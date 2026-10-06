@@ -57,6 +57,8 @@ const initialLayerVisibility = {
   erosion: false,
   lguFlood: false,
   landUse: false,
+  npaaad: false,
+  safdz: false,
   fault: false,
   epicenter: false,
   volcano: false,
@@ -285,6 +287,8 @@ export default function App() {
         liquefaction: data.liquefaction,
         erosion: data.erosion,
         landUse: data.landUse,
+        npaaad: data.npaaad,
+        safdz: data.safdz,
       },
     )
     setAssessmentResult(result)
@@ -321,6 +325,8 @@ export default function App() {
         liquefaction: data.liquefaction,
         erosion: data.erosion,
         landUse: data.landUse,
+        npaaad: data.npaaad,
+        safdz: data.safdz,
       },
     )
     setAssessmentResult(result)
@@ -354,6 +360,8 @@ export default function App() {
     erosionFeatureCount: data?.erosion.features.length ?? 0,
     lguFloodFeatureCount: data?.lguFlood.features.length ?? 0,
     landUseFeatureCount: data?.landUse.features.length ?? 0,
+    npaaadFeatureCount: data?.npaaad.features.length ?? 0,
+    safdzFeatureCount: data?.safdz.features.length ?? 0,
     mgbExposureCounts,
     faultLineName,
     faultSegmentCount,
@@ -440,6 +448,8 @@ export default function App() {
             erosion={data.erosion}
             lguFlood={data.lguFlood}
             landUse={data.landUse}
+            npaaad={data.npaaad}
+            safdz={data.safdz}
             faultLines={activeFaults}
             epicenter={epicenter}
             earthquakeRadius={earthquakeRadius}

@@ -22,6 +22,8 @@ import {
   LAND_USE_COLORS,
   LGU_FLOOD_COLORS,
   LIQUEFACTION_COLORS,
+  NPAAAD_COLORS,
+  SAFDZ_COLORS,
   LGU_HAZARD_OPACITY,
 } from '@/lib/simulation/lguHazards'
 import { FAULT_LAYER_IDS } from '@/lib/simulation/faultLegend'
@@ -55,6 +57,8 @@ interface MapViewProps {
   erosion: FeatureCollection | null
   lguFlood: FeatureCollection | null
   landUse: FeatureCollection | null
+  npaaad?: FeatureCollection | null
+  safdz?: FeatureCollection | null
   faultLines: FeatureCollection | null
   epicenter: [number, number] | null
   earthquakeRadius: number
@@ -95,6 +99,8 @@ export function MapView({
   erosion,
   lguFlood,
   landUse,
+  npaaad,
+  safdz,
   faultLines,
   epicenter,
   earthquakeRadius,
@@ -375,7 +381,7 @@ export function MapView({
             // production raster style flat so every planning overlay remains
             // visible; 3D building extrusions and camera pitch still work.
             const hasRasterBasemap = Boolean(
-              map.getSource('carto') || map.getSource('basemap-raster-underlay'),
+              map.getSource('osm') || map.getSource('basemap-raster-underlay'),
             )
             if (current.terrain3d && !hasRasterBasemap) {
               map.setTerrain({ source: 'lasam-dem', exaggeration: current.exaggeration })
@@ -594,6 +600,64 @@ export function MapView({
           layout: { visibility: 'none' },
         })
 
+        const initialNpaaad = npaaad ?? { type: 'FeatureCollection', features: [] }
+        map.addSource('npaaad-zone', { type: 'geojson', data: initialNpaaad })
+        map.addLayer({
+          id: 'npaaad-fill',
+          type: 'fill',
+          source: 'npaaad-zone',
+          paint: {
+            'fill-color': buildClassColorMatch(
+              'code',
+              NPAAAD_COLORS,
+              NPAAAD_COLORS.Others,
+            ),
+            'fill-opacity': LGU_HAZARD_OPACITY,
+            'fill-outline-color': '#047857',
+          },
+          layout: { visibility: 'none' },
+        })
+        map.addLayer({
+          id: 'npaaad-line',
+          type: 'line',
+          source: 'npaaad-zone',
+          paint: {
+            'line-color': '#047857',
+            'line-width': 1,
+            'line-opacity': 0.6,
+          },
+          layout: { visibility: 'none' },
+        })
+
+        const initialSafdz = safdz ?? { type: 'FeatureCollection', features: [] }
+        map.addSource('safdz-zone', { type: 'geojson', data: initialSafdz })
+        map.addLayer({
+          id: 'safdz-fill',
+          type: 'fill',
+          source: 'safdz-zone',
+          paint: {
+            'fill-color': buildClassColorMatch(
+              'code',
+              SAFDZ_COLORS,
+              SAFDZ_COLORS.Others,
+            ),
+            'fill-opacity': LGU_HAZARD_OPACITY,
+            'fill-outline-color': '#4d7c0f',
+          },
+          layout: { visibility: 'none' },
+        })
+        map.addLayer({
+          id: 'safdz-line',
+          type: 'line',
+          source: 'safdz-zone',
+          paint: {
+            'line-color': '#4d7c0f',
+            'line-width': 1,
+            'line-opacity': 0.6,
+          },
+          layout: { visibility: 'none' },
+        })
+
         addBuildingLayers(map)
 
         const initialFault = faultLines ?? { type: 'FeatureCollection', features: [] }
@@ -709,6 +773,43 @@ export function MapView({
             map.getCanvas().style.cursor = ''
           })
         }
+
+        const showAgriPopup = (titlePrefix: string) => (e: MapLayerMouseEvent) => {
+          if (activeToolRef.current !== 'select') return
+          const feature = e.features?.[0]
+          if (!feature?.properties) return
+          const p = feature.properties
+          const code = String(p.code ?? '')
+          const label = String(p.label ?? p.description ?? code)
+          const desc = String(p.description ?? '')
+          new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
+            .setLngLat(e.lngLat)
+            .setHTML(
+              `<div style="font:12px/1.4 system-ui,sans-serif;color:#0f172a">
+                <strong style="display:block;margin-bottom:4px;color:#047857">${titlePrefix}: ${code}</strong>
+                <div style="font-weight:600;margin-bottom:4px">${label}</div>
+                ${desc && desc !== label ? `<div style="color:#64748b;font-size:11px">${desc}</div>` : ''}
+                <div style="margin-top:6px;font-size:10px;color:#94a3b8">Source: DA-BSWM (${p.year ?? '2022'})</div>
+              </div>`,
+            )
+            .addTo(map)
+        }
+
+        map.on('click', 'npaaad-fill', showAgriPopup('NPAAAD Protection'))
+        map.on('mouseenter', 'npaaad-fill', () => {
+          map.getCanvas().style.cursor = 'pointer'
+        })
+        map.on('mouseleave', 'npaaad-fill', () => {
+          map.getCanvas().style.cursor = ''
+        })
+
+        map.on('click', 'safdz-fill', showAgriPopup('SAFDZ Zone'))
+        map.on('mouseenter', 'safdz-fill', () => {
+          map.getCanvas().style.cursor = 'pointer'
+        })
+        map.on('mouseleave', 'safdz-fill', () => {
+          map.getCanvas().style.cursor = ''
+        })
 
       map.addSource('epicenter', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
       map.addLayer({ id: 'epicenter-rings', type: 'fill', source: 'epicenter', filter: ['==', ['geometry-type'], 'Polygon'], paint: { 'fill-color': '#ef4444', 'fill-opacity': ['coalesce', ['get', 'opacity'], 0.12] } })
@@ -884,6 +985,26 @@ export function MapView({
     const map = mapRef.current
     if (!map?.isStyleLoaded()) return
 
+    const npaaadData = npaaad ?? { type: 'FeatureCollection', features: [] }
+    ;(map.getSource('npaaad-zone') as maplibregl.GeoJSONSource)?.setData(
+      npaaadData as GeoJSON.FeatureCollection,
+    )
+  }, [npaaad])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map?.isStyleLoaded()) return
+
+    const safdzData = safdz ?? { type: 'FeatureCollection', features: [] }
+    ;(map.getSource('safdz-zone') as maplibregl.GeoJSONSource)?.setData(
+      safdzData as GeoJSON.FeatureCollection,
+    )
+  }, [safdz])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map?.isStyleLoaded()) return
+
     ;(map.getSource('rivers-main') as maplibregl.GeoJSONSource | undefined)?.setData(riversMain)
     ;(map.getSource('rivers-tributaries') as maplibregl.GeoJSONSource | undefined)?.setData(
       riversTributaries,
@@ -899,7 +1020,7 @@ export function MapView({
     const map = mapRef.current
     if (!map?.getSource('lasam-dem')) return
     const hasRasterBasemap = Boolean(
-      map.getSource('carto') || map.getSource('basemap-raster-underlay'),
+      map.getSource('osm') || map.getSource('basemap-raster-underlay'),
     )
     if (
       terrainSettings.terrain3d &&
@@ -1180,7 +1301,7 @@ export function MapView({
           </div>
         </div>
       )}
-      <MapLegend hazardMode={hazardMode} />
+      <MapLegend hazardMode={hazardMode} layerVisibility={layerVisibility} />
       <TerrainInfoBar sample={terrainSample} />
       {toolHint && (
         <div className="pointer-events-none absolute left-1/2 top-3 z-10 max-w-[90%] -translate-x-1/2 rounded-full bg-slate-900/85 px-4 py-2 text-xs text-white shadow-lg">

@@ -5,6 +5,8 @@ import {
   getLandUseAtPoint,
   getLguFloodAtPoint,
   getLiquefactionAtPoint,
+  getNpaaadAtPoint,
+  getSafdzAtPoint,
 } from '@/lib/simulation/lguLayerQuery'
 import type { AssessmentRow } from '@/types'
 
@@ -21,13 +23,15 @@ export interface LguAssessmentContext {
   liquefaction?: FeatureCollection | null
   erosion?: FeatureCollection | null
   landUse?: FeatureCollection | null
+  npaaad?: FeatureCollection | null
+  safdz?: FeatureCollection | null
 }
 
 export function assessLgu(
   coords: [number, number],
   ctx: LguAssessmentContext,
 ): AssessmentRow[] {
-  return [
+  const rows: AssessmentRow[] = [
     {
       label: 'Flood (LGU 2020)',
       value: formatLguFlood(coords, ctx.lguFlood),
@@ -45,6 +49,22 @@ export function assessLgu(
       value: formatLandUse(coords, ctx.landUse),
     },
   ]
+
+  if (ctx.npaaad?.features?.length) {
+    rows.push({
+      label: 'NPAAAD Protection (DA 2022)',
+      value: formatNpaaad(coords, ctx.npaaad),
+    })
+  }
+
+  if (ctx.safdz?.features?.length) {
+    rows.push({
+      label: 'SAFDZ Agri Zone (DA 2022)',
+      value: formatSafdz(coords, ctx.safdz),
+    })
+  }
+
+  return rows
 }
 
 function formatLguFlood(
@@ -107,3 +127,32 @@ function formatLandUse(
   )
   return (normalized === 'Crops' ? 'Agriculture' : rawLabel) || normalized
 }
+
+function formatNpaaad(
+  coords: [number, number],
+  collection: FeatureCollection | null | undefined,
+): string {
+  if (!collection?.features?.length) return UNAVAILABLE
+
+  const match = getNpaaadAtPoint(coords, collection)
+  if (!match) return 'Outside mapped NPAAAD boundaries'
+
+  const code = String(match.properties?.code ?? '').trim()
+  const label = String(match.properties?.label ?? match.properties?.description ?? code).trim()
+  return code ? `${code} (${label})` : label
+}
+
+function formatSafdz(
+  coords: [number, number],
+  collection: FeatureCollection | null | undefined,
+): string {
+  if (!collection?.features?.length) return UNAVAILABLE
+
+  const match = getSafdzAtPoint(coords, collection)
+  if (!match) return 'Outside mapped SAFDZ boundaries'
+
+  const code = String(match.properties?.code ?? '').trim()
+  const label = String(match.properties?.label ?? match.properties?.description ?? code).trim()
+  return code ? `Zone ${code} — ${label}` : label
+}
+

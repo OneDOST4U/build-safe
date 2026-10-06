@@ -13,6 +13,8 @@ import {
   LAND_USE_LEGEND,
   LGU_FLOOD_LEGEND,
   LIQUEFACTION_LEGEND,
+  NPAAAD_LEGEND,
+  SAFDZ_LEGEND,
 } from '@/lib/simulation/lguHazards'
 import { LAYER_VISIBILITY_LABELS } from '@/lib/map/layerVisibility'
 import { BuildingInfoPanel } from '@/components/layout/BuildingInfoPanel'
@@ -33,6 +35,8 @@ interface HazardPanelProps {
   erosionFeatureCount: number
   lguFloodFeatureCount: number
   landUseFeatureCount: number
+  npaaadFeatureCount?: number
+  safdzFeatureCount?: number
   mgbExposureCounts: Record<MgbSusceptibility | 'none', number>
   faultLineName: string
   faultSegmentCount: number
@@ -245,6 +249,50 @@ export function HazardPanel(props: HazardPanelProps) {
                   </div>
                   <div className="max-h-40 space-y-1 overflow-y-auto pr-1">
                     {LAND_USE_LEGEND.map(({ label, color }) => (
+                      <LegendSwatch key={label} color={color} label={label} />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3 rounded-md border border-slate-100 bg-slate-50 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <Label>NPAAAD — Agricultural Protection (DA 2022)</Label>
+                      <p className="text-[10px] text-slate-500">
+                        {props.npaaadFeatureCount && props.npaaadFeatureCount > 0
+                          ? `${props.npaaadFeatureCount} agricultural parcel(s)`
+                          : 'Network of Protected Areas for Agri'}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={props.layerVisibility.npaaad === true}
+                      onCheckedChange={(v) => props.onLayerVisibilityChange('npaaad', v)}
+                    />
+                  </div>
+                  <div className="max-h-40 space-y-1 overflow-y-auto pr-1">
+                    {NPAAAD_LEGEND.map(({ label, color }) => (
+                      <LegendSwatch key={label} color={color} label={label} />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3 rounded-md border border-slate-100 bg-slate-50 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <Label>SAFDZ — Strategic Agri-Fisheries (DA 2022)</Label>
+                      <p className="text-[10px] text-slate-500">
+                        {props.safdzFeatureCount && props.safdzFeatureCount > 0
+                          ? `${props.safdzFeatureCount} development zone(s)`
+                          : 'Strategic Agri & Fisheries Development Zones'}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={props.layerVisibility.safdz === true}
+                      onCheckedChange={(v) => props.onLayerVisibilityChange('safdz', v)}
+                    />
+                  </div>
+                  <div className="max-h-40 space-y-1 overflow-y-auto pr-1">
+                    {SAFDZ_LEGEND.map(({ label, color }) => (
                       <LegendSwatch key={label} color={color} label={label} />
                     ))}
                   </div>
@@ -515,7 +563,9 @@ export function HazardPanel(props: HazardPanelProps) {
                       layer !== 'liquefaction' &&
                       layer !== 'erosion' &&
                       layer !== 'lguFlood' &&
-                      layer !== 'landUse',
+                      layer !== 'landUse' &&
+                      layer !== 'npaaad' &&
+                      layer !== 'safdz',
                   )
                   .map(([layer, visible]) => (
                   <div key={layer} className="flex items-center justify-between gap-3">

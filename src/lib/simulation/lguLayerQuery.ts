@@ -135,3 +135,21 @@ export function formatLandUseClass(landUseClass: LandUseClass | undefined): stri
       return 'Unknown'
   }
 }
+
+export function getNpaaadAtPoint(
+  coords: [number, number],
+  collection: FeatureCollection | null | undefined,
+): Feature | null {
+  const matches = findMatchingFeatures(coords, collection)
+  return matches[0] ?? null
+}
+
+export function getSafdzAtPoint(
+  coords: [number, number],
+  collection: FeatureCollection | null | undefined,
+): Feature | null {
+  const matches = findMatchingFeatures(coords, collection)
+  return matches[0] ?? null
+}
+
+

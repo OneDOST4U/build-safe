@@ -1,7 +1,7 @@
 import * as maplibregl from 'maplibre-gl'
 import type { Map, MapOptions, StyleSpecification } from 'maplibre-gl'
 import { installRasterUnderlay } from '@/lib/map/basemapUnderlay'
-import { CARTO_RASTER_STYLE, MAP_STYLE } from '@/lib/map/styles'
+import { MAP_STYLE, OSM_RASTER_STYLE } from '@/lib/map/styles'
 
 export function createMap(options: Omit<MapOptions, 'style'> & { container: HTMLElement }): Map {
   return new maplibregl.Map({
@@ -10,7 +10,7 @@ export function createMap(options: Omit<MapOptions, 'style'> & { container: HTML
   })
 }
 
-/** Carto raster is the primary style — no vector underlay needed. */
+/** Install raster underlay if required */
 export function prepareBasemap(map: Map): void {
   if (typeof map.getStyle().sources?.openmaptiles !== 'undefined') {
     installRasterUnderlay(map)
@@ -21,7 +21,7 @@ export function prepareBasemap(map: Map): void {
 export function createMapFallback(options: Omit<MapOptions, 'style'> & { container: HTMLElement }): Map {
   return new maplibregl.Map({
     ...options,
-    style: CARTO_RASTER_STYLE,
+    style: OSM_RASTER_STYLE,
   })
 }
 
@@ -32,7 +32,8 @@ export function createMapWithStyle(
   return new maplibregl.Map({ ...options, style })
 }
 
-export { CARTO_RASTER_STYLE as OSM_RASTER_STYLE }
+export { OSM_RASTER_STYLE }
+
 
 export function bindMapResize(map: Map, container: HTMLElement): () => void {
   let active = true

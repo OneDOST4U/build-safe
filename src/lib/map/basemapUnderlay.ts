@@ -1,29 +1,25 @@
 import type { Map } from 'maplibre-gl'
 
-/** Production-safe raster tiles (Carto CDN). OSM direct tiles often block non-localhost referrers. */
-export const CARTO_RASTER_TILES = [
-  'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-  'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-  'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+/** Reliable raster tiles (OpenStreetMap). */
+export const OSM_RASTER_TILES = [
+  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
 ]
 
 const UNDERLAY_SOURCE = 'basemap-raster-underlay'
 const UNDERLAY_LAYER = 'basemap-raster-underlay'
 
 /**
- * Insert a reliable raster underlay beneath vector style layers.
- * When OpenFreeMap vectors fail at high zoom (common on Vercel / rural PH),
- * Carto tiles remain visible instead of a blank beige background.
+ * Insert a reliable raster underlay beneath vector style layers if needed.
  */
 export function installRasterUnderlay(map: Map): void {
   if (map.getSource(UNDERLAY_SOURCE)) return
 
   map.addSource(UNDERLAY_SOURCE, {
     type: 'raster',
-    tiles: CARTO_RASTER_TILES,
+    tiles: OSM_RASTER_TILES,
     tileSize: 256,
-    maxzoom: 20,
-    attribution: '© OpenStreetMap © CARTO',
+    maxzoom: 19,
+    attribution: '© OpenStreetMap contributors',
   })
 
   const anchor = map.getStyle().layers[0]?.id
@@ -33,7 +29,7 @@ export function installRasterUnderlay(map: Map): void {
       type: 'raster',
       source: UNDERLAY_SOURCE,
       minzoom: 0,
-      maxzoom: 22,
+      maxzoom: 19,
     },
     anchor,
   )
@@ -42,3 +38,4 @@ export function installRasterUnderlay(map: Map): void {
     map.setPaintProperty('background', 'background-color', 'transparent')
   }
 }
+

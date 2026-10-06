@@ -99,6 +99,54 @@ export const LAND_USE_LEGEND: { key: LandUseClass; label: string; color: string 
   { key: 'road', label: 'Road', color: LAND_USE_COLORS.road },
 ]
 
+export const NPAAAD_COLORS: Record<string, string> = {
+  A: '#059669',
+  BU: '#e11d48',
+  C: '#84cc16',
+  D: '#d97706',
+  F: '#ea580c',
+  G: '#0284c7',
+  H: '#15803d',
+  WB: '#0284c7',
+  Others: '#64748b',
+}
+
+export const NPAAAD_LEGEND = [
+  { key: 'A', label: 'All irrigated lands/areas (A)', color: NPAAAD_COLORS.A },
+  { key: 'C', label: 'Alluvial plain highly suitable (C)', color: NPAAAD_COLORS.C },
+  { key: 'D', label: 'Agro-Industrial croplands (D)', color: NPAAAD_COLORS.D },
+  { key: 'F', label: 'Ecologically fragile lands (F)', color: NPAAAD_COLORS.F },
+  { key: 'G', label: 'Fishery areas (G)', color: NPAAAD_COLORS.G },
+  { key: 'H', label: 'Forest / Watershed (H)', color: NPAAAD_COLORS.H },
+  { key: 'BU', label: 'Built-up areas (BU)', color: NPAAAD_COLORS.BU },
+  { key: 'WB', label: 'Water bodies (WB)', color: NPAAAD_COLORS.WB },
+  { key: 'Others', label: 'Other lands / Infrastructure', color: NPAAAD_COLORS.Others },
+]
+
+export const SAFDZ_COLORS: Record<string, string> = {
+  '1': '#65a30d',
+  '2': '#d97706',
+  '3': '#0284c7',
+  '8': '#0d9488',
+  '9': '#16a34a',
+  '10': '#15803d',
+  BU: '#e11d48',
+  WB: '#0284c7',
+  Others: '#64748b',
+}
+
+export const SAFDZ_LEGEND = [
+  { key: '1', label: 'Strategic Crop Zone (1)', color: SAFDZ_COLORS['1'] },
+  { key: '2', label: 'Strategic Livestock Zone (2)', color: SAFDZ_COLORS['2'] },
+  { key: '3', label: 'Strategic Fishery Zone (3)', color: SAFDZ_COLORS['3'] },
+  { key: '8', label: 'Remaining NPAAAD (8)', color: SAFDZ_COLORS['8'] },
+  { key: '9', label: 'Agro-Forestry Zone (9)', color: SAFDZ_COLORS['9'] },
+  { key: '10', label: 'Forest / Watershed Areas (10)', color: SAFDZ_COLORS['10'] },
+  { key: 'BU', label: 'Built-up areas (BU)', color: SAFDZ_COLORS.BU },
+  { key: 'WB', label: 'Water Bodies (WB)', color: SAFDZ_COLORS.WB },
+  { key: 'Others', label: 'Other lands / Infrastructure', color: SAFDZ_COLORS.Others },
+]
+
 export const LGU_HAZARD_OPACITY = 0.5
 
 export function buildClassColorMatch(
@@ -113,3 +161,4 @@ export function buildClassColorMatch(
   match.push(fallback)
   return match as ExpressionSpecification
 }
+

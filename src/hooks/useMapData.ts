@@ -20,6 +20,8 @@ export interface MapData {
   erosion: FeatureCollection
   lguFlood: FeatureCollection
   landUse: FeatureCollection
+  npaaad: FeatureCollection
+  safdz: FeatureCollection
   defaultFaults: FeatureCollection
   volcanoes: FeatureCollection
   facilities: FeatureCollection
@@ -99,6 +101,8 @@ function buildMapData(
     erosion: partial.erosion,
     lguFlood: partial.lguFlood,
     landUse: partial.landUse,
+    npaaad: partial.npaaad,
+    safdz: partial.safdz,
     defaultFaults: faults,
     volcanoes: partial.volcanoes,
     facilities: partial.facilities,
@@ -126,6 +130,8 @@ function emptyMapDataShell(
     erosion: emptyFc,
     lguFlood: emptyFc,
     landUse: emptyFc,
+    npaaad: emptyFc,
+    safdz: emptyFc,
     phivolcsFaults: null,
     sampleFault: null,
     volcanoes: emptyFc,
@@ -256,6 +262,8 @@ export function useMapData(): UseMapDataResult {
           erosion,
           lguFlood,
           landUse: emptyFc,
+          npaaad: emptyFc,
+          safdz: emptyFc,
           phivolcsFaults,
           sampleFault,
           volcanoes,
@@ -265,38 +273,55 @@ export function useMapData(): UseMapDataResult {
         // Instantly activate flood and hazard layers
         setData(tier1Data)
 
-        // Tier 2: Heavy background layers (land use, terrain elevation grid, contours, drainage)
-        const [landUse, drainage, riverbanks, watersheds, flowArrows, contours, elevationGrid] =
-          await Promise.all([
-            fetchJsonOptional<FeatureCollection>(
-              dataUrl('/data/hazards/lasam-land-use-2020.geojson'),
-              emptyFc,
-            ),
-            fetchJsonOptional<FeatureCollection>(
-              dataUrl('/data/hydrology/drainage.geojson'),
-              emptyFc,
-            ),
-            fetchJsonOptional<FeatureCollection>(
-              dataUrl('/data/hydrology/riverbanks.geojson'),
-              emptyFc,
-            ),
-            fetchJsonOptional<FeatureCollection>(
-              dataUrl('/data/hydrology/watersheds.geojson'),
-              emptyFc,
-            ),
-            fetchJsonOptional<FeatureCollection>(
-              dataUrl('/data/hydrology/flow-arrows.geojson'),
-              emptyFc,
-            ),
-            fetchJsonOptional<FeatureCollection>(
-              dataUrl('/data/terrain/contours.geojson'),
-              emptyFc,
-            ),
-            fetchJsonOptional<ElevationGrid | null>(
-              dataUrl('/data/terrain/elevation-grid.json'),
-              null,
-            ),
-          ])
+        // Tier 2: Heavy background layers (land use, NPAAAD, SAFDZ, terrain elevation grid, contours, drainage)
+        const [
+          landUse,
+          npaaad,
+          safdz,
+          drainage,
+          riverbanks,
+          watersheds,
+          flowArrows,
+          contours,
+          elevationGrid,
+        ] = await Promise.all([
+          fetchJsonOptional<FeatureCollection>(
+            dataUrl('/data/hazards/lasam-land-use-2020.geojson'),
+            emptyFc,
+          ),
+          fetchJsonOptional<FeatureCollection>(
+            dataUrl('/data/hazards/lasam-npaaad-2022.geojson'),
+            emptyFc,
+          ),
+          fetchJsonOptional<FeatureCollection>(
+            dataUrl('/data/hazards/lasam-safdz-2022.geojson'),
+            emptyFc,
+          ),
+          fetchJsonOptional<FeatureCollection>(
+            dataUrl('/data/hydrology/drainage.geojson'),
+            emptyFc,
+          ),
+          fetchJsonOptional<FeatureCollection>(
+            dataUrl('/data/hydrology/riverbanks.geojson'),
+            emptyFc,
+          ),
+          fetchJsonOptional<FeatureCollection>(
+            dataUrl('/data/hydrology/watersheds.geojson'),
+            emptyFc,
+          ),
+          fetchJsonOptional<FeatureCollection>(
+            dataUrl('/data/hydrology/flow-arrows.geojson'),
+            emptyFc,
+          ),
+          fetchJsonOptional<FeatureCollection>(
+            dataUrl('/data/terrain/contours.geojson'),
+            emptyFc,
+          ),
+          fetchJsonOptional<ElevationGrid | null>(
+            dataUrl('/data/terrain/elevation-grid.json'),
+            null,
+          ),
+        ])
 
         if (cancelled) return
 
@@ -317,6 +342,8 @@ export function useMapData(): UseMapDataResult {
           erosion,
           lguFlood,
           landUse,
+          npaaad,
+          safdz,
           phivolcsFaults,
           sampleFault,
           volcanoes,

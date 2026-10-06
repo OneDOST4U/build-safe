@@ -15,6 +15,8 @@ export interface AssessSiteContext {
   liquefaction?: FeatureCollection | null
   erosion?: FeatureCollection | null
   landUse?: FeatureCollection | null
+  npaaad?: FeatureCollection | null
+  safdz?: FeatureCollection | null
 }
 
 export function assessSite(
@@ -34,6 +36,8 @@ export function assessSite(
       liquefaction: ctx.liquefaction,
       erosion: ctx.erosion,
       landUse: ctx.landUse,
+      npaaad: ctx.npaaad,
+      safdz: ctx.safdz,
     }),
     facilities: assessFacilities(coords, ctx.facilities),
   }
