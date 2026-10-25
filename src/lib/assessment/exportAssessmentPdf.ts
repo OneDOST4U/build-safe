@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf'
-import { getGoogleEarthWebUrl } from '@/lib/assessment/googleEarth'
+import { getGoogleMapsUrl } from '@/lib/assessment/googleEarth'
 import {
   REPORT_HEADER,
   REPORT_LAYOUT,
@@ -11,10 +11,7 @@ import { APP_LOGO_PATH } from '@/lib/constants'
 import type { AssessmentRow, SiteAssessmentResult } from '@/types'
 
 const ROW_PAD_X = 1.5
-const LABEL_RATIO = 0.44
-const SECTION_TITLE_H = 4.2
-const SECTION_BOTTOM_PAD = 1.2
-const MIN_SECTION_GAP = 1.2
+const LABEL_RATIO = 0.40
 
 export interface ExportAssessmentPdfInput {
   mapDataUrl: string
@@ -24,10 +21,18 @@ export interface ExportAssessmentPdfInput {
 
 function pdfText(text: string): string {
   return text
-    .replace(/\u2264/g, '<=')
-    .replace(/\u2265/g, '>=')
-    .replace(/[\u2013\u2014]/g, '-')
-    .replace(/\u00b0/g, ' deg')
+    .replace(/[🚫❌]/gu, '[RESTRICTED] ')
+    .replace(/[⚠️⚡]/gu, '[WARNING] ')
+    .replace(/[✅🟢]/gu, '[OK] ')
+    .replace(/[🟡]/gu, '[CAUTION] ')
+    .replace(/[🔴]/gu, '[HIGH RISK] ')
+    .replace(/[🌾🌽🥔🥬🏢🚗📍]/gu, '')
+    .replace(/\[RESTRICTED\]\s*\[OK\]/gu, '[RESTRICTED]')
+    .replace(/\[OK\]\s*\[RESTRICTED\]/gu, '[RESTRICTED]')
+    .replace(/\u2264/gu, '<=')
+    .replace(/\u2265/gu, '>=')
+    .replace(/[\u2013\u2014]/gu, '-')
+    .replace(/\u00b0/gu, ' deg')
     .replace(/\bCrops\b/g, 'Agriculture')
     .replace(/\bcrops\b/g, 'agriculture')
     .replace(/\s+/g, ' ')
@@ -58,7 +63,19 @@ function loadImageDataUrl(src: string): Promise<string> {
 interface LayoutConfig {
   fontSize: number
   lineH: number
+  rowPadding: number
+  sectionTitleH: number
+  sectionBottomPad: number
   sectionGap: number
+}
+
+function computeConfig(fontSize: number): LayoutConfig {
+  const lineH = Number((fontSize * 0.40).toFixed(2))
+  const rowPadding = Number(Math.max(0.35, Math.min(1.1, 0.35 + (fontSize - 4.2) * 0.28)).toFixed(2))
+  const sectionTitleH = Number(Math.max(2.6, Math.min(3.8, 2.6 + (fontSize - 4.2) * 0.45)).toFixed(2))
+  const sectionBottomPad = Number(Math.max(0.3, Math.min(0.8, 0.3 + (fontSize - 4.2) * 0.2)).toFixed(2))
+  const sectionGap = Number(Math.max(0.6, Math.min(1.4, 0.6 + (fontSize - 4.2) * 0.3)).toFixed(2))
+  return { fontSize, lineH, rowPadding, sectionTitleH, sectionBottomPad, sectionGap }
 }
 
 function measureRowHeight(
@@ -70,11 +87,11 @@ function measureRowHeight(
 ): number {
   pdf.setFontSize(cfg.fontSize)
   const labelW = innerW * LABEL_RATIO
-  const valueW = innerW * (1 - LABEL_RATIO) - 1.5
+  const valueW = innerW * (1 - LABEL_RATIO) - 1.2
   const labelLines = pdf.splitTextToSize(pdfText(label), labelW)
   const valueLines = pdf.splitTextToSize(pdfText(value), valueW)
   const lines = Math.max(labelLines.length, valueLines.length, 1)
-  return lines * cfg.lineH + 1.4
+  return lines * cfg.lineH + cfg.rowPadding
 }
 
 function measureSectionHeight(
@@ -87,7 +104,7 @@ function measureSectionHeight(
     (sum, row) => sum + measureRowHeight(pdf, row.label, row.value, innerW, cfg),
     0,
   )
-  return SECTION_TITLE_H + rowsH + SECTION_BOTTOM_PAD
+  return cfg.sectionTitleH + rowsH + cfg.sectionBottomPad
 }
 
 function resolveLayout(
@@ -96,37 +113,38 @@ function resolveLayout(
   innerW: number,
   availableH: number,
 ): LayoutConfig {
-  let fontSize = 6.8
-  let lineH = 3.1
-  let sectionGap = MIN_SECTION_GAP
+  let bestFontSize = 4.2
+  const low = 4.0
+  const high = 7.0
 
   const totalFor = (cfg: LayoutConfig) =>
     sections.reduce((sum, rows) => sum + measureSectionHeight(pdf, rows, innerW, cfg), 0) +
-    sectionGap * (sections.length - 1)
+    cfg.sectionGap * Math.max(0, sections.length - 1)
 
-  let cfg: LayoutConfig = { fontSize, lineH, sectionGap }
-  let total = totalFor(cfg)
-
-  while (total < availableH * 0.96 && fontSize < 7.5) {
-    fontSize += 0.12
-    lineH = 3 + fontSize * 0.02
-    cfg = { fontSize, lineH, sectionGap }
-    total = totalFor(cfg)
+  for (let fs = high; fs >= low; fs -= 0.08) {
+    const cfg = computeConfig(Number(fs.toFixed(2)))
+    const total = totalFor(cfg)
+    if (total <= availableH) {
+      bestFontSize = fs
+      break
+    }
   }
 
-  while (total > availableH && fontSize > 5.4) {
-    fontSize -= 0.12
-    lineH = 3 + fontSize * 0.02
-    cfg = { fontSize, lineH, sectionGap }
-    total = totalFor(cfg)
+  let finalCfg = computeConfig(Number(bestFontSize.toFixed(2)))
+  const finalTotal = totalFor(finalCfg)
+
+  // Distribute surplus height so tables fill the column gracefully
+  if (finalTotal < availableH && sections.length > 1) {
+    const extra = availableH - finalTotal
+    const extraGap = Math.min(1.8, extra / (sections.length * 2))
+    finalCfg = {
+      ...finalCfg,
+      sectionGap: Number((finalCfg.sectionGap + extraGap).toFixed(2)),
+      rowPadding: Number((finalCfg.rowPadding + extraGap * 0.18).toFixed(2)),
+    }
   }
 
-  if (total < availableH && sections.length > 1) {
-    sectionGap = MIN_SECTION_GAP + (availableH - total) / (sections.length - 1)
-    cfg = { ...cfg, sectionGap }
-  }
-
-  return cfg
+  return finalCfg
 }
 
 function drawRow(
@@ -141,12 +159,12 @@ function drawRow(
   pdf.setFontSize(cfg.fontSize)
   const innerW = w - ROW_PAD_X * 2
   const labelW = innerW * LABEL_RATIO
-  const valueW = innerW * (1 - LABEL_RATIO) - 1.5
-  const valueX = x + ROW_PAD_X + labelW + 1.5
+  const valueW = innerW * (1 - LABEL_RATIO) - 1.2
+  const valueX = x + ROW_PAD_X + labelW + 1.2
   const rowH = measureRowHeight(pdf, label, value, innerW, cfg)
   const labelLines = pdf.splitTextToSize(pdfText(label), labelW)
   const valueLines = pdf.splitTextToSize(pdfText(value), valueW)
-  const startY = y + cfg.fontSize * 0.4
+  const startY = y + cfg.fontSize * 0.33 + cfg.rowPadding * 0.45
 
   pdf.setFont('helvetica', 'normal')
   pdf.setTextColor(71, 85, 105)
@@ -180,11 +198,11 @@ function drawAssessmentSection(
   pdf.roundedRect(x, y, w, sectionH, 0.8, 0.8, 'S')
 
   pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(cfg.fontSize + 0.15)
+  pdf.setFontSize(Math.max(5.4, cfg.fontSize + 0.15))
   pdf.setTextColor(15, 118, 110)
-  pdf.text(title, x + ROW_PAD_X, y + 3.4)
+  pdf.text(title, x + ROW_PAD_X, y + cfg.sectionTitleH * 0.72)
 
-  let rowY = y + SECTION_TITLE_H
+  let rowY = y + cfg.sectionTitleH
   rows.forEach((row, index) => {
     const rowH = measureRowHeight(pdf, row.label, row.value, innerW, cfg)
 
@@ -215,20 +233,33 @@ function drawAssessmentPanel(
   h: number,
   result: SiteAssessmentResult,
 ) {
-  const sections: { title: string; rows: AssessmentRow[] }[] = [
+  const sections: { title: string; rows: AssessmentRow[] }[] = []
+
+  if (result.farmAssessment && result.farmAssessment.length > 0) {
+    sections.push({ title: 'CROP & AGRI HAZARDS', rows: result.farmAssessment })
+  }
+
+  sections.push(
     { title: 'SEISMIC HAZARD', rows: result.seismic },
     { title: 'VOLCANIC HAZARD', rows: result.volcanic },
     { title: 'HYDRO-MET HAZARD', rows: result.hydromet },
-    { title: 'LGU DATASETS', rows: result.lgu },
-    { title: 'CRITICAL FACILITIES', rows: result.facilities },
-  ]
+  )
+
+  if (result.input.category !== 'farm_lot') {
+    sections.push({ title: 'LGU DATASETS', rows: result.lgu })
+  }
+
+  sections.push({
+    title: result.input.category === 'farm_lot' ? 'NEAREST FARM BUSINESSES' : 'CRITICAL FACILITIES',
+    rows: result.facilities,
+  })
 
   const innerW = w - ROW_PAD_X * 2
   const cfg = resolveLayout(
     pdf,
     sections.map((s) => s.rows),
     innerW,
-    h - 10,
+    h - 2, // 2mm bottom safety padding
   )
 
   let cursorY = y
@@ -238,27 +269,30 @@ function drawAssessmentPanel(
   })
 }
 
-/** Centered logo + BUILD-SAFE titles — building type/coords go on the map overlay */
+/** Centered logo + BUILD-SAFE titles — compact layout matching 20mm header */
 function drawReportHeader(pdf: jsPDF, x: number, y: number, w: number, logo: string | null) {
   const centerX = x + w / 2
 
   if (logo) {
-    pdf.addImage(logo, 'PNG', centerX - 7.5, y + 1.5, 15, 15)
+    pdf.addImage(logo, 'PNG', centerX - 4.5, y + 1, 9, 9)
   }
 
   pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(9)
+  pdf.setFontSize(8.5)
   pdf.setTextColor(15, 23, 42)
-  pdf.text(REPORT_HEADER.titleLine1, centerX, y + 19.5, { align: 'center' })
+  pdf.text(REPORT_HEADER.titleLine1, centerX, y + 12.5, { align: 'center' })
 
-  pdf.setFontSize(8)
-  pdf.text(REPORT_HEADER.titleLine2, centerX, y + 23.5, { align: 'center' })
+  pdf.setFont('helvetica', 'normal')
+  pdf.setFontSize(6.5)
+  pdf.setTextColor(51, 65, 85)
+  pdf.text(REPORT_HEADER.titleLine2, centerX, y + 15.5, { align: 'center' })
 
-  pdf.setFontSize(7)
-  pdf.text(REPORT_HEADER.titleLine3, centerX, y + 27.5, { align: 'center' })
+  pdf.setFontSize(6)
+  pdf.setTextColor(100, 116, 139)
+  pdf.text(REPORT_HEADER.titleLine3, centerX, y + 18, { align: 'center' })
 
   pdf.setDrawColor(226, 232, 240)
-  pdf.setLineWidth(0.25)
+  pdf.setLineWidth(0.2)
   pdf.line(x, y + REPORT_LAYOUT.headerMm, x + w, y + REPORT_LAYOUT.headerMm)
 }
 
@@ -276,7 +310,7 @@ function drawMapSiteInfoOverlay(
   const pad = 3
   const titleLines = pdf.splitTextToSize(pdfText(buildingType), boxW - 4)
   const titleLineCount = Array.isArray(titleLines) ? titleLines.length : 1
-  const boxH = 6 + titleLineCount * 3.2 + 8
+  const boxH = 6 + titleLineCount * 3.2 + 5.5
   const boxX = mapX + pad
   const boxY = mapY + mapH - boxH - pad
 
@@ -295,17 +329,23 @@ function drawMapSiteInfoOverlay(
   pdf.setTextColor(100, 116, 139)
   pdf.text(`${lat.toFixed(5)} N, ${lng.toFixed(5)} E`, boxX + 2, boxY + 4.5 + titleLineCount * 3.2)
 
-  const earthLabel = 'Google Earth'
-  pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(6)
+  // Only View in Maps (Google Earth removed as requested)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(6.2)
   pdf.setTextColor(3, 105, 161)
-  const linkY = boxY + 4.5 + titleLineCount * 3.2 + 3.5
-  pdf.textWithLink(earthLabel, boxX + 2, linkY, { url: getGoogleEarthWebUrl(lat, lng) })
+  const linkY = boxY + 4.5 + titleLineCount * 3.2 + 3.2
+  pdf.textWithLink('View in Maps', boxX + 2, linkY, { url: getGoogleMapsUrl(lat, lng) })
 }
 
 export async function exportAssessmentReportPdf(input: ExportAssessmentPdfInput): Promise<void> {
   const { mapDataUrl, result, logoDataUrl } = input
-  const { buildingType, lat, lng } = result.input
+  const { lat, lng } = result.input
+  const displayTitle =
+    result.input.category === 'farm_lot'
+      ? `Farm Lot: ${result.cropSuitability?.cropLabel ?? result.input.cropType ?? 'Agricultural Crop'}`
+      : (result.input.buildingType ?? 'Proposed Building')
+  const muni = result.coverage?.municipality ?? 'Lasam'
+  const confidence = result.coverage?.confidenceLabel ?? 'AI Hazard Assessment'
 
   const logo = logoDataUrl
     ? logoDataUrl
@@ -328,16 +368,16 @@ export async function exportAssessmentReportPdf(input: ExportAssessmentPdfInput)
   pdf.setLineWidth(0.2)
   pdf.rect(x0, bodyY, leftW, bodyH, 'S')
   pdf.addImage(mapDataUrl, 'PNG', x0, bodyY, leftW, bodyH)
-  drawMapSiteInfoOverlay(pdf, x0, bodyY, bodyH, buildingType, lat, lng)
+  drawMapSiteInfoOverlay(pdf, x0, bodyY, bodyH, displayTitle, lat, lng)
 
   // Assessment — right column
   pdf.setDrawColor(226, 232, 240)
   pdf.line(rightX, bodyY, rightX, bodyY + bodyH)
 
   pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(9)
+  pdf.setFontSize(8.5)
   pdf.setTextColor(15, 23, 42)
-  pdf.text('AI Hazard Assessment', rightX + 2.5, bodyY + 5)
+  pdf.text(`${muni}, Cagayan · ${confidence}`, rightX + 2.5, bodyY + 5)
 
   pdf.setFont('helvetica', 'normal')
   pdf.setFontSize(5.8)
@@ -347,8 +387,9 @@ export async function exportAssessmentReportPdf(input: ExportAssessmentPdfInput)
   pdf.setDrawColor(241, 245, 249)
   pdf.line(rightX, bodyY + 10, rightX + rightW, bodyY + 10)
 
-  drawAssessmentPanel(pdf, rightX + 1.5, bodyY + 11, rightW - 3, bodyH - 12, result)
+  drawAssessmentPanel(pdf, rightX + 1.5, bodyY + 11, rightW - 3, bodyH - 13, result)
 
   const stamp = new Date().toISOString().slice(0, 10)
-  pdf.save(`lasam-site-assessment-${stamp}.pdf`)
+  const safeMuni = muni.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+  pdf.save(`${safeMuni}-site-assessment-${stamp}.pdf`)
 }

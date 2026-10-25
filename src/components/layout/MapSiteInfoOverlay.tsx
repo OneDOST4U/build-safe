@@ -22,7 +22,7 @@ export function MapSiteInfoOverlay({
       <p className="mt-0.5 font-mono text-[10px] text-slate-500">
         {lat.toFixed(5)} N, {lng.toFixed(5)} E
       </p>
-      <GoogleEarthLink lat={lat} lng={lng} className="mt-1" />
+      <GoogleEarthLink lat={lat} lng={lng} siteTitle={buildingType} className="mt-1" />
     </div>
   )
 }

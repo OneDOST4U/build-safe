@@ -32,8 +32,15 @@ export const OSM_RASTER_STYLE: StyleSpecification = {
   ],
 }
 
-/** Primary basemap: OpenFreeMap Liberty vector tiles */
-export const MAP_STYLE = OPENFREEMAP_STYLE
+/**
+ * Primary basemap.
+ *
+ * Keep the style definition in the bundle so map initialization never depends
+ * on a third-party style JSON, sprite, or glyph server. The raster tiles are
+ * still remote, but a failed tile can no longer prevent the local planning
+ * overlays from loading.
+ */
+export const MAP_STYLE = OSM_RASTER_STYLE
 
 /** Fallback style */
 export const MAP_STYLE_FALLBACK = OSM_RASTER_STYLE
@@ -42,8 +49,8 @@ export const MAP_STYLE_FALLBACK = OSM_RASTER_STYLE
 export const MAP_STYLE_DEV = OPENFREEMAP_STYLE
 
 export const MAP_STYLE_CANDIDATES: Array<string | StyleSpecification> = [
-  OPENFREEMAP_STYLE,
   OSM_RASTER_STYLE,
+  OPENFREEMAP_STYLE,
   MAPLIBRE_DEMO_STYLE,
 ]
 

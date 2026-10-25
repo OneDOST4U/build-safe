@@ -5,7 +5,13 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import distance from '@turf/distance'
 import { point } from '@turf/turf'
 import { fitMapToLasam, getLasamCenter } from '@/lib/map/lasamView'
-import { createMap, createMapFallback, bindMapResize, prepareBasemap } from '@/lib/map/createMap'
+import {
+  createMap,
+  createMapFallback,
+  bindMapResize,
+  prepareBasemap,
+  waitForMapStyle,
+} from '@/lib/map/createMap'
 import { hideBasemapBuildings, applyBuildingExtrusionPaint, raiseBuildingLayers, BUILDING_COLOR, BUILDING_SELECTED, BUILDING_LIGHT } from '@/lib/map/buildingLayers'
 import { LAYER_ID_MAP, resolveMapLibreLayerVisibility } from '@/lib/map/layerVisibility'
 import { createEarthquakeRings } from '@/lib/map/visuals'
@@ -27,6 +33,13 @@ import {
   LGU_HAZARD_OPACITY,
 } from '@/lib/simulation/lguHazards'
 import { FAULT_LAYER_IDS } from '@/lib/simulation/faultLegend'
+import {
+  HOVERABLE_LEGEND_LAYERS,
+  parseHoveredLegendFeature,
+  type HoveredLegendInfo,
+} from '@/lib/map/hoverLegend'
+import { MapPin } from 'lucide-react'
+import { identifyMunicipality, isPointInsideLasam } from '@/lib/assessment/coverage'
 import { MapLegend } from '@/components/map/MapLegend'
 import { TerrainInfoBar } from '@/components/map/TerrainInfoBar'
 import type {
@@ -40,6 +53,11 @@ import type {
 } from '@/types'
 import type { Feature, FeatureCollection, LineString } from 'geojson'
 import type { SelectedRiver } from '@/components/layout/RiverInfoCard'
+import type { HighlightedFacilityInfo } from '@/components/layout/AssessmentResultsCard'
+import { generateHighwayCorridorRoute, getHighwayDrivingRoute } from '@/lib/map/roadRouting'
+import type { ProposedBuildingType } from '@/lib/assessment/buildingTypes'
+import type { AssessmentTargetCategory } from '@/lib/assessment/farmLot'
+import { createProposedBuildingCollection } from '@/lib/assessment/proposedBuilding'
 
 interface MapViewProps {
   buildings: BuildingCollection
@@ -69,6 +87,14 @@ interface MapViewProps {
   floodOpacity: number
   selectedBuildingId: string | null
   siteCoords: [number, number] | null
+  buildingType?: ProposedBuildingType
+  category?: AssessmentTargetCategory
+  hasAssessmentResult?: boolean
+  onReopenReport?: () => void
+  reportOpen?: boolean
+  hazardPanelOpen?: boolean
+  highlightedFacility?: HighlightedFacilityInfo | null
+  onClearHighlightedFacility?: () => void
   /** When true, confirm fly-to runs for a committed site pin (not while dragging/picking). */
   flyToSite?: boolean
   layerVisibility: Record<string, boolean>
@@ -111,6 +137,14 @@ export function MapView({
   floodOpacity,
   selectedBuildingId,
   siteCoords,
+  buildingType,
+  category,
+  hasAssessmentResult = false,
+  onReopenReport,
+  reportOpen = false,
+  hazardPanelOpen = false,
+  highlightedFacility = null,
+  onClearHighlightedFacility,
   flyToSite = false,
   layerVisibility,
   terrainSettings,
@@ -126,28 +160,54 @@ export function MapView({
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<Map | null>(null)
   const siteMarkerRef = useRef<maplibregl.Marker | null>(null)
+  const facilityMarkerRef = useRef<maplibregl.Marker | null>(null)
+  const facilityPopupRef = useRef<maplibregl.Popup | null>(null)
+  const onClearHighlightedFacilityRef = useRef(onClearHighlightedFacility)
+  onClearHighlightedFacilityRef.current = onClearHighlightedFacility
   const drawPointsRef = useRef<[number, number][]>([])
   const isDrawingRef = useRef(false)
   const measurePointsRef = useRef<[number, number][]>([])
   const activeToolRef = useRef(activeTool)
   const onBuildingSelectRef = useRef(onBuildingSelect)
   const onRiverSelectRef = useRef(onRiverSelect)
+  const onSitePlaceRef = useRef(onSitePlace)
+  const boundaryRef = useRef(boundary)
   const elevationGridRef = useRef(elevationGrid)
   const terrainSettingsRef = useRef(terrainSettings)
   const onMapReadyRef = useRef(onMapReady)
+  const onReopenReportRef = useRef(onReopenReport)
+  onReopenReportRef.current = onReopenReport
 
   useEffect(() => {
+    boundaryRef.current = boundary
     activeToolRef.current = activeTool
     onBuildingSelectRef.current = onBuildingSelect
     onRiverSelectRef.current = onRiverSelect
+    onSitePlaceRef.current = onSitePlace
     elevationGridRef.current = elevationGrid
     terrainSettingsRef.current = terrainSettings
     onMapReadyRef.current = onMapReady
-  }, [activeTool, onBuildingSelect, onRiverSelect, elevationGrid, terrainSettings, onMapReady])
+  }, [boundary, activeTool, onBuildingSelect, onRiverSelect, onSitePlace, elevationGrid, terrainSettings, onMapReady])
 
   const [toolHint, setToolHint] = useState<string | null>(null)
   const [mapError, setMapError] = useState<string | null>(null)
   const [terrainSample, setTerrainSample] = useState<TerrainSample | null>(null)
+  const [hoverSiteCoords, setHoverSiteCoords] = useState<{
+    lng: number
+    lat: number
+    muni: string
+    isInsideLasam?: boolean
+    isWaterBody?: boolean
+    waterBodyName?: string
+    point: { x: number; y: number }
+  } | null>(null)
+  const [hoveredWater, setHoveredWater] = useState<{
+    name: string
+    waterway: string
+    className: string
+    point: { x: number; y: number }
+  } | null>(null)
+  const [hoveredLegend, setHoveredLegend] = useState<HoveredLegendInfo | null>(null)
 
   const applyLayerVisibility = useCallback((map: Map) => {
     for (const layerIds of Object.values(LAYER_ID_MAP)) {
@@ -168,7 +228,7 @@ export function MapView({
     }
 
     const sitePinVisible =
-      (layerVisibility.site ?? true) || activeToolRef.current === 'place-site'
+      (layerVisibility.site ?? true) || activeToolRef.current === 'place-site' || hasAssessmentResult
     const markerEl = siteMarkerRef.current?.getElement()
     if (markerEl) {
       markerEl.style.display = sitePinVisible ? '' : 'none'
@@ -316,10 +376,7 @@ export function MapView({
         }
 
         try {
-          await new Promise<void>((resolve, reject) => {
-            map.once('load', () => resolve())
-            map.once('error', (e) => reject(new Error(e.error?.message ?? 'Map failed to load')))
-          })
+          await waitForMapStyle(map)
         } catch {
           map.remove()
           map = createMapFallback({
@@ -329,10 +386,7 @@ export function MapView({
             pitch: 52,
             bearing: -20,
           })
-          await new Promise<void>((resolve, reject) => {
-            map.once('load', () => resolve())
-            map.once('error', (e) => reject(new Error(e.error?.message ?? 'Map failed to load')))
-          })
+          await waitForMapStyle(map)
         }
 
         if (cancelled) {
@@ -742,7 +796,7 @@ export function MapView({
         }
 
         const showFaultPopup = (e: MapLayerMouseEvent) => {
-          if (activeToolRef.current !== 'select') return
+          if (activeToolRef.current !== 'select' && activeToolRef.current !== 'pan') return
           const feature = e.features?.[0]
           if (!feature?.properties) return
           const p = feature.properties
@@ -767,15 +821,19 @@ export function MapView({
         for (const layerId of FAULT_LAYER_IDS) {
           map.on('click', layerId, showFaultPopup)
           map.on('mouseenter', layerId, () => {
-            map.getCanvas().style.cursor = 'pointer'
+            if (activeToolRef.current === 'select' || activeToolRef.current === 'pan') {
+              map.getCanvas().style.cursor = 'pointer'
+            }
           })
           map.on('mouseleave', layerId, () => {
-            map.getCanvas().style.cursor = ''
+            if (activeToolRef.current === 'select' || activeToolRef.current === 'pan') {
+              map.getCanvas().style.cursor = ''
+            }
           })
         }
 
         const showAgriPopup = (titlePrefix: string) => (e: MapLayerMouseEvent) => {
-          if (activeToolRef.current !== 'select') return
+          if (activeToolRef.current !== 'select' && activeToolRef.current !== 'pan') return
           const feature = e.features?.[0]
           if (!feature?.properties) return
           const p = feature.properties
@@ -795,20 +853,59 @@ export function MapView({
             .addTo(map)
         }
 
+        const showLandUsePopup = (e: MapLayerMouseEvent) => {
+          if (activeToolRef.current !== 'select' && activeToolRef.current !== 'pan') return
+          const feature = e.features?.[0]
+          if (!feature?.properties) return
+          const p = feature.properties
+          const label = String(p.land_use_label ?? 'Land Use')
+          const remarks = p.remarks ? String(p.remarks) : ''
+          new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
+            .setLngLat(e.lngLat)
+            .setHTML(
+              `<div style="font:12px/1.4 system-ui,sans-serif;color:#0f172a">
+                <strong style="display:block;margin-bottom:4px;color:#166534">Land Use (CLUP): ${label}</strong>
+                ${remarks ? `<div style="color:#64748b;font-size:11px;margin-bottom:4px">${remarks}</div>` : ''}
+                <div style="font-size:10px;color:#94a3b8">Source: LGU Lasam CLUP (2020)</div>
+              </div>`,
+            )
+            .addTo(map)
+        }
+
+        map.on('click', 'land-use-fill', showLandUsePopup)
+        map.on('mouseenter', 'land-use-fill', () => {
+          if (activeToolRef.current === 'select' || activeToolRef.current === 'pan') {
+            map.getCanvas().style.cursor = 'pointer'
+          }
+        })
+        map.on('mouseleave', 'land-use-fill', () => {
+          if (activeToolRef.current === 'select' || activeToolRef.current === 'pan') {
+            map.getCanvas().style.cursor = ''
+          }
+        })
+
         map.on('click', 'npaaad-fill', showAgriPopup('NPAAAD Protection'))
         map.on('mouseenter', 'npaaad-fill', () => {
-          map.getCanvas().style.cursor = 'pointer'
+          if (activeToolRef.current === 'select' || activeToolRef.current === 'pan') {
+            map.getCanvas().style.cursor = 'pointer'
+          }
         })
         map.on('mouseleave', 'npaaad-fill', () => {
-          map.getCanvas().style.cursor = ''
+          if (activeToolRef.current === 'select' || activeToolRef.current === 'pan') {
+            map.getCanvas().style.cursor = ''
+          }
         })
 
         map.on('click', 'safdz-fill', showAgriPopup('SAFDZ Zone'))
         map.on('mouseenter', 'safdz-fill', () => {
-          map.getCanvas().style.cursor = 'pointer'
+          if (activeToolRef.current === 'select' || activeToolRef.current === 'pan') {
+            map.getCanvas().style.cursor = 'pointer'
+          }
         })
         map.on('mouseleave', 'safdz-fill', () => {
-          map.getCanvas().style.cursor = ''
+          if (activeToolRef.current === 'select' || activeToolRef.current === 'pan') {
+            map.getCanvas().style.cursor = ''
+          }
         })
 
       map.addSource('epicenter', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
@@ -840,6 +937,78 @@ export function MapView({
         data: { type: 'FeatureCollection', features: [] },
       })
 
+      map.addSource('facility-route-line', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      })
+      map.addLayer({
+        id: 'facility-route-glow',
+        type: 'line',
+        source: 'facility-route-line',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+        },
+        paint: {
+          'line-color': '#059669',
+          'line-width': 8,
+          'line-opacity': 0.5,
+          'line-blur': 2.5,
+        },
+      })
+      map.addLayer({
+        id: 'facility-route-main',
+        type: 'line',
+        source: 'facility-route-line',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+        },
+        paint: {
+          'line-color': '#10b981',
+          'line-width': 3.5,
+          'line-dasharray': [2, 1.5],
+        },
+      })
+
+      map.addSource('proposed-building', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      })
+      map.addLayer({
+        id: 'proposed-building-3d',
+        type: 'fill-extrusion',
+        source: 'proposed-building',
+        paint: {
+          'fill-extrusion-color': '#FACC15',
+          'fill-extrusion-height': ['get', 'height'],
+          'fill-extrusion-base': 0,
+          'fill-extrusion-opacity': 0.98,
+          'fill-extrusion-vertical-gradient': true,
+        },
+      })
+      map.addLayer({
+        id: 'proposed-building-outline',
+        type: 'line',
+        source: 'proposed-building',
+        paint: {
+          'line-color': '#0f172a',
+          'line-width': 2,
+          'line-opacity': 0.75,
+        },
+      })
+
+      map.on('click', 'proposed-building-3d', (e) => {
+        e.originalEvent?.stopPropagation?.()
+        onReopenReportRef.current?.()
+      })
+      map.on('mouseenter', 'proposed-building-3d', () => {
+        map.getCanvas().style.cursor = 'pointer'
+      })
+      map.on('mouseleave', 'proposed-building-3d', () => {
+        map.getCanvas().style.cursor = ''
+      })
+
       map.addSource('measure', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
       map.addLayer({ id: 'measure-line', type: 'line', source: 'measure', paint: { 'line-color': '#7c3aed', 'line-width': 2, 'line-dasharray': [2, 2] } })
       map.addLayer({ id: 'measure-points', type: 'circle', source: 'measure', filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-radius': 5, 'circle-color': '#7c3aed', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5 } })
@@ -848,34 +1017,165 @@ export function MapView({
       map.addLayer({ id: 'draw-fault-line', type: 'line', source: 'draw-fault', paint: { 'line-color': '#b91c1c', 'line-width': 3, 'line-dasharray': [2, 1] } })
 
       map.on('click', 'buildings-3d', (e: MapLayerMouseEvent) => {
-        if (activeToolRef.current !== 'select') return
+        if (activeToolRef.current !== 'select' && activeToolRef.current !== 'pan') return
         const feature = e.features?.[0]
         if (feature?.properties?.id) {
           onBuildingSelectRef.current(feature.properties.id as string)
         }
       })
 
-      const selectRiver = (e: MapLayerMouseEvent) => {
-        if (activeToolRef.current !== 'select') return
+      const WATER_INTERACTIVE_LAYERS = [
+        'rivers-main',
+        'rivers-tributaries',
+        'riverbanks-fill',
+        'riverbanks-line',
+        'drainage',
+      ]
+
+      const onWaterClick = (e: MapLayerMouseEvent) => {
         const feature = e.features?.[0]
         if (!feature?.properties) return
-        const coords = (feature.geometry as LineString).coordinates?.[0]
+        const p = feature.properties
+        const rawName = p.name ?? p.waterway ?? 'Waterway'
+        const isRiverGeneric = String(rawName).toLowerCase() === 'river'
+        const name = isRiverGeneric ? 'Active River Waterway' : String(rawName)
+        const waterway = String(
+          p.waterway ?? (feature.layer.id.includes('riverbank') ? 'riverbank' : 'stream'),
+        )
+        const className = String(
+          p.class ?? (feature.layer.id.includes('riverbank') ? 'river bank / bed' : 'water body'),
+        )
+
         let bankElevationM: number | null = null
         const grid = elevationGridRef.current
-        if (grid && coords) {
-          bankElevationM = buildTerrainSample(grid, coords[0], coords[1]).elevation
+        if (grid && e.lngLat) {
+          bankElevationM = buildTerrainSample(grid, e.lngLat.lng, e.lngLat.lat).elevation
         }
+
+        // Show authoritative MapLibre popup right at the clicked coordinate
+        new maplibregl.Popup({
+          closeButton: true,
+          maxWidth: '320px',
+          className: 'water-body-warning-popup',
+        })
+          .setLngLat(e.lngLat)
+          .setHTML(
+            `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.45;padding:2px 0;">
+              <div style="background:#dc2626;color:#ffffff;padding:6px 10px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                <span>🚫 WATER BODY — CANNOT BUILD HERE</span>
+              </div>
+              <div style="font-weight:700;font-size:13.5px;color:#0f172a;margin-bottom:4px;">
+                ${name}
+              </div>
+              <div style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:6px 8px;border-radius:6px;font-size:11px;margin-bottom:6px;line-height:1.4;">
+                <strong>Construction Strictly Prohibited:</strong> Under <strong>Presidential Decree No. 1067</strong> (Water Code of the Philippines, Art. 51) and <strong>PD 1096</strong> (National Building Code), building structures within riverbeds, active waterways, and riparian easements is unlawful.
+              </div>
+              <div style="font-size:10.5px;color:#334155;background:#f8fafc;padding:5px 8px;border-radius:6px;border:1px solid #e2e8f0;margin-bottom:6px;">
+                <strong style="color:#0f172a">Mandatory Legal Easements:</strong><br/>
+                • Urban areas: <strong>3 meters</strong><br/>
+                • Agricultural areas: <strong>20 meters</strong><br/>
+                • Forest / Protected: <strong>40 meters</strong>
+              </div>
+              <div style="font-size:10px;color:#64748b;display:flex;justify-content:space-between;border-top:1px solid #e2e8f0;padding-top:4px;">
+                <span>Type: <strong style="color:#334155">${waterway}</strong> (${className})</span>
+                ${bankElevationM != null ? `<span>Elev: <strong style="color:#334155">${bankElevationM.toFixed(1)}m</strong></span>` : ''}
+              </div>
+            </div>`,
+          )
+          .addTo(map)
+
         onRiverSelectRef.current({
-          id: String(feature.properties.id ?? ''),
-          name: String(feature.properties.name ?? feature.properties.waterway ?? 'Waterway'),
-          waterway: String(feature.properties.waterway ?? 'stream'),
-          className: String(feature.properties.class ?? 'tributary'),
-          lengthKm: feature.properties.length_km as number | undefined,
+          id: String(p.id ?? p.parent_id ?? ''),
+          name,
+          waterway,
+          className,
+          lengthKm: p.length_km as number | undefined,
           bankElevationM,
+          isWaterBody: true,
+          advisory:
+            'Construction strictly prohibited under Presidential Decree No. 1067 (Water Code).',
+        })
+
+        // No site placement on water body - Water Code PD 1067 forbids construction
+      }
+
+      for (const layerId of WATER_INTERACTIVE_LAYERS) {
+        map.on('click', layerId, onWaterClick)
+        map.on('mouseenter', layerId, (e: MapLayerMouseEvent) => {
+          const feat = e.features?.[0]
+          const p = feat?.properties ?? {}
+          const rawName = p.name ?? p.waterway ?? 'Waterway'
+          const name = String(rawName).toLowerCase() === 'river' ? 'River Segment' : String(rawName)
+          const waterway = String(
+            p.waterway ?? (layerId.includes('riverbank') ? 'riverbank' : 'stream'),
+          )
+          const className = String(p.class ?? 'water body')
+
+          map.getCanvas().style.cursor =
+            activeToolRef.current === 'place-site' ? 'not-allowed' : 'pointer'
+          setHoveredWater({
+            name,
+            waterway,
+            className,
+            point: { x: e.point.x, y: e.point.y },
+          })
+        })
+        map.on('mousemove', layerId, (e: MapLayerMouseEvent) => {
+          const feat = e.features?.[0]
+          const p = feat?.properties ?? {}
+          const rawName = p.name ?? p.waterway ?? 'Waterway'
+          const name = String(rawName).toLowerCase() === 'river' ? 'River Segment' : String(rawName)
+          const waterway = String(
+            p.waterway ?? (layerId.includes('riverbank') ? 'riverbank' : 'stream'),
+          )
+          const className = String(p.class ?? 'water body')
+
+          map.getCanvas().style.cursor =
+            activeToolRef.current === 'place-site' ? 'not-allowed' : 'pointer'
+          setHoveredWater({
+            name,
+            waterway,
+            className,
+            point: { x: e.point.x, y: e.point.y },
+          })
+        })
+        map.on('mouseleave', layerId, (e: MapLayerMouseEvent) => {
+          setHoveredWater(null)
+          if (activeToolRef.current === 'place-site') {
+            const inside = e?.lngLat
+              ? isPointInsideLasam(e.lngLat.lng, e.lngLat.lat, boundaryRef.current)
+              : true
+            map.getCanvas().style.cursor = inside ? 'crosshair' : 'not-allowed'
+          } else {
+            map.getCanvas().style.cursor = ''
+          }
         })
       }
-      map.on('click', 'rivers-main', selectRiver)
-      map.on('click', 'rivers-tributaries', selectRiver)
+
+      if (map.getLayer('water')) {
+        map.on('click', 'water', onWaterClick)
+        map.on('mouseenter', 'water', (e: MapLayerMouseEvent) => {
+          map.getCanvas().style.cursor =
+            activeToolRef.current === 'place-site' ? 'not-allowed' : 'pointer'
+          setHoveredWater({
+            name: 'Natural Water Body',
+            waterway: 'water',
+            className: 'water body',
+            point: { x: e.point.x, y: e.point.y },
+          })
+        })
+        map.on('mouseleave', 'water', (e: MapLayerMouseEvent) => {
+          setHoveredWater(null)
+          if (activeToolRef.current === 'place-site') {
+            const inside = e?.lngLat
+              ? isPointInsideLasam(e.lngLat.lng, e.lngLat.lat, boundaryRef.current)
+              : true
+            map.getCanvas().style.cursor = inside ? 'crosshair' : 'not-allowed'
+          } else {
+            map.getCanvas().style.cursor = ''
+          }
+        })
+      }
 
         if (cancelled) {
           map.remove()
@@ -1087,6 +1387,49 @@ export function MapView({
     }
   }, [epicenter, earthquakeRadius])
 
+  // Render proposed 3D building ("box house") on the live map whenever siteCoords is set
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    const syncProposedBuilding = () => {
+      const source = map.getSource('proposed-building') as maplibregl.GeoJSONSource | undefined
+      if (!source) return
+
+      if (!siteCoords || activeTool === 'place-site') {
+        source.setData({ type: 'FeatureCollection', features: [] })
+        return
+      }
+
+      const activeBuildingType = (category === 'farm_lot'
+        ? 'Agricultural structure (barn, poultry shed)'
+        : (buildingType ?? 'Single-family house')) as ProposedBuildingType
+
+      try {
+        const buildingData = createProposedBuildingCollection(
+          siteCoords[0],
+          siteCoords[1],
+          activeBuildingType,
+          buildings,
+        )
+        source.setData(buildingData)
+        raiseBuildingLayers(map)
+      } catch (err) {
+        console.error('Failed to create proposed building collection:', err)
+      }
+    }
+
+    if (map.isStyleLoaded()) {
+      syncProposedBuilding()
+    } else {
+      map.once('load', syncProposedBuilding)
+    }
+
+    return () => {
+      map.off('load', syncProposedBuilding)
+    }
+  }, [siteCoords, buildingType, category, buildings, activeTool])
+
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
@@ -1113,25 +1456,65 @@ export function MapView({
         ],
       })
 
+      const markerHtml = hasAssessmentResult
+        ? `
+        <div class="live-site-assessment-badge" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;user-select:none;transition:transform 0.15s ease;">
+          <div style="display:flex;align-items:center;gap:4.5px;background:#065f46;color:#ffffff;padding:3px 9px;border-radius:9999px;font-size:10.5px;font-weight:700;letter-spacing:0.3px;border:1.5px solid #ffffff;box-shadow:0 3px 10px rgba(0,0,0,0.35);white-space:nowrap;">
+            <span style="font-size:10px;">📍</span>
+            <span>LIVE SITE ASSESSMENT</span>
+            <span style="font-size:8.5px;background:rgba(255,255,255,0.25);padding:1px 5px;border-radius:4px;font-weight:800;letter-spacing:0.2px;">OPEN</span>
+          </div>
+          <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid #065f46;margin-top:-1px;"></div>
+          <div style="width:6px;height:6px;border-radius:50%;background:#34d399;margin-top:2px;box-shadow:0 0 6px #10b981;"></div>
+        </div>
+      `
+        : `
+        <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+          <div style="position:absolute;bottom:2px;width:30px;height:30px;border-radius:50%;background:rgba(2,132,199,0.35);box-shadow:0 0 0 4px rgba(2,132,199,0.25);animation:ping 1.6s cubic-bezier(0,0,0.2,1) infinite;"></div>
+          <div style="position:absolute;bottom:10px;width:10px;height:10px;border-radius:50%;background:#0284c7;border:2px solid #ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>
+          <img src="/markers/site-pin.svg" alt="" width="36" height="48" draggable="false" style="display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));position:relative;z-index:2;" />
+        </div>
+      `
+
+      const markerOffset: [number, number] = hasAssessmentResult ? [0, -28] : [0, 2]
+
       if (!siteMarkerRef.current) {
         const el = document.createElement('div')
         el.className = 'site-pin-marker'
         el.style.cssText =
-          'width:36px;height:48px;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;pointer-events:none;z-index:6;'
-        el.innerHTML =
-          '<img src="/markers/site-pin.svg" alt="" width="36" height="48" draggable="false" style="display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));" />'
-        siteMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [0, 2] })
+          `width:auto;height:auto;display:flex;align-items:flex-end;justify-content:center;z-index:30;pointer-events:${hasAssessmentResult ? 'auto' : 'none'};cursor:${hasAssessmentResult ? 'pointer' : 'default'};`
+        el.title = hasAssessmentResult ? 'Click to reopen Site Assessment Report' : ''
+        el.innerHTML = markerHtml
+        if (hasAssessmentResult) {
+          el.onclick = (e) => {
+            e.stopPropagation()
+            onReopenReportRef.current?.()
+          }
+        }
+        siteMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'bottom', offset: markerOffset })
           .setLngLat(siteCoords)
           .addTo(map)
       } else {
+        const el = siteMarkerRef.current.getElement()
+        el.style.pointerEvents = hasAssessmentResult ? 'auto' : 'none'
+        el.style.cursor = hasAssessmentResult ? 'pointer' : 'default'
+        el.title = hasAssessmentResult ? 'Click to reopen Site Assessment Report' : ''
+        el.innerHTML = markerHtml
+        el.onclick = hasAssessmentResult
+          ? (e) => {
+              e.stopPropagation()
+              onReopenReportRef.current?.()
+            }
+          : null
+        siteMarkerRef.current.setOffset(markerOffset)
         siteMarkerRef.current.setLngLat(siteCoords)
       }
 
       const sitePinVisible =
-        (layerVisibility.site ?? true) || activeTool === 'place-site'
+        (layerVisibility.site ?? true) || activeTool === 'place-site' || hasAssessmentResult
       siteMarkerRef.current.getElement().style.display = sitePinVisible ? '' : 'none'
 
-      if (flyToSite) {
+      if (flyToSite && !highlightedFacility) {
         map.flyTo({
           center: siteCoords,
           zoom: Math.max(map.getZoom(), 16),
@@ -1150,7 +1533,211 @@ export function MapView({
     return () => {
       map.off('load', syncSitePin)
     }
-  }, [siteCoords, flyToSite, is3D, layerVisibility.site, activeTool])
+  }, [siteCoords, flyToSite, is3D, layerVisibility.site, activeTool, hasAssessmentResult, onReopenReport])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    const syncFacilityRoute = () => {
+      const lineSource = map.getSource('facility-route-line') as maplibregl.GeoJSONSource | undefined
+
+      if (!highlightedFacility || !siteCoords) {
+        lineSource?.setData({
+          type: 'FeatureCollection',
+          features: [],
+        })
+        facilityMarkerRef.current?.remove()
+        facilityMarkerRef.current = null
+        facilityPopupRef.current?.remove()
+        facilityPopupRef.current = null
+        return
+      }
+
+      const [siteLng, siteLat] = siteCoords
+      const [facLng, facLat] = highlightedFacility.coords
+
+      // 1. Draw live highway route immediately (0ms local road geometry, never a straight line!)
+      const instantRoute = generateHighwayCorridorRoute([siteLng, siteLat], [facLng, facLat])
+      lineSource?.setData({
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            properties: { name: highlightedFacility.name, road: instantRoute.roadName },
+            geometry: {
+              type: 'LineString',
+              coordinates: instantRoute.coordinates,
+            },
+          },
+        ],
+      })
+
+      // 2. Add / update destination marker
+      facilityMarkerRef.current?.remove()
+      const el = document.createElement('div')
+      el.className = 'facility-route-target-pin'
+      el.style.cssText =
+        'cursor:pointer;display:flex;flex-direction:column;align-items:center;z-index:35;pointer-events:auto;'
+      const safeFacName = highlightedFacility.name.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      el.innerHTML = `
+        <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+          <div style="position:absolute;bottom:0px;width:34px;height:34px;border-radius:50%;background:rgba(16,185,129,0.35);box-shadow:0 0 0 4px rgba(16,185,129,0.25);animation:ping 1.6s cubic-bezier(0,0,0.2,1) infinite;"></div>
+          <div style="position:absolute;bottom:8px;width:14px;height:14px;border-radius:50%;background:#059669;border:2.5px solid #ffffff;box-shadow:0 2px 5px rgba(0,0,0,0.4);"></div>
+          <div style="background:#065f46;color:#ffffff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9999px;border:1.5px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.35);margin-bottom:18px;white-space:nowrap;display:flex;align-items:center;gap:4px;">
+            <span>📍</span>
+            <span>${safeFacName}</span>
+          </div>
+        </div>
+      `
+      facilityMarkerRef.current = new maplibregl.Marker({
+        element: el,
+        anchor: 'bottom',
+        offset: [0, 2],
+      })
+        .setLngLat([facLng, facLat])
+        .addTo(map)
+
+      // 3. Smoothly animate live map camera to show the full road route and destination
+      const leftPad = hazardPanelOpen ? 360 : 80
+      const routePadding = { top: 110, bottom: 90, left: leftPad, right: 80 }
+
+      const bounds = new maplibregl.LngLatBounds()
+      for (const pt of instantRoute.coordinates) {
+        bounds.extend(pt)
+      }
+
+      map.fitBounds(bounds, {
+        padding: routePadding,
+        maxZoom: 16,
+        duration: 900,
+      })
+
+      // 4. Show live route info popup card
+      facilityPopupRef.current?.remove()
+      const categoryLabel = (highlightedFacility.category ?? 'Destination Facility')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+      const distLabel =
+        highlightedFacility.distanceM != null
+          ? highlightedFacility.distanceM >= 1000
+            ? `${(highlightedFacility.distanceM / 1000).toFixed(2)} km`
+            : `${Math.round(highlightedFacility.distanceM)} m`
+          : ''
+      const travelTimeText = (highlightedFacility.valueText ?? '')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+
+      const popup = new maplibregl.Popup({
+        closeButton: true,
+        closeOnClick: false,
+        offset: [0, -32],
+        maxWidth: '300px',
+        className: 'facility-live-route-popup',
+      })
+        .setLngLat([facLng, facLat])
+        .setHTML(
+          `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:4px 2px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:10px;font-weight:700;color:#047857;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;">
+              <span>📍 ${categoryLabel}</span>
+              <span style="background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:1px 6px;border-radius:4px;font-size:9.5px;font-weight:600;">LIVE ROUTE</span>
+            </div>
+            <div style="font-weight:700;font-size:13px;color:#0f172a;margin-bottom:6px;line-height:1.3;">
+              ${safeFacName}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:6px 8px;font-size:11px;color:#166534;">
+              ${distLabel ? `<div><strong>Straight-line Distance:</strong> ${distLabel}</div>` : ''}
+              ${travelTimeText ? `<div><strong>Travel Estimate:</strong> ${travelTimeText}</div>` : ''}
+            </div>
+            <div style="margin-top:6px;font-size:9.5px;color:#64748b;text-align:right;">
+              Close (✕) to clear route
+            </div>
+          </div>`,
+        )
+        .addTo(map)
+
+      popup.on('close', () => {
+        onClearHighlightedFacilityRef.current?.()
+      })
+
+      facilityPopupRef.current = popup
+
+      // 5. Fetch high-resolution turn-by-turn road network geometry
+      void getHighwayDrivingRoute([siteLng, siteLat], [facLng, facLat]).then((roadRoute) => {
+        if (!cancelled && lineSource && roadRoute.coordinates.length > 2) {
+          lineSource.setData({
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                properties: { name: highlightedFacility.name, road: roadRoute.roadName },
+                geometry: {
+                  type: 'LineString',
+                  coordinates: roadRoute.coordinates,
+                },
+              },
+            ],
+          })
+
+          const roadBounds = new maplibregl.LngLatBounds()
+          for (const pt of roadRoute.coordinates) {
+            roadBounds.extend(pt)
+          }
+          map.fitBounds(roadBounds, {
+            padding: routePadding,
+            maxZoom: 16,
+            duration: 650,
+          })
+        }
+      })
+    }
+
+    let cancelled = false
+
+    if (map.isStyleLoaded()) {
+      syncFacilityRoute()
+    } else {
+      map.once('load', syncFacilityRoute)
+    }
+
+    return () => {
+      cancelled = true
+      map.off('load', syncFacilityRoute)
+    }
+  }, [highlightedFacility, siteCoords, hazardPanelOpen])
+
+  // When the report modal is minimized (reportOpen transitions from true to false),
+  // resize the map canvas and frame the active route or site pin
+  const prevReportOpenRef = useRef(reportOpen)
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    const wasOpen = prevReportOpenRef.current
+    prevReportOpenRef.current = reportOpen
+
+    if (wasOpen && !reportOpen) {
+      const timer = setTimeout(() => {
+        map.resize()
+        if (highlightedFacility && siteCoords) {
+          const [siteLng, siteLat] = siteCoords
+          const [facLng, facLat] = highlightedFacility.coords
+          const instantRoute = generateHighwayCorridorRoute([siteLng, siteLat], [facLng, facLat])
+          const bounds = new maplibregl.LngLatBounds()
+          for (const pt of instantRoute.coordinates) {
+            bounds.extend(pt)
+          }
+          const leftPad = hazardPanelOpen ? 360 : 80
+          map.fitBounds(bounds, {
+            padding: { top: 110, bottom: 90, left: leftPad, right: 80 },
+            maxZoom: 16,
+            duration: 900,
+          })
+        }
+      }, 60)
+      return () => clearTimeout(timer)
+    }
+  }, [reportOpen, highlightedFacility, siteCoords, hazardPanelOpen])
 
   useEffect(() => {
     const map = mapRef.current
@@ -1180,7 +1767,56 @@ export function MapView({
 
     const handleClick = (e: MapMouseEvent) => {
       if (activeTool === 'place-site') {
-        onSitePlace([e.lngLat.lng, e.lngLat.lat])
+        const lng = e.lngLat.lng
+        const lat = e.lngLat.lat
+        const insideBoundary = isPointInsideLasam(lng, lat, boundaryRef.current ?? boundary)
+
+        if (!insideBoundary) {
+          const muniName = identifyMunicipality(lng, lat, boundaryRef.current ?? boundary)
+          new maplibregl.Popup({
+            closeButton: true,
+            maxWidth: '300px',
+            className: 'boundary-warning-popup',
+          })
+            .setLngLat(e.lngLat)
+            .setHTML(
+              `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
+                <div style="background:#ea580c;color:#ffffff;padding:5px 8px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                  <span>🚫 Outside Lasam Boundary</span>
+                </div>
+                <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
+                  Cannot Place Site Here (${muniName})
+                </div>
+                <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
+                  The proposed building site must be located strictly within the official municipal boundary of Lasam, Cagayan. Clicking outside Lasam is disabled.
+                </div>
+              </div>`,
+            )
+            .addTo(map)
+          return
+        }
+
+        const existingWaterLayers = [
+          'rivers-main',
+          'rivers-tributaries',
+          'riverbanks-fill',
+          'riverbanks-line',
+          'drainage',
+          'water',
+          'waterway',
+        ].filter((id) => map.getLayer(id))
+
+        if (existingWaterLayers.length > 0) {
+          const waterFeats = map.queryRenderedFeatures(e.point, {
+            layers: existingWaterLayers,
+          })
+          if (waterFeats.length > 0) {
+            // Click is on water body; onWaterClick will display the water body warning popup
+            return
+          }
+        }
+
+        onSitePlace([lng, lat])
         return
       }
 
@@ -1267,11 +1903,104 @@ export function MapView({
       }
     }
 
+    if (activeTool === 'place-site') {
+      map.getCanvas().style.cursor = 'crosshair'
+    } else {
+      map.getCanvas().style.cursor = ''
+      setHoverSiteCoords(null)
+    }
+
+    const handleMouseMove = (e: MapMouseEvent) => {
+      // 1. Dynamic cursor legend for active open hazard / land use map layers
+      const activeHazardLayers = HOVERABLE_LEGEND_LAYERS.filter((id) => {
+        if (!map.getLayer(id)) return false
+        return map.getLayoutProperty(id, 'visibility') !== 'none'
+      })
+
+      if (activeHazardLayers.length > 0) {
+        const feats = map.queryRenderedFeatures(e.point, {
+          layers: activeHazardLayers as unknown as string[],
+        })
+        if (feats.length > 0) {
+          const parsed = parseHoveredLegendFeature(feats[0], { x: e.point.x, y: e.point.y })
+          setHoveredLegend(parsed)
+        } else {
+          setHoveredLegend(null)
+        }
+      } else {
+        setHoveredLegend(null)
+      }
+
+      // 2. Site placement cursor
+      if (activeTool === 'place-site') {
+        const lng = e.lngLat.lng
+        const lat = e.lngLat.lat
+        const insideLasam = isPointInsideLasam(lng, lat, boundaryRef.current ?? boundary)
+        const muni = insideLasam ? 'Lasam' : identifyMunicipality(lng, lat, boundaryRef.current ?? boundary)
+
+        const existingWaterLayers = [
+          'rivers-main',
+          'rivers-tributaries',
+          'riverbanks-fill',
+          'riverbanks-line',
+          'drainage',
+          'water',
+          'waterway',
+        ].filter((id) => map.getLayer(id))
+
+        let isWater = false
+        let waterName: string | undefined
+        if (existingWaterLayers.length > 0) {
+          const waterFeats = map.queryRenderedFeatures(e.point, {
+            layers: existingWaterLayers,
+          })
+          if (waterFeats.length > 0) {
+            isWater = true
+            const featP = waterFeats[0].properties
+            const rName = featP?.name || featP?.waterway || 'Waterway'
+            waterName =
+              String(rName).toLowerCase() === 'river'
+                ? 'Active River Waterway'
+                : String(rName)
+          }
+        }
+
+        setHoverSiteCoords({
+          lng,
+          lat,
+          muni,
+          isInsideLasam: insideLasam,
+          isWaterBody: isWater,
+          waterBodyName: waterName,
+          point: { x: e.point.x, y: e.point.y },
+        })
+
+        if (!insideLasam || isWater) {
+          map.getCanvas().style.cursor = 'not-allowed'
+        } else {
+          map.getCanvas().style.cursor = 'crosshair'
+        }
+      }
+    }
+
+    const handleCanvasMouseLeave = () => {
+      setHoverSiteCoords(null)
+      setHoveredLegend(null)
+    }
+
+    const canvas = map.getCanvas()
+    canvas.addEventListener('mouseleave', handleCanvasMouseLeave)
+
     map.on('click', handleClick)
     map.on('dblclick', handleDblClick)
+    map.on('mousemove', handleMouseMove)
     return () => {
+      canvas.removeEventListener('mouseleave', handleCanvasMouseLeave)
       map.off('click', handleClick)
       map.off('dblclick', handleDblClick)
+      map.off('mousemove', handleMouseMove)
+      map.getCanvas().style.cursor = ''
+      setHoveredLegend(null)
     }
   }, [activeTool, is3D, boundary, onEpicenterPlace, onSitePlace, onFaultLineDrawn, onMeasureUpdate])
 
@@ -1303,6 +2032,160 @@ export function MapView({
       )}
       <MapLegend hazardMode={hazardMode} layerVisibility={layerVisibility} />
       <TerrainInfoBar sample={terrainSample} />
+      {/* Active Layer Legend Tooltip following cursor */}
+      {hoveredLegend && activeTool !== 'place-site' && !hoveredWater && (
+        <div
+          className="pointer-events-none absolute z-30 select-none will-change-[left,top]"
+          style={{
+            left: `${Math.min(
+              hoveredLegend.x + 16,
+              (containerRef.current?.clientWidth ?? 600) - 260,
+            )}px`,
+            top: `${Math.max(14, hoveredLegend.y - 38)}px`,
+          }}
+        >
+          <div className="flex items-center gap-2 rounded-full border border-slate-700/80 bg-slate-950/95 px-3 py-1.5 text-xs font-bold text-white shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95 duration-75">
+            <span
+              className="h-2.5 w-2.5 flex-shrink-0 rounded-full ring-2 ring-white/30"
+              style={{ backgroundColor: hoveredLegend.color }}
+            />
+            <span className="text-sm">{hoveredLegend.icon}</span>
+            <span className="font-bold tracking-tight text-slate-100">{hoveredLegend.label}</span>
+            <span className="rounded bg-slate-800/90 px-1.5 py-0.5 text-[9px] font-semibold text-slate-300 uppercase tracking-wider">
+              {hoveredLegend.layerTitle}
+            </span>
+          </div>
+        </div>
+      )}
+      {hoveredWater && activeTool !== 'place-site' && (
+        <div
+          className="pointer-events-none absolute z-30 flex items-center gap-1.5 rounded-full border border-red-300 bg-red-950/95 px-3 py-1.5 text-xs font-semibold text-white shadow-xl backdrop-blur-sm animate-in fade-in zoom-in-95 duration-100"
+          style={{
+            left: `${Math.min(hoveredWater.point.x + 12, (containerRef.current?.clientWidth ?? 400) - 240)}px`,
+            top: `${Math.max(12, hoveredWater.point.y - 38)}px`,
+          }}
+        >
+          <span className="text-sm">🌊</span>
+          <span>{hoveredWater.name}</span>
+          <span className="rounded bg-red-800 px-1.5 py-0.5 text-[9px] font-bold text-red-200">
+            🚫 No-Build Zone (PD 1067)
+          </span>
+        </div>
+      )}
+      {activeTool === 'place-site' && hoverSiteCoords && !siteCoords && (
+        <div
+          className="pointer-events-none absolute z-30 select-none will-change-[left,top]"
+          style={{
+            left: `${hoverSiteCoords.point.x}px`,
+            top: `${hoverSiteCoords.point.y}px`,
+            transform: 'translate(-50%, -100%)',
+          }}
+        >
+          <div className="relative flex flex-col items-center">
+            {/* Tooltip badge floating directly above the pin */}
+            <div
+              className={`mb-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold shadow-xl backdrop-blur-md transition-colors ${
+                !hoverSiteCoords.isInsideLasam
+                  ? 'border border-amber-300 bg-amber-950/95 text-amber-200'
+                  : hoverSiteCoords.isWaterBody
+                  ? 'border border-red-300 bg-red-950/95 text-red-200'
+                  : 'border border-sky-300/80 bg-slate-900/95 text-white'
+              }`}
+            >
+              {!hoverSiteCoords.isInsideLasam ? (
+                <span className="flex items-center gap-1.5">
+                  <span>🚫</span>
+                  <span>Outside Lasam ({hoverSiteCoords.muni})</span>
+                </span>
+              ) : hoverSiteCoords.isWaterBody ? (
+                <span className="flex items-center gap-1.5">
+                  <span>🌊</span>
+                  <span>Water Body — Prohibited (PD 1067)</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span>Left-Click to Land Pin</span>
+                  {hoveredLegend && (
+                    <span className="ml-1 inline-flex items-center gap-1 rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      <span>{hoveredLegend.icon}</span>
+                      <span>{hoveredLegend.label}</span>
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
+
+            {/* Pin graphic pointing directly at mouse cursor */}
+            <div className="relative flex flex-col items-center">
+              <img
+                src="/markers/site-pin.svg"
+                alt=""
+                width="34"
+                height="46"
+                draggable={false}
+                className={`drop-shadow-xl transition-all ${
+                  !hoverSiteCoords.isInsideLasam || hoverSiteCoords.isWaterBody
+                    ? 'grayscale contrast-125 opacity-70'
+                    : 'animate-bounce'
+                }`}
+                style={{ animationDuration: '2.4s' }}
+              />
+
+              {/* Precise target radar pulse at cursor point */}
+              <div
+                className={`absolute -bottom-1 h-5 w-5 rounded-full animate-ping ${
+                  !hoverSiteCoords.isInsideLasam
+                    ? 'bg-amber-400/50'
+                    : hoverSiteCoords.isWaterBody
+                    ? 'bg-red-500/50'
+                    : 'bg-sky-400/60'
+                }`}
+              />
+              <div
+                className={`absolute -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-white shadow-sm ${
+                  !hoverSiteCoords.isInsideLasam
+                    ? 'bg-amber-600'
+                    : hoverSiteCoords.isWaterBody
+                    ? 'bg-red-600'
+                    : 'bg-sky-500'
+                }`}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+      {activeTool === 'place-site' && hoverSiteCoords && !siteCoords && (
+        !hoverSiteCoords.isInsideLasam ? (
+          <div className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-amber-300 bg-amber-950/95 px-4 py-2 text-xs font-semibold text-white shadow-2xl backdrop-blur-sm animate-pulse">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-600 text-white font-bold text-xs">
+              🚫
+            </span>
+            <span>Outside Lasam Boundary ({hoverSiteCoords.muni}) — Placement Disabled</span>
+            <span className="rounded bg-amber-800 px-1.5 py-0.5 text-[10px] font-bold text-amber-200">
+              Not Allowed
+            </span>
+          </div>
+        ) : hoverSiteCoords.isWaterBody ? (
+          <div className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-red-300 bg-red-950/95 px-4 py-2 text-xs font-semibold text-white shadow-2xl backdrop-blur-sm animate-pulse">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white font-bold text-xs">
+              🚫
+            </span>
+            <span>Water Body: {hoverSiteCoords.waterBodyName || 'Active Waterway'} — Cannot build here (PD 1067)</span>
+            <span className="rounded bg-red-800 px-1.5 py-0.5 text-[10px] font-bold text-red-200">
+              Prohibited
+            </span>
+          </div>
+        ) : (
+          <div className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-sky-300 bg-sky-950/90 px-3.5 py-1.5 text-xs font-medium text-white shadow-xl backdrop-blur-sm">
+            <MapPin className="h-3.5 w-3.5 text-sky-400 animate-bounce" />
+            <span>Click map to place site · {hoverSiteCoords.lat.toFixed(5)}° N, {hoverSiteCoords.lng.toFixed(5)}° E</span>
+            <span className="rounded bg-sky-800 px-1.5 py-0.5 text-[10px] font-bold text-sky-200">
+              Lasam
+            </span>
+          </div>
+        )
+      )}
       {toolHint && (
         <div className="pointer-events-none absolute left-1/2 top-3 z-10 max-w-[90%] -translate-x-1/2 rounded-full bg-slate-900/85 px-4 py-2 text-xs text-white shadow-lg">
           {toolHint}

@@ -44,11 +44,15 @@ function applyExtrusionHeights(map: Map, layerId: string, terrainDraped: boolean
 
 /** Terrain-draped extrusions with warm beige fill (no per-feature dark colors). */
 export function applyBuildingExtrusionPaint(map: Map, terrainDraped: boolean): void {
-  for (const layerId of ['buildings-3d', 'buildings-3d-selected']) {
+  for (const layerId of ['buildings-3d', 'buildings-3d-selected', 'proposed-building-3d']) {
     if (!map.getLayer(layerId)) continue
-    const verticalGradient = layerId === 'buildings-3d'
+    const verticalGradient = layerId !== 'buildings-3d-selected'
     map.setPaintProperty(layerId, 'fill-extrusion-vertical-gradient', verticalGradient)
-    map.setPaintProperty(layerId, 'fill-extrusion-opacity', 1)
+    if (layerId === 'proposed-building-3d') {
+      map.setPaintProperty(layerId, 'fill-extrusion-opacity', 0.98)
+    } else {
+      map.setPaintProperty(layerId, 'fill-extrusion-opacity', 1)
+    }
     applyExtrusionHeights(map, layerId, terrainDraped)
   }
 
@@ -68,7 +72,12 @@ export function applyBuildingExtrusionPaint(map: Map, terrainDraped: boolean): v
 
 export function raiseBuildingLayers(map: Map): void {
   hideBasemapBuildings(map)
-  for (const layerId of ['buildings-3d', 'buildings-3d-selected']) {
+  for (const layerId of [
+    'buildings-3d',
+    'buildings-3d-selected',
+    'proposed-building-3d',
+    'proposed-building-outline',
+  ]) {
     if (map.getLayer(layerId)) {
       map.moveLayer(layerId)
     }

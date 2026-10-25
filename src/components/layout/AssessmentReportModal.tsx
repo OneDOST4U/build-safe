@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Download, Loader2, X } from 'lucide-react'
+import { Download, Loader2, Minus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   AssessmentReportFrame,
@@ -9,6 +9,7 @@ import { type ProposedBuildingPreviewMapHandle } from '@/components/layout/Propo
 import { exportAssessmentReportPdf } from '@/lib/assessment/exportAssessmentPdf'
 import { getNearbyBuildings } from '@/lib/assessment/nearbyBuildings'
 import type { ProposedBuildingType } from '@/lib/assessment/buildingTypes'
+import type { HighlightedFacilityInfo } from '@/components/layout/AssessmentResultsCard'
 import type { BuildingCollection, SiteAssessmentResult } from '@/types'
 
 interface AssessmentReportModalProps {
@@ -16,6 +17,11 @@ interface AssessmentReportModalProps {
   result: SiteAssessmentResult | null
   buildings: BuildingCollection | null
   onClose: () => void
+  onMinimize?: () => void
+  highlightedFacility?: HighlightedFacilityInfo | null
+  onSelectFacility?: (facility: HighlightedFacilityInfo | null) => void
+  onOpenChatbot?: () => void
+  isChatbotOpen?: boolean
 }
 
 export function AssessmentReportModal({
@@ -23,6 +29,11 @@ export function AssessmentReportModal({
   result,
   buildings,
   onClose,
+  onMinimize,
+  highlightedFacility = null,
+  onSelectFacility,
+  onOpenChatbot,
+  isChatbotOpen = false,
 }: AssessmentReportModalProps) {
   const mapRef = useRef<ProposedBuildingPreviewMapHandle>(null)
   const [mapReady, setMapReady] = useState(false)
@@ -61,7 +72,11 @@ export function AssessmentReportModal({
 
   if (!open || !result) return null
 
-  const buildingType = result.input.buildingType as ProposedBuildingType
+  const isFarmLot = result.input.category === 'farm_lot'
+  const displayTitle = isFarmLot
+    ? `Farm Lot: ${result.cropSuitability?.cropLabel ?? result.input.cropType ?? 'Agricultural Crop'}`
+    : (result.input.buildingType ?? 'Proposed Building')
+  const buildingType = (result.input.buildingType ?? 'Residential (Single-family)') as ProposedBuildingType
   const { lng, lat } = result.input
 
   return (
@@ -82,7 +97,7 @@ export function AssessmentReportModal({
           <div className="flex items-center gap-2">
             <Button
               size="sm"
-              className="gap-2"
+              className="gap-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold shadow-xs"
               onClick={handleExportPdf}
               disabled={exporting || !mapReady}
               title={!mapReady ? 'Wait for map preview to load' : 'Save as A4 landscape PDF'}
@@ -94,7 +109,26 @@ export function AssessmentReportModal({
               )}
               Save PDF (A4)
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} aria-label="Close">
+            {onMinimize && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs text-slate-700 hover:text-slate-900 border-slate-300 font-medium"
+                onClick={onMinimize}
+                title="Minimize report to explore the full live map & route"
+              >
+                <Minus className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Minimize</span>
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+              onClick={onClose}
+              title="Exit and close entire site assessment & map route"
+              aria-label="Exit assessment"
+            >
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -108,6 +142,7 @@ export function AssessmentReportModal({
           <AssessmentReportFrame>
             <AssessmentReportSheet
               buildingType={buildingType}
+              displayTitle={displayTitle}
               lat={lat}
               lng={lng}
               result={result}
@@ -115,6 +150,11 @@ export function AssessmentReportModal({
               mapRef={mapRef}
               mapReady={mapReady}
               onMapReady={() => setMapReady(true)}
+              highlightedFacility={highlightedFacility}
+              onSelectFacility={onSelectFacility}
+              onMinimize={onMinimize}
+              onOpenChatbot={onOpenChatbot}
+              isChatbotOpen={isChatbotOpen}
             />
           </AssessmentReportFrame>
         </div>

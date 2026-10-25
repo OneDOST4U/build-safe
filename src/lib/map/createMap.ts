@@ -34,6 +34,37 @@ export function createMapWithStyle(
 
 export { OSM_RASTER_STYLE }
 
+/**
+ * Wait only for the style to become usable. MapLibre's generic `error` event
+ * also reports non-fatal tile, sprite, glyph, and terrain failures, so treating
+ * the first error as fatal makes deployments unnecessarily brittle.
+ */
+export function waitForMapStyle(map: Map, timeoutMs = 10_000): Promise<void> {
+  if (map.isStyleLoaded()) return Promise.resolve()
+
+  return new Promise<void>((resolve, reject) => {
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      window.clearTimeout(timeout)
+      map.off('style.load', finish)
+      map.off('load', finish)
+      resolve()
+    }
+    const timeout = window.setTimeout(() => {
+      if (settled) return
+      settled = true
+      map.off('style.load', finish)
+      map.off('load', finish)
+      reject(new Error('Map style timed out while loading'))
+    }, timeoutMs)
+
+    map.once('style.load', finish)
+    map.once('load', finish)
+  })
+}
+
 
 export function bindMapResize(map: Map, container: HTMLElement): () => void {
   let active = true

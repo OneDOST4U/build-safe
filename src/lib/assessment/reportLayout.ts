@@ -17,9 +17,9 @@ export const REPORT_PAGE = {
 } as const
 
 export const REPORT_LAYOUT = {
-  leftColRatio: 0.62,
+  leftColRatio: 0.52,
   /** Room for centered logo + report title lines */
-  headerMm: 32,
+  headerMm: 20,
   footerMm: 0,
   bodyGapMm: 0,
 } as const

@@ -1,4 +1,4 @@
-import { ChevronRight, FlaskConical } from 'lucide-react'
+import { ChevronRight, FlaskConical, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -53,6 +53,7 @@ interface HazardPanelProps {
   onRiverSettingsChange: (patch: Partial<RiverSettings>) => void
   selectedBuilding: SelectedBuilding | null
   onCollapse?: () => void
+  onOpenReliability?: () => void
 }
 
 function LegendSwatch({ color, label }: { color: string; label: string }) {
@@ -126,19 +127,20 @@ export function HazardPanel(props: HazardPanelProps) {
       <div className="border-b border-slate-200 px-4 py-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-slate-900">Hazard Panel</h2>
-            <p className="text-xs text-slate-500">LGU datasets, MGB flood, PHIVOLCS faults, and map layers</p>
+            <h2 className="text-sm font-bold text-slate-900">Hazard & Planning Layers</h2>
+            <p className="text-[11px] text-slate-500">MGB Flood, PHIVOLCS, DA-BSWM & Cadastral</p>
           </div>
           {props.onCollapse && (
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0"
+              size="sm"
+              className="h-7 shrink-0 gap-1 rounded-lg px-2 text-xs font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-100"
               onClick={props.onCollapse}
-              title="Hide hazard panel"
-              aria-label="Hide hazard panel"
+              title="Close hazard panel"
+              aria-label="Close hazard panel"
             >
-              <ChevronRight className="h-4 w-4" />
+              <span>Close</span>
+              <ChevronRight className="h-3.5 w-3.5" />
             </Button>
           )}
         </div>
@@ -160,6 +162,27 @@ export function HazardPanel(props: HazardPanelProps) {
                 <CardTitle>LGU datasets</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="rounded-md border border-teal-200 bg-teal-50/70 p-2.5 text-[11px] text-teal-950 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold flex items-center gap-1">
+                      <ShieldCheck className="h-3.5 w-3.5 text-teal-700" />
+                      Zero-Hallucination Data Policy
+                    </span>
+                    {props.onOpenReliability && (
+                      <button
+                        type="button"
+                        onClick={props.onOpenReliability}
+                        className="text-[10px] font-semibold text-teal-700 underline hover:text-teal-900"
+                      >
+                        Coverage Matrix
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[10px] leading-snug text-teal-900">
+                    Local datasets cover Lasam. Neighboring municipalities (e.g. Lal-lo) are covered by regional fault/volcano models; missing local layers are flagged as "Data Gap", never "Safe".
+                  </p>
+                </div>
+
                 <p className="text-[11px] leading-relaxed text-slate-500">
                   Local GIS layers converted from shapefiles and clipped to the PSA Lasam municipal
                   boundary. For demonstration only — verify with the LGU before planning decisions.

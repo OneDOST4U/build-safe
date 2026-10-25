@@ -27,7 +27,7 @@ export function assessSeismic(
   const nearestAny = nearest ?? getNearestFaultSegment(coords, faults)
 
   let nearestFaultText = 'No active fault data within assessment extent'
-  let groundRupture = 'Safe'
+  let groundRupture = 'Data Gap — Fault catalog unavailable'
   let groundShaking = 'Temporarily Unavailable'
 
   if (nearestAny) {
@@ -39,18 +39,24 @@ export function assessSeismic(
       direction,
       nearestAny.faultName,
     )
-    groundRupture = nearestAny.distanceM < 250 ? 'Prone' : 'Safe'
+    groundRupture =
+      nearestAny.distanceM < 250
+        ? 'Prone (Within 250 m buffer of mapped active fault)'
+        : 'Safe (>250 m buffer from cataloged active fault trace)'
     groundShaking = intensityFromFaultDistanceKm(nearestAny.distanceKm)
   }
 
   const coastKm = distance(point(coords), point(COAST_REFERENCE), { units: 'kilometers' })
-  const tsunami = coastKm > 25 ? 'Safe' : 'Prone'
+  const tsunami =
+    coastKm > 25
+      ? `Safe / Inland (${coastKm.toFixed(1)} km from Babuyan coast)`
+      : `Prone (${coastKm.toFixed(1)} km from coast)`
 
   return [
     { label: 'Nearest Active Fault', value: nearestFaultText },
     { label: 'Ground Rupture', value: groundRupture },
     { label: 'Ground Shaking', value: groundShaking },
-    { label: 'Earthquake-Induced Landslide', value: 'Temporarily Unavailable' },
+    { label: 'Earthquake-Induced Landslide', value: 'Data Gap — MGB slope instability model required' },
     { label: 'Tsunami', value: tsunami },
   ]
 }

@@ -137,12 +137,31 @@ export interface ElevationGrid {
 export interface AssessmentRow {
   label: string
   value: string
+  facilityName?: string
+  facilityCoords?: [number, number]
+  facilityDistanceM?: number
+  category?: string
 }
+
+import type {
+  AssessmentTargetCategory,
+  CropSuitabilityInfo,
+  FarmCropType,
+} from '@/lib/assessment/farmLot'
+
+export type {
+  AssessmentTargetCategory,
+  CropSuitabilityInfo,
+  FarmCropType,
+}
+import type { SiteCoverageReport } from '@/lib/assessment/coverage'
 
 export interface SiteAssessmentInput {
   lat: number
   lng: number
-  buildingType: ProposedBuildingType
+  category?: AssessmentTargetCategory
+  buildingType?: ProposedBuildingType
+  cropType?: FarmCropType
 }
 
 export interface SiteAssessmentResult {
@@ -153,6 +172,9 @@ export interface SiteAssessmentResult {
   hydromet: AssessmentRow[]
   lgu: AssessmentRow[]
   facilities: AssessmentRow[]
+  coverage: SiteCoverageReport
+  farmAssessment?: AssessmentRow[]
+  cropSuitability?: CropSuitabilityInfo
 }
 
 export interface SimulationState {

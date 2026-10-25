@@ -27,28 +27,33 @@ function nearestInCategory(
   site: [number, number],
   facilities: FeatureCollection | null,
   category: FacilityCategory,
-): { name: string; distanceM: number } | null {
+): { name: string; distanceM: number; coords: [number, number] } | null {
   if (!facilities?.features?.length) return null
 
   const from = point(site)
-  let best: { name: string; distanceM: number } | null = null
+  let best: { name: string; distanceM: number; coords: [number, number] } | null = null
 
   for (const f of facilities.features) {
     if (String(f.properties?.category) !== category) continue
     if (!f.geometry) continue
 
     let distM: number
+    let targetCoords: [number, number]
     if (f.geometry.type === 'Point') {
       distM = distance(from, f as Feature<Point>, { units: 'meters' })
+      targetCoords = [f.geometry.coordinates[0], f.geometry.coordinates[1]]
     } else if (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString') {
       const nearest = nearestPointOnLine(f as Feature<LineString | MultiLineString>, from)
       distM = distance(from, nearest, { units: 'meters' })
+      targetCoords = [nearest.geometry.coordinates[0], nearest.geometry.coordinates[1]]
     } else {
       continue
     }
 
     const name = facilityName(f.properties as Record<string, unknown>)
-    if (!best || distM < best.distanceM) best = { name, distanceM: distM }
+    if (!best || distM < best.distanceM) {
+      best = { name, distanceM: distM, coords: targetCoords }
+    }
   }
 
   return best
@@ -73,7 +78,15 @@ export function assessFacilities(
 
     rows.push({
       label: CATEGORY_LABELS[category],
-      value: formatFacilityDistance(nearest.name, nearest.distanceM),
+      value: formatFacilityDistance(
+        nearest.name,
+        nearest.distanceM,
+        category === 'primary_road',
+      ),
+      facilityName: nearest.name,
+      facilityCoords: nearest.coords,
+      facilityDistanceM: nearest.distanceM,
+      category,
     })
   }
 
