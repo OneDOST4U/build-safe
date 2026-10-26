@@ -2,9 +2,40 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+import { rmSync } from 'node:fs'
+
+function excludeRawGisSourcesFromBuild() {
+  return {
+    name: 'exclude-raw-gis-sources-from-build',
+    apply: 'build' as const,
+    closeBundle() {
+      // Conversion inputs are retained in public/data for the data scripts,
+      // but the browser only consumes the generated files in data/hazards.
+      for (const directory of ['NPAAAD', 'SAFDZ']) {
+        rmSync(path.resolve(__dirname, 'dist', 'data', directory), {
+          recursive: true,
+          force: true,
+        })
+      }
+
+      // These are processing inputs or an identical legacy copy, not browser
+      // assets. Keep them in the repository without uploading them to Vercel.
+      const unusedFiles = [
+        'data/terrain/conditioned-dem.npy',
+        'data/terrain/flow-accumulation.npy',
+        'data/terrain/flow-direction.npy',
+        'data/terrain/lasam-dem.npy',
+        'data/terrain/slope.npy',
+      ]
+      for (const file of unusedFiles) {
+        rmSync(path.resolve(__dirname, 'dist', file), { force: true })
+      }
+    },
+  }
+}
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), excludeRawGisSourcesFromBuild()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

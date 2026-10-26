@@ -177,6 +177,18 @@ export function MapView({
   const onMapReadyRef = useRef(onMapReady)
   const onReopenReportRef = useRef(onReopenReport)
   onReopenReportRef.current = onReopenReport
+  const latestLayerDataRef = useRef({
+    boundary, riversMain, riversTributaries, drainage, riverbanks, watersheds,
+    flowArrows, contours, mgbFlood, liquefaction, erosion, lguFlood, landUse,
+    npaaad, safdz, faultLines,
+  })
+  // Background GIS downloads can finish before MapLibre assigns mapRef.
+  // Retain the newest render synchronously so map startup cannot miss them.
+  latestLayerDataRef.current = {
+    boundary, riversMain, riversTributaries, drainage, riverbanks, watersheds,
+    flowArrows, contours, mgbFlood, liquefaction, erosion, lguFlood, landUse,
+    npaaad, safdz, faultLines,
+  }
 
   useEffect(() => {
     boundaryRef.current = boundary
@@ -1182,7 +1194,32 @@ export function MapView({
           return
         }
 
-        fitMapToLasam(map, boundary, { duration: 0 })
+        // Reconcile data that may have arrived while MapLibre was starting.
+        // Without this, the sidebar can show loaded feature counts while the
+        // corresponding MapLibre source still contains the initial empty data.
+        const latest = latestLayerDataRef.current
+        const syncSource = (id: string, data: FeatureCollection | null | undefined) => {
+          const source = map.getSource(id) as maplibregl.GeoJSONSource | undefined
+          if (source && data) source.setData(data)
+        }
+        syncSource('boundary', latest.boundary)
+        syncSource('watersheds', latest.watersheds)
+        syncSource('riverbanks', latest.riverbanks)
+        syncSource('rivers-main', latest.riversMain)
+        syncSource('rivers-tributaries', latest.riversTributaries)
+        syncSource('drainage', latest.drainage)
+        syncSource('flow-arrows', latest.flowArrows)
+        syncSource('contours', latest.contours)
+        syncSource('flood-zone', latest.mgbFlood)
+        syncSource('liquefaction-zone', latest.liquefaction)
+        syncSource('erosion-zone', latest.erosion)
+        syncSource('lgu-flood-zone', latest.lguFlood)
+        syncSource('land-use-zone', latest.landUse)
+        syncSource('npaaad-zone', latest.npaaad)
+        syncSource('safdz-zone', latest.safdz)
+        syncSource('fault-line', latest.faultLines)
+
+        fitMapToLasam(map, latest.boundary, { duration: 0 })
 
         applyLayerVisibility(map)
         mapRef.current = map
