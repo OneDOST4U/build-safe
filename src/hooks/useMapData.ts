@@ -109,36 +109,6 @@ function buildMapData(
   }
 }
 
-function emptyMapDataShell(
-  buildings: BuildingCollection,
-  boundary: FeatureCollection,
-): MapData {
-  return buildMapData({
-    buildings,
-    boundary,
-    riversLegacy: emptyFc,
-    riversMain: emptyFc,
-    riversTributaries: emptyFc,
-    drainage: emptyFc,
-    riverbanks: emptyFc,
-    watersheds: emptyFc,
-    flowArrows: emptyFc,
-    contours: emptyFc,
-    elevationGrid: null,
-    mgbFlood: emptyFc,
-    liquefaction: emptyFc,
-    erosion: emptyFc,
-    lguFlood: emptyFc,
-    landUse: emptyFc,
-    npaaad: emptyFc,
-    safdz: emptyFc,
-    phivolcsFaults: null,
-    sampleFault: null,
-    volcanoes: emptyFc,
-    facilities: emptyFc,
-  })
-}
-
 export function useMapData(): UseMapDataResult {
   const [data, setData] = useState<MapData | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -184,10 +154,6 @@ export function useMapData(): UseMapDataResult {
             'Municipal boundary missing. Run npm run fetch:boundary (or ensure OSM lasam-boundary.geojson exists).',
           )
         }
-
-        setData(emptyMapDataShell(buildings, boundary))
-        setIsLoading(false)
-        setIsEnhancing(true)
 
         // Tier 1: Fast Critical Hazards & Infrastructure (loads in <300ms)
         const [
@@ -272,6 +238,8 @@ export function useMapData(): UseMapDataResult {
 
         // Instantly activate flood and hazard layers
         setData(tier1Data)
+        setIsLoading(false)
+        setIsEnhancing(true)
 
         // Tier 2: Heavy background layers (land use, NPAAAD, SAFDZ, terrain elevation grid, contours, drainage)
         const [

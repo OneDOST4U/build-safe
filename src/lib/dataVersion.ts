@@ -4,7 +4,9 @@
 // from being paired with a newly deployed application bundle.
 export const DATA_VERSION = 'gis-20261026-map-sync-v2'
 
+const GIS_BASE_URL = (import.meta.env.VITE_GIS_BASE_URL ?? '').replace(/\/$/, '')
+
 export function dataUrl(path: string): string {
-  return `${path}?v=${DATA_VERSION}`
+  return `${GIS_BASE_URL}${path}?v=${DATA_VERSION}`
 }
 
