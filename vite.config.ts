@@ -2,13 +2,24 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
-import { rmSync } from 'node:fs'
+import { copyFileSync, mkdirSync, rmSync } from 'node:fs'
 
 function excludeRawGisSourcesFromBuild() {
   return {
     name: 'exclude-raw-gis-sources-from-build',
     apply: 'build' as const,
     closeBundle() {
+      // MapLibre v6 resolves its module worker relative to the deployed JS
+      // bundle. Vite does not emit that sibling file automatically, leaving
+      // the basemap visible but preventing every GeoJSON overlay from being
+      // parsed. Ship the worker at the exact URL MapLibre requests.
+      const assetDirectory = path.resolve(__dirname, 'dist', 'assets')
+      mkdirSync(assetDirectory, { recursive: true })
+      copyFileSync(
+        path.resolve(__dirname, 'node_modules', 'maplibre-gl', 'dist', 'maplibre-gl-worker.mjs'),
+        path.resolve(assetDirectory, 'maplibre-gl-worker.mjs'),
+      )
+
       // Conversion inputs are retained in public/data for the data scripts,
       // but the browser only consumes the generated files in data/hazards.
       for (const directory of ['NPAAAD', 'SAFDZ']) {
