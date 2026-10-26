@@ -25,7 +25,7 @@ export const LAYER_ID_MAP: Record<string, string[]> = {
   flood: ['flood-zone-fill'],
   liquefaction: ['liquefaction-fill'],
   erosion: ['erosion-fill'],
-  lguFlood: ['lgu-flood-fill'],
+  lguFlood: ['lgu-flood-fill', 'lgu-flood-outline'],
   landUse: ['land-use-fill'],
   npaaad: ['npaaad-fill', 'npaaad-line'],
   safdz: ['safdz-fill', 'safdz-line'],

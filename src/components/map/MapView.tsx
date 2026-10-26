@@ -247,6 +247,26 @@ export function MapView({
     }
 
     raiseBuildingLayers(map)
+
+    // Operational hazard polygons must remain above the basemap and 3D
+    // buildings. MapLibre can regroup draped fill layers in pitched views,
+    // which previously left a toggle ON while the polygon looked absent.
+    // Move enabled hazard layers last so their display state is unambiguous.
+    const operationalLayers = [
+      'flood-zone-fill',
+      'liquefaction-fill',
+      'erosion-fill',
+      'lgu-flood-fill',
+      'lgu-flood-outline',
+      'land-use-fill',
+      'npaaad-fill',
+      'npaaad-line',
+      'safdz-fill',
+      'safdz-line',
+    ]
+    for (const layerId of operationalLayers) {
+      if (map.getLayer(layerId)) map.moveLayer(layerId)
+    }
   }, [layerVisibility, terrainSettings, riverSettings, is3D])
 
   const addBuildingLayers = useCallback((map: Map) => {
@@ -642,8 +662,19 @@ export function MapView({
               LGU_FLOOD_COLORS,
               LGU_FLOOD_COLORS.unknown,
             ),
-            'fill-opacity': LGU_HAZARD_OPACITY,
+            'fill-opacity': 0.68,
             'fill-outline-color': '#1e3a8a',
+          },
+          layout: { visibility: 'none' },
+        })
+        map.addLayer({
+          id: 'lgu-flood-outline',
+          type: 'line',
+          source: 'lgu-flood-zone',
+          paint: {
+            'line-color': '#172554',
+            'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1.5, 13, 3],
+            'line-opacity': 0.95,
           },
           layout: { visibility: 'none' },
         })
