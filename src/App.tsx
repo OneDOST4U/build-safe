@@ -154,7 +154,7 @@ export default function App() {
   const baseBuildings = useMemo(() => {
     if (!data) return null
     let result = data.buildings
-    if (layerVisibility.flood || hazardMode === 'flood') {
+    if (layerVisibility.flood) {
       if (data.mgbFlood.features.length) {
         result = applyMgbFloodExposure(result, data.mgbFlood)
       }
@@ -163,10 +163,10 @@ export default function App() {
       result = applyEarthquakeSimulation(result, epicenter, earthquakeMagnitude, earthquakeRadius)
     }
     return result
-  }, [data, layerVisibility.flood, hazardMode, epicenter, earthquakeMagnitude, earthquakeRadius])
+  }, [data, layerVisibility.flood, epicenter, earthquakeMagnitude, earthquakeRadius])
 
-  const needsFaultExposure = layerVisibility.fault || hazardMode === 'fault'
-  const needsVolcanoExposure = layerVisibility.volcano || hazardMode === 'volcano'
+  const needsFaultExposure = Boolean(layerVisibility.fault)
+  const needsVolcanoExposure = Boolean(layerVisibility.volcano)
 
   const [faultBuildings, setFaultBuildings] = useState<
     NonNullable<ReturnType<typeof useMapData>['data']>['buildings'] | null

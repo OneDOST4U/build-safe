@@ -356,7 +356,7 @@ export function HazardPanel(props: HazardPanelProps) {
                   <Label htmlFor="show-mgb-flood">Show MGB flood layer</Label>
                   <Switch
                     id="show-mgb-flood"
-                    checked={props.layerVisibility.flood !== false}
+                    checked={Boolean(props.layerVisibility.flood)}
                     onCheckedChange={(v) => props.onLayerVisibilityChange('flood', v)}
                   />
                 </div>
@@ -450,7 +450,7 @@ export function HazardPanel(props: HazardPanelProps) {
                   <Label htmlFor="show-fault-layer">Show PHIVOLCS fault lines</Label>
                   <Switch
                     id="show-fault-layer"
-                    checked={props.layerVisibility.fault !== false}
+                    checked={Boolean(props.layerVisibility.fault)}
                     onCheckedChange={(v) => props.onLayerVisibilityChange('fault', v)}
                   />
                 </div>
@@ -499,7 +499,7 @@ export function HazardPanel(props: HazardPanelProps) {
                   <Label htmlFor="show-volcano-layer">Show Cagua volcano marker</Label>
                   <Switch
                     id="show-volcano-layer"
-                    checked={props.layerVisibility.volcano !== false}
+                    checked={Boolean(props.layerVisibility.volcano)}
                     onCheckedChange={(v) => props.onLayerVisibilityChange('volcano', v)}
                   />
                 </div>
