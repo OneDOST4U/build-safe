@@ -66,7 +66,7 @@ const initialLayerVisibility = {
   flood: false,
   liquefaction: false,
   erosion: false,
-  lguFlood: true,
+  lguFlood: false,
   landUse: false,
   npaaad: false,
   safdz: false,
@@ -432,24 +432,7 @@ export default function App() {
 
   const hazardPanelProps = {
     hazardMode,
-    onHazardModeChange: (mode: HazardMode) => {
-      setHazardMode(mode)
-
-      // Opening a hazard tab should display its map, not just its controls.
-      // Manual switches remain available for turning layers off afterward.
-      const primaryLayer: Partial<Record<HazardMode, keyof typeof initialLayerVisibility>> = {
-        lgu: 'lguFlood',
-        flood: 'flood',
-        fault: 'fault',
-        volcano: 'volcano',
-      }
-      const layer = primaryLayer[mode]
-      if (layer) {
-        setLayerVisibility((prev) =>
-          prev[layer] ? prev : { ...prev, [layer]: true },
-        )
-      }
-    },
+    onHazardModeChange: setHazardMode,
     floodOpacity,
     onFloodOpacityChange: setFloodOpacity,
     mgbFeatureCount: data?.mgbFlood.features.length ?? 0,
