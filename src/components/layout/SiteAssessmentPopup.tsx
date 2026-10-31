@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { AlertTriangle, Ban, Building2, ClipboardList, Crosshair, MapPin, RotateCcw, ShieldCheck, Sparkles, Sprout, X } from 'lucide-react'
+import { AlertTriangle, Ban, Building2, ClipboardList, Crosshair, MapPin, RotateCcw, ShieldCheck, Sprout, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { AssessmentResultsCard, type HighlightedFacilityInfo } from '@/components/layout/AssessmentResultsCard'
@@ -19,12 +19,6 @@ import { identifyMunicipality, isPointInsideLasam } from '@/lib/assessment/cover
 import { getLandUseAtPoint } from '@/lib/simulation/lguLayerQuery'
 import type { WaterBodyCheckResult } from '@/lib/assessment/waterBody'
 import type { SiteAssessmentResult } from '@/types'
-
-const LASAM_LOCATION_PRESETS = [
-  { name: '🏛️ Centro 2', lat: '18.064500', lng: '121.601500', desc: 'LGU Commercial / Town Proper' },
-  { name: '🌾 Alannay', lat: '18.060930', lng: '121.571580', desc: 'Agricultural Rice Basin' },
-  { name: '🏡 Nabannagan', lat: '18.045000', lng: '121.615000', desc: 'Residential Corridor' },
-]
 
 export interface SiteAssessmentPopupProps {
   open: boolean
@@ -75,7 +69,6 @@ export function SiteAssessmentPopup({
   onAssessCategoryChange,
   onAssessBuildingTypeChange,
   onAssessCropTypeChange,
-  onAssessSite,
   onPickSiteOnMap,
   pickingOnMap = false,
   pendingSiteCoords = null,
@@ -441,7 +434,7 @@ export function SiteAssessmentPopup({
                       className="w-full bg-transparent font-mono text-xs font-semibold text-slate-900 focus:outline-none"
                       value={assessLat}
                       onChange={(e) => onAssessLatChange(e.target.value)}
-                      placeholder="18.064500"
+                      placeholder="Not set (Pick on Map)"
                       inputMode="decimal"
                     />
                   </div>
@@ -455,34 +448,18 @@ export function SiteAssessmentPopup({
                       className="w-full bg-transparent font-mono text-xs font-semibold text-slate-900 focus:outline-none"
                       value={assessLng}
                       onChange={(e) => onAssessLngChange(e.target.value)}
-                      placeholder="121.601500"
+                      placeholder="Not set (Pick on Map)"
                       inputMode="decimal"
                     />
                   </div>
                 </div>
 
-                {/* Quick Presets Pills */}
-                <div className="flex items-center gap-1.5 pt-0.5">
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider shrink-0">
-                    Quick test:
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {LASAM_LOCATION_PRESETS.map((preset) => (
-                      <button
-                        key={preset.name}
-                        type="button"
-                        onClick={() => {
-                          onAssessLatChange(preset.lat)
-                          onAssessLngChange(preset.lng)
-                        }}
-                        className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-[10.5px] font-medium text-slate-600 hover:border-teal-400 hover:bg-teal-50 hover:text-teal-900 transition-all cursor-pointer shadow-2xs"
-                        title={preset.desc}
-                      >
-                        {preset.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                {!assessLat && !assessLng && (
+                  <p className="text-[10.5px] text-slate-500 italic flex items-center gap-1 pt-0.5">
+                    <span>📍</span>
+                    <span>No coordinates selected yet. Click the button below to pick on the live map.</span>
+                  </p>
+                )}
               </div>
 
               {/* Site Land-Use Purpose Selector */}
@@ -643,16 +620,7 @@ export function SiteAssessmentPopup({
                   <span>{assessCategory === 'farm_lot' ? 'Pick Farm Lot Directly on Map' : 'Pick Point Directly on Map'}</span>
                 </Button>
 
-                {onAssessSite && isInputValidNumber && isInputInsideLasam && (
-                  <button
-                    type="button"
-                    onClick={onAssessSite}
-                    className="w-full h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
-                  >
-                    <Sparkles className="h-3.5 w-3.5 text-teal-600" />
-                    <span>Run Assessment for Entered Coordinates</span>
-                  </button>
-                )}
+
               </div>
 
               {assessmentResult && (

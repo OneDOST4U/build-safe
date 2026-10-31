@@ -13,7 +13,6 @@ import { BuildSafeChatbot } from '@/components/layout/BuildSafeChatbot'
 import { Button } from '@/components/ui/button'
 import { FileText, Navigation, X } from 'lucide-react'
 import { useMapData } from '@/hooks/useMapData'
-import { LASAM_CENTER } from '@/lib/constants'
 import { DEFAULT_PROPOSED_BUILDING_TYPE } from '@/lib/assessment/buildingTypes'
 import {
   type AssessmentTargetCategory,
@@ -112,8 +111,8 @@ export default function App() {
   const [epicenter, setEpicenter] = useState<[number, number] | null>(null)
 
   const [faultLineName, setFaultLineName] = useState(DEFAULT_FAULT_NAME)
-  const [assessLat, setAssessLat] = useState(String(LASAM_CENTER[1]))
-  const [assessLng, setAssessLng] = useState(String(LASAM_CENTER[0]))
+  const [assessLat, setAssessLat] = useState('')
+  const [assessLng, setAssessLng] = useState('')
   const [assessCategory, setAssessCategory] = useState<AssessmentTargetCategory>('building')
   const [assessBuildingType, setAssessBuildingType] = useState<ProposedBuildingType>(
     DEFAULT_PROPOSED_BUILDING_TYPE,
@@ -282,8 +281,8 @@ export default function App() {
     setReportOpen(false)
     setSiteCoords(null)
     setPendingSiteCoords(null)
-    setAssessLat(String(LASAM_CENTER[1]))
-    setAssessLng(String(LASAM_CENTER[0]))
+    setAssessLat('')
+    setAssessLng('')
     setAssessCategory('building')
     setAssessBuildingType(DEFAULT_PROPOSED_BUILDING_TYPE)
     setAssessCropType(DEFAULT_FARM_CROP)
@@ -299,6 +298,8 @@ export default function App() {
     setPendingSiteCoords(null)
     setHighlightedFacility(null)
     setAssessError(null)
+    setAssessLat('')
+    setAssessLng('')
     setChatbotOpen(false)
   }, [])
 
