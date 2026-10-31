@@ -4,7 +4,6 @@ import { Header } from '@/components/layout/Header'
 import { BrandLogo } from '@/components/layout/BrandLogo'
 import { DisclaimerModal } from '@/components/layout/DisclaimerModal'
 import { DatasetReliabilityModal } from '@/components/layout/DatasetReliabilityModal'
-import { MapToolbar } from '@/components/layout/MapToolbar'
 import { SiteAssessmentPopup } from '@/components/layout/SiteAssessmentPopup'
 import { type HighlightedFacilityInfo } from '@/components/layout/AssessmentResultsCard'
 import { MobileHazardDrawer } from '@/components/layout/MobileHazardDrawer'
@@ -731,11 +730,6 @@ export default function App() {
               </div>
             </div>
           )}
-          <MapToolbar
-            activeTool={activeTool}
-            onToolChange={setActiveTool}
-            className="left-3 top-14"
-          />
           {selectedBuilding && (
             <BuildingPopup building={selectedBuilding} onClose={() => setSelectedBuildingId(null)} />
           )}

@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import { Hand, Ruler } from 'lucide-react'
+import { Hand } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { MapTool } from '@/types'
@@ -15,7 +15,6 @@ interface MapToolbarProps {
 
 const tools: { id: MapTool; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { id: 'pan', label: 'Pan / Explore Map', icon: Hand },
-  { id: 'measure', label: 'Measure Distance', icon: Ruler },
 ]
 
 export function MapToolbar({
@@ -23,6 +22,10 @@ export function MapToolbar({
   onToolChange,
   className,
 }: MapToolbarProps) {
+  if (tools.length <= 1) {
+    return null
+  }
+
   return (
     <div
       className={cn(
