@@ -53,20 +53,15 @@ export function estimateCarTravelTime(
   const totalMinutes = hours * 60
 
   let summary: string
-  if (isRoadNetwork && distanceM < 100) {
-    summary = '<0.01 hr by car [direct access]'
-  } else if (hours < 0.01 || totalMinutes < 1) {
-    summary = '<0.01 hr by car [<1 min drive]'
-  } else if (hours < 0.1) {
+  if (totalMinutes < 1) {
+    summary = '<1 min drive'
+  } else if (totalMinutes < 60) {
     const mins = Math.max(1, Math.round(totalMinutes))
-    summary = `~${hours.toFixed(2)} hr by car [~${mins} min${mins > 1 ? 's' : ''} drive]`
-  } else if (hours < 1.0) {
-    const mins = Math.round(totalMinutes)
-    summary = `~${hours.toFixed(2)} hr by car [~${mins} mins drive]`
+    summary = `~${mins} min${mins > 1 ? 's' : ''} drive`
   } else {
     const h = Math.floor(hours)
     const m = Math.round((hours - h) * 60)
-    summary = `~${hours.toFixed(1)} hr${hours >= 1.5 ? 's' : ''} by car [~${h}h${m > 0 ? ` ${m}m` : ''} drive]`
+    summary = m > 0 ? `~${h} hr${h > 1 ? 's' : ''} ${m} mins drive` : `~${h} hr${h > 1 ? 's' : ''} drive`
   }
 
   return {
