@@ -61,35 +61,16 @@ export function generateAiResponse(userInput: string, context?: ChatContext): {
     q.includes('how does build-safe work')
   ) {
     return {
-      text: `🏛️ **The BUILD-SAFE Site Assessment Process:**
+      text: `🏛️ **How BUILD-SAFE Site Assessment Works:**
 
-**BUILD-SAFE** performs an automated, 5-stage geospatial hazard and zoning intelligence screening for any parcel in the **Municipality of Lasam, Cagayan**:
-
-1. **Spatial Georeferencing & Coordinates:**
-   Pick any parcel on the 2D/3D map or input coordinates (e.g. 18.06093° N, 121.57158° E). The system pinpoints the exact Barangay, cadastral parcel, and road connectivity.
-
-2. **Multi-Hazard Geospatial Synthesis:**
-   The engine cross-queries four authoritative national scientific datasets:
-   • **DENR-MGB 1:10,000 Flood Inundation:** Computes exact flood depth (Low, Moderate, High, Very High) and 100-year return period boundaries.
-   • **PHIVOLCS Active Faults & Liquefaction:** Calculates distance to the active fault trace and evaluates alluvial soil liquefaction risks.
-   • **Mount Cagua Volcanic Hazard:** Computes concentric radial buffer zones for ashfall and pyroclastic limits.
-   • **Hydrometeorological Basins:** Analyzes distance to the Lasam and Zinundungan river networks.
-
-3. **CLUP (2020–2029) Land Use Zoning Verification:**
-   Cross-references the parcel against Lasam's approved Comprehensive Land Use Plan and DA-BSWM SAFDZ/NPAAAD boundaries to verify if the proposed structure is **Permitted**, **Conditional**, or **Prohibited**.
-
-4. **Statutory Buffer & Legal Easement Checks:**
-   Validates mandatory statutory setbacks:
-   • **PD 1067 (Water Code):** 3m (urban), 20m (agricultural), and 40m (forest) riverbank easements.
-   • **PHIVOLCS Active Fault Buffer:** Mandatory 5-meter setback from active fault rupture lines.
-   • **DPWH / Local Road Rights-of-Way:** Verifies setback clearances from national and municipal road alignments.
-
-5. **Decision Synthesis & Actionable Recommendations:**
-   Generates a clear Traffic-Light Status (Clear, Caution/Restricted, Prohibited), a required municipal permits checklist (Locational Clearance, Building Permit, DAR Clearance), and specific engineering mitigations. You can also export a complete, printable municipal PDF report.`,
+1. **Pick a Location:** Click your parcel on the map or enter coordinates in Lasam.
+2. **Hazard Screening:** Instant check for flood depths, river easements, and active fault line buffers.
+3. **Zoning Check:** Verifies if your building or farm is allowed under Lasam's CLUP (2020–2029).
+4. **Actionable Summary:** Tells you if the site is clear, what permits are needed, and recommended safety steps.`,
       suggestions: [
-        'How can I mitigate flood risk on my lot?',
-        'What permits are required in Lasam?',
         'Can I build on agricultural land in Lasam?',
+        'What are the mandatory river easement setbacks?',
+        'What permits are required in Lasam?',
       ],
     }
   }
@@ -101,27 +82,16 @@ export function generateAiResponse(userInput: string, context?: ChatContext): {
     q.includes('topics to discuss')
   ) {
     return {
-      text: `💬 **Let's discuss urban planning & hazard resilience in Lasam!**
+      text: `💬 **Topics we can explore for Lasam:**
 
-Here are four key topics we can explore:
-
-1. **Flood-Resilient Architecture & Elevation Strategies:**
-   How elevated stilt construction and raised floor elevations protect homes and farm structures along the Lasam River floodplains.
-
-2. **Agricultural Preservation vs. Urban Expansion (CLUP 2020):**
-   How Lasam balances residential growth with the legal protection of prime rice lands under AFMA (RA 8435) and DAR conversion rules.
-
-3. **Seismic Engineering in Seismic Zone 4:**
-   Foundational strategies for alluvial soils subject to liquefaction, and structural compliance with the National Structural Code of the Philippines (NSCP).
-
-4. **Municipal Permitting & Modernizing LGU Approvals:**
-   Navigating locational clearance from the MPDO, Fire Safety clearances from BFP, and Building Official approvals.
-
-Which of these topics interests you most, or do you have a specific question in mind?`,
+• **Flood Protection:** Stilt construction and elevated foundations along river floodplains
+• **Agricultural Land Rules:** How Lasam protects prime rice lands and DAR conversion rules
+• **Earthquake Safety:** Building standards for Seismic Zone 4 and liquefaction
+• **Permits & Approvals:** Step-by-step clearance from the MPDO and Building Official`,
       suggestions: [
-        'Tell me about flood-resilient architecture in Lasam',
-        'How does Lasam protect agricultural rice lands?',
-        'What are building permit requirements in Lasam?',
+        'Can I build on agricultural land in Lasam?',
+        'What are the mandatory river easement setbacks?',
+        'What permits are required in Lasam?',
       ],
     }
   }
@@ -134,27 +104,16 @@ Which of these topics interests you most, or do you have a specific question in 
     q.includes('draft a letter')
   ) {
     return {
-      text: `✍️ **I'd be glad to help you draft or refine your municipal documents!**
+      text: `✍️ **I can help draft municipal letters for Lasam:**
 
-Here are formal documents I can write or structure for you:
-
-1. **Locational / Zoning Clearance Justification Letter:**
-   A formal letter to the **Lasam Municipal Planning & Development Office (MPDO)** explaining your proposed land use, building purpose, and how you will comply with CLUP zoning regulations.
-
-2. **DAR Land Use Reclassification Request:**
-   A petition outline for the **Department of Agrarian Reform (DAR)** and Sangguniang Bayan regarding agricultural parcel reclassification under RA 7160 / AFMA.
-
-3. **Site Hazard & Mitigation Narrative:**
-   A technical summary explaining to architects, contractors, or bank appraisers how your site design addresses DENR-MGB flood levels or PHIVOLCS seismic buffers.
-
-4. **Barangay Development Consultation Request:**
-   Formal correspondence requesting Barangay Captain and Council clearance for construction or agribusiness operations.
-
-What type of document are you working on? Share any specifics (location, building type, or site context) and I'll generate a draft for you!`,
+• **Locational Clearance Letter:** Justification letter for the Lasam MPDO
+• **DAR Reclassification Petition:** For agricultural lot conversion
+• **Hazard Mitigation Summary:** For your architect, engineer, or contractor
+• **Barangay Consultation Letter:** Request for local council clearance`,
       suggestions: [
-        'Draft a Locational Clearance letter for Lasam MPDO',
-        'Draft a flood mitigation narrative for a house',
-        'What documents are required for a building permit?',
+        'What permits are required in Lasam?',
+        'Can I build on agricultural land in Lasam?',
+        'What are the mandatory river easement setbacks?',
       ],
     }
   }
@@ -221,14 +180,12 @@ Would you like detailed engineering mitigation guidelines or permit steps for th
     return {
       text: `🌾 **Building on Agricultural Land in Lasam:**
 
-Under the **Lasam Comprehensive Land Use Plan (CLUP 2020–2029)** and **Republic Act No. 8435 (AFMA)**:
-1. **Zoning Restriction:** Agricultural zones are preserved primarily for agricultural production, food security, and allied agribusinesses.
-2. **Mandatory DAR Conversion Clearance:** If you intend to erect non-agricultural structures (such as commercial, industrial, or residential subdivisions), you must first secure formal **Land Use Conversion Clearance** from the **Department of Agrarian Reform (DAR)** under *DAR Administrative Order No. 1 (2019)*.
-3. **Sangguniang Bayan Reclassification:** A formal municipal reclassification ordinance enacted by the **Sangguniang Bayan of Lasam** pursuant to *Section 20 of the Local Government Code (RA 7160)* is required before the Municipal Engineering Office can lawfully issue a Building Permit.
-4. **Farm Lots:** If the property is developed as an active **Farm Lot** (crop production, solar dryers, farm machinery sheds), it conforms directly with the agricultural zoning!`,
+• **Protected Land:** Agricultural land in Lasam is reserved for farming. Building a house or commercial structure is **non-conforming**.
+• **Requirements to Build:** You must secure a **DAR Conversion Clearance** and a **reclassification ordinance** from the Sangguniang Bayan before a building permit is issued.
+• **Farm Structures:** Sheds, crop dryers, and storage buildings directly supporting farming are allowed without conversion.`,
       suggestions: [
-        'What is NPAAAD and SAFDZ protection?',
-        'What are the requirements for building permits?',
+        'What permits are required in Lasam?',
+        'What are the mandatory river easement setbacks?',
         'Which crops grow best in Lasam?',
       ],
     }
@@ -244,18 +201,18 @@ Under the **Lasam Comprehensive Land Use Plan (CLUP 2020–2029)** and **Republi
     q.includes('water body')
   ) {
     return {
-      text: `🌊 **Waterway Easements & Legal Protection (PD 1067):**
+      text: `🌊 **River Easement Setbacks (PD 1067):**
 
-Under **Presidential Decree No. 1067 (The Water Code of the Philippines, Article 51)** and the **National Building Code (PD 1096)**:
-• **Urban Areas:** Minimum **3-meter** riparian easement along all riverbanks and creeks.
-• **Agricultural Areas:** Minimum **20-meter** easement along rivers (such as the *Lasam River*, *Zinundungan River*, and tributary creeks).
-• **Forest & Mountain Areas:** Minimum **40-meter** conservation easement.
+By law, no permanent structures can be built within:
+• **3 meters** in urban areas
+• **20 meters** along agricultural / rural riverbanks (Lasam & Zinundungan rivers)
+• **40 meters** in forest areas
 
-⚠️ **Strict Legal Rule:** No permanent structure may be erected within these easements. They are reserved exclusively for public recreation, flood defense, and river maintenance. Building inside riverbeds or natural drainage corridors is illegal and will be summarily denied a building permit.`,
+These buffer zones are strictly protected for flood safety and river maintenance.`,
       suggestions: [
         'How does MGB rate flood susceptibility?',
-        'How to mitigate flood hazards for structures?',
-        'Can I build on agricultural land?',
+        'What are active fault line buffers?',
+        'Can I build on agricultural land in Lasam?',
       ],
     }
   }
@@ -263,15 +220,11 @@ Under **Presidential Decree No. 1067 (The Water Code of the Philippines, Article
   // 4. Flood Hazards & Elevation (MGB / LGU)
   if (q.includes('flood') || q.includes('baha') || q.includes('water level') || q.includes('drain')) {
     return {
-      text: `🌊 **MGB Flood Susceptibility & Recommended Mitigations:**
+      text: `🌊 **Flood Risk & Safety Guidelines (DENR-MGB):**
 
-DENR-Mines and Geosciences Bureau (MGB) classifies flood susceptibility into 4 tiers:
-• **Low Susceptibility:** Historical flood depths < 0.5m; duration < 1 day. Standard foundation design is sufficient.
-• **Moderate Susceptibility:** Flood depths 0.5m – 1.0m; flood duration 1–3 days. Minimum Finished Floor Elevation (**FFE**) must be raised **+0.50m** above the adjacent roadway or historical flood crest.
-• **High Susceptibility:** Flood depths 1.0m – 2.0m. Requires stilt/column foundation or elevated ground floor. Ground levels should not be used for primary sleeping quarters.
-• **Very High Susceptibility:** Flood depths > 2.0m. Highly hazardous; priority zone for floodway retention, agriculture, or elevated stilt structures.
-
-💡 *Lasam Tip:* Check our live LGU and MGB flood layers to view exact flood extent along the Lasam and Zinundungan basins.`,
+• **Low Flood (<0.5m):** Standard foundations are generally safe.
+• **Moderate Flood (0.5m–1.0m):** Raise your finished floor elevation at least **+0.50m** above the road or highest flood line.
+• **High / Very High (>1.0m):** Build on concrete stilts or elevated posts. Ground levels should not be used for sleeping quarters.`,
       suggestions: [
         'What are the river easement rules?',
         'What are active fault line buffers?',
@@ -290,12 +243,10 @@ DENR-Mines and Geosciences Bureau (MGB) classifies flood susceptibility into 4 t
     q.includes('tremor')
   ) {
     return {
-      text: `🏚️ **Active Fault Line Buffers & Seismic Guidelines (PHIVOLCS):**
+      text: `🏚️ **Active Fault Line Buffers (PHIVOLCS):**
 
-According to **PHIVOLCS** and the **National Structural Code of the Philippines (NSCP, 7th Ed.)**:
-1. **Mandatory 5-Meter Buffer:** A strictly non-buildable buffer zone of **at least 5 meters** on both sides of an active fault trace (total 10m strip) is required. No building permit may be approved directly over a known active ground rupture trace.
-2. **Seismic Zone 4:** The entire Province of Cagayan and Municipality of Lasam falls under **Seismic Zone 4 (Zone Factor Z = 0.40)**, requiring reinforced concrete detailing, ductile beam-column joints, and lateral tie reinforcement.
-3. **Soil Geotechnical Tests:** For structures 3 stories and above, a confirmatory geotechnical borehole investigation is strongly recommended to evaluate liquefaction potential in alluvial river deposits.`,
+• **5-Meter Buffer:** A strictly non-buildable buffer of **5 meters** on both sides of an active fault line (10m total) is required.
+• **Seismic Safety:** Lasam is in Seismic Zone 4, requiring reinforced concrete framing and ductile detailing.`,
       suggestions: [
         'What is liquefaction and where does it occur?',
         'How to check distance to active faults?',
@@ -379,22 +330,19 @@ Lasam's prime agricultural soils and alluvial terraces are highly fertile:
     q.includes('how to build')
   ) {
     return {
-      text: `📜 **Standard Building Permit Checklist for Lasam, Cagayan:**
+      text: `📜 **Building Permit Checklist for Lasam:**
 
-To secure a legal Building Permit from the **Lasam Municipal Engineering Office (Office of the Building Official)**, prepare:
-1. **Proof of Ownership:** Certified True Copy of TCT/OCT or Notarized Deed of Sale / Lease Agreement.
-2. **Barangay Clearance:** Clearance from the respective Barangay Captain confirming local site consent.
-3. **Locational / Zoning Clearance:** Issued by the **Lasam Municipal Planning & Development Office (MPDO)** verifying CLUP compliance.
-4. **Complete Architecture & Engineering Plans (5 sets):**
-   - Architectural, Structural, Electrical, Sanitary/Plumbing, and Mechanical plans signed & sealed by registered Philippine professionals.
-5. **Fire Safety Evaluation Clearance (FSEC):** From the **Bureau of Fire Protection (BFP Lasam)**.
-6. **DAR Conversion Clearance:** (Only if land is classified as Agricultural under the CLUP).
-
-💡 *Pro-tip:* Generate a **BUILD-SAFE Site Assessment Report** and attach it to your MPDO pre-consultation package!`,
+To apply at the **Lasam Municipal Engineering Office**, prepare:
+1. **Proof of Ownership:** Title (TCT/OCT) or notarized Deed of Sale
+2. **Barangay Clearance:** From your local Barangay Captain
+3. **Locational / Zoning Clearance:** From the Lasam MPDO
+4. **Building Plans (5 sets):** Signed & sealed by registered professionals
+5. **Fire Safety Clearance:** From BFP Lasam
+6. *(If agricultural land)* **DAR Conversion Clearance**`,
       suggestions: [
-        'Can I build on agricultural land?',
-        'What are the river easement rules?',
-        'How to interpret MGB flood hazard?',
+        'Can I build on agricultural land in Lasam?',
+        'What are the mandatory river easement setbacks?',
+        'How can I mitigate flood risk on my lot?',
       ],
     }
   }
@@ -409,16 +357,13 @@ To secure a legal Building Permit from the **Lasam Municipal Engineering Office 
     q.includes('sino ka')
   ) {
     return {
-      text: `👋 Hello! I am **BUILD-SAFE AI**, developed specifically for the **Municipality of Lasam, Cagayan**.
+      text: `👋 Hello! I am **BUILD-SAFE AI**, your planning assistant for Lasam, Cagayan.
 
-I combine local geospatial layers (CLUP 2020 zoning, DENR-MGB flood, PHIVOLCS fault lines, and DA farm registries) with Philippine building statutes (PD 1096, PD 1067, RA 8435) to give you instant, accurate property development answers.
-
-You can ask me about:
-• Zoning classification of any lot in Lasam
-• Flood, earthquake, and liquefaction mitigations
-• Minimum legal setbacks from rivers and fault lines
-• Recommended crops and farm lot logistics
-• Municipal permit procedures`,
+I can help you check:
+• **Zoning:** Is your lot residential, commercial, or agricultural?
+• **Hazards:** Flood depth, active fault distance, and river setbacks
+• **Permits:** Clearances needed from the Lasam MPDO and Engineering Office
+• **Farm Lots:** Suitable crops and agribusiness locations`,
       suggestions: [
         'Can I build on agricultural land in Lasam?',
         'What are the mandatory river easement setbacks?',
@@ -430,15 +375,12 @@ You can ask me about:
 
   // 11. Fallback with helpful direction
   return {
-    text: `I understand you're asking about **"${userInput}"**.
+    text: `I can help you evaluate properties and safety in Lasam!
 
-As the **BUILD-SAFE AI** decision support system for Lasam, I specialize in:
-1. **Zoning & Land Use (CLUP 2020):** Checking agricultural, residential, commercial, or forest status.
-2. **Hazard Screening:** DENR-MGB flood susceptibility, PHIVOLCS active fault distances, and river easements.
-3. **Permit Compliance:** DAR clearances, MPDO locational clearances, and building codes (PD 1096).
-4. **Farm Lot Logistics:** Recommended crops (palay, corn, root crops) and hauling routes.
-
-Could you specify what aspect of property planning or hazard mitigation you would like to explore?`,
+• **Zoning & Land Use:** Agricultural, residential, or commercial compliance (CLUP 2020)
+• **Hazards & Setbacks:** Flood risks, river easements (PD 1067), and fault lines
+• **Permits:** Locational clearances and building permits
+• **Farm Lots:** Crop recommendations and farming regulations`,
     suggestions: [
       'Can I build on agricultural land in Lasam?',
       'What are the mandatory river easement setbacks?',
