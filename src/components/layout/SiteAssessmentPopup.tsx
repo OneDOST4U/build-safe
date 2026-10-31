@@ -362,7 +362,7 @@ export function SiteAssessmentPopup({
 
             <div className="min-h-0 flex-1 space-y-3.5 overflow-y-auto p-5">
               <div className="flex items-center justify-between gap-1 text-[11px] text-slate-500">
-                <span>Supports Lasam, Lal-lo, and Northern Cagayan corridor.</span>
+                <span>Official municipal coverage for Lasam, Cagayan.</span>
                 {onOpenReliability && (
                   <button
                     type="button"

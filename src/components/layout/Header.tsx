@@ -98,7 +98,7 @@ export function Header({
             size="sm"
             onClick={onOpenReliability}
             className="h-8 gap-1.5 rounded-lg border-teal-200/80 bg-teal-50/50 text-teal-800 hover:bg-teal-100/70 font-medium text-xs shadow-xs"
-            title="Dataset Reliability, Provenance & Multi-LGU Coverage"
+            title="Dataset Reliability & Municipal Data Provenance"
           >
             <ShieldCheck className="h-3.5 w-3.5 text-teal-600" />
             <span className="hidden sm:inline">Data Reliability</span>

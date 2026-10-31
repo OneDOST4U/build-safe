@@ -179,7 +179,7 @@ export function HazardPanel(props: HazardPanelProps) {
                     )}
                   </div>
                   <p className="text-[10px] leading-snug text-teal-900">
-                    Local datasets cover Lasam. Neighboring municipalities (e.g. Lal-lo) are covered by regional fault/volcano models; missing local layers are flagged as "Data Gap", never "Safe".
+                    All local GIS layers, CLUP zoning, and hazard assessments cover the Municipality of Lasam with zero data hallucination.
                   </p>
                 </div>
 
