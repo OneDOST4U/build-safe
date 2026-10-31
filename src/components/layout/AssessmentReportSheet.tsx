@@ -68,12 +68,6 @@ export function AssessmentReportSheet({
         <p className="mt-0.5 text-[11px] font-bold tracking-wide text-slate-900 leading-tight sm:text-xs">
           {REPORT_HEADER.titleLine1}
         </p>
-        <p className="text-[8.5px] font-semibold leading-tight text-slate-800 sm:text-[9px]">
-          {REPORT_HEADER.titleLine2}
-        </p>
-        <p className="text-[8px] font-medium leading-tight text-slate-600 sm:text-[8.5px]">
-          {REPORT_HEADER.titleLine3}
-        </p>
       </header>
 
       {/* Body — map left, hazard tables right */}

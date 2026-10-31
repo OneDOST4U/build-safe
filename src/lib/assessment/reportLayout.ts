@@ -3,8 +3,6 @@ import { APP_BRAND } from '@/lib/constants'
 
 export const REPORT_HEADER = {
   titleLine1: APP_BRAND.name,
-  titleLine2: 'An AI-Assisted Multi-Hazard Site Intelligence and Decision Support System',
-  titleLine3: 'for Building Permits, Urban Planning, and Safer Property Development',
 } as const
 
 export const A4_LANDSCAPE_RATIO = 297 / 210
@@ -18,8 +16,8 @@ export const REPORT_PAGE = {
 
 export const REPORT_LAYOUT = {
   leftColRatio: 0.52,
-  /** Room for centered logo + report title lines */
-  headerMm: 20,
+  /** Room for centered logo + report title */
+  headerMm: 15,
   footerMm: 0,
   bodyGapMm: 0,
 } as const

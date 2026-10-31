@@ -269,7 +269,7 @@ function drawAssessmentPanel(
   })
 }
 
-/** Centered logo + BUILD-SAFE titles — compact layout matching 20mm header */
+/** Centered logo + BUILD-SAFE title — compact layout matching header */
 function drawReportHeader(pdf: jsPDF, x: number, y: number, w: number, logo: string | null) {
   const centerX = x + w / 2
 
@@ -278,18 +278,9 @@ function drawReportHeader(pdf: jsPDF, x: number, y: number, w: number, logo: str
   }
 
   pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(8.5)
+  pdf.setFontSize(9)
   pdf.setTextColor(15, 23, 42)
-  pdf.text(REPORT_HEADER.titleLine1, centerX, y + 12.5, { align: 'center' })
-
-  pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(6.5)
-  pdf.setTextColor(51, 65, 85)
-  pdf.text(REPORT_HEADER.titleLine2, centerX, y + 15.5, { align: 'center' })
-
-  pdf.setFontSize(6)
-  pdf.setTextColor(100, 116, 139)
-  pdf.text(REPORT_HEADER.titleLine3, centerX, y + 18, { align: 'center' })
+  pdf.text(REPORT_HEADER.titleLine1, centerX, y + 13, { align: 'center' })
 
   pdf.setDrawColor(226, 232, 240)
   pdf.setLineWidth(0.2)
