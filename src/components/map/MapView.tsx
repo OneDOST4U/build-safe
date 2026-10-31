@@ -1076,6 +1076,32 @@ export function MapView({
       ]
 
       const onWaterClick = (e: MapLayerMouseEvent) => {
+        // If user is placing a site pin, allow landing pin directly on water bodies
+        if (activeToolRef.current === 'place-site') {
+          const lng = e.lngLat.lng
+          const lat = e.lngLat.lat
+          const insideBoundary = isPointInsideLasam(lng, lat, boundaryRef.current ?? boundary)
+          if (!insideBoundary) {
+            const muniName = identifyMunicipality(lng, lat, boundaryRef.current ?? boundary)
+            new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
+              .setLngLat(e.lngLat)
+              .setHTML(
+                `<div style="font-family:system-ui,-apple-system,sans-serif;padding:2px 0;">
+                  <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
+                    Cannot Place Site Here (${muniName})
+                  </div>
+                  <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
+                    The proposed site must be located strictly within the official municipal boundary of Lasam, Cagayan.
+                  </div>
+                </div>`,
+              )
+              .addTo(map)
+            return
+          }
+          onSitePlaceRef.current([lng, lat])
+          return
+        }
+
         const feature = e.features?.[0]
         if (!feature?.properties) return
         const p = feature.properties
@@ -1155,7 +1181,7 @@ export function MapView({
           const className = String(p.class ?? 'water body')
 
           map.getCanvas().style.cursor =
-            activeToolRef.current === 'place-site' ? 'not-allowed' : 'pointer'
+            activeToolRef.current === 'place-site' ? 'crosshair' : 'pointer'
           setHoveredWater({
             name,
             waterway,
@@ -1174,7 +1200,7 @@ export function MapView({
           const className = String(p.class ?? 'water body')
 
           map.getCanvas().style.cursor =
-            activeToolRef.current === 'place-site' ? 'not-allowed' : 'pointer'
+            activeToolRef.current === 'place-site' ? 'crosshair' : 'pointer'
           setHoveredWater({
             name,
             waterway,
@@ -1199,7 +1225,7 @@ export function MapView({
         map.on('click', 'water', onWaterClick)
         map.on('mouseenter', 'water', (e: MapLayerMouseEvent) => {
           map.getCanvas().style.cursor =
-            activeToolRef.current === 'place-site' ? 'not-allowed' : 'pointer'
+            activeToolRef.current === 'place-site' ? 'crosshair' : 'pointer'
           setHoveredWater({
             name: 'Natural Water Body',
             waterway: 'water',
@@ -1864,25 +1890,7 @@ export function MapView({
           return
         }
 
-        const existingWaterLayers = [
-          'rivers-main',
-          'rivers-tributaries',
-          'riverbanks-fill',
-          'riverbanks-line',
-          'drainage',
-          'water',
-          'waterway',
-        ].filter((id) => map.getLayer(id))
-
-        if (existingWaterLayers.length > 0) {
-          const waterFeats = map.queryRenderedFeatures(e.point, {
-            layers: existingWaterLayers,
-          })
-          if (waterFeats.length > 0) {
-            // Click is on water body; onWaterClick will display the water body warning popup
-            return
-          }
-        }
+        // Water bodies are allowed to be clicked and assessed
 
         onSitePlace([lng, lat])
         return
@@ -2043,7 +2051,7 @@ export function MapView({
           point: { x: e.point.x, y: e.point.y },
         })
 
-        if (!insideLasam || isWater) {
+        if (!insideLasam) {
           map.getCanvas().style.cursor = 'not-allowed'
         } else {
           map.getCanvas().style.cursor = 'crosshair'
@@ -2167,8 +2175,11 @@ export function MapView({
                 </span>
               ) : hoverSiteCoords.isWaterBody ? (
                 <span className="flex items-center gap-1.5">
-                  <span>🌊</span>
-                  <span>Water Body — Prohibited (PD 1067)</span>
+                  <span className="inline-block h-2 w-2 rounded-full bg-red-400 animate-ping" />
+                  <span>Left-Click to Land Pin</span>
+                  <span className="ml-1 inline-flex items-center gap-1 rounded bg-red-800/80 px-1.5 py-0.5 text-[10px] font-bold text-red-100">
+                    <span>🌊 Water Body (PD 1067)</span>
+                  </span>
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5">
@@ -2193,7 +2204,7 @@ export function MapView({
                 height="46"
                 draggable={false}
                 className={`drop-shadow-xl transition-all ${
-                  !hoverSiteCoords.isInsideLasam || hoverSiteCoords.isWaterBody
+                  !hoverSiteCoords.isInsideLasam
                     ? 'grayscale contrast-125 opacity-70'
                     : 'animate-bounce'
                 }`}
@@ -2235,13 +2246,11 @@ export function MapView({
             </span>
           </div>
         ) : hoverSiteCoords.isWaterBody ? (
-          <div className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-red-300 bg-red-950/95 px-4 py-2 text-xs font-semibold text-white shadow-2xl backdrop-blur-sm animate-pulse">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white font-bold text-xs">
-              🚫
-            </span>
-            <span>Water Body: {hoverSiteCoords.waterBodyName || 'Active Waterway'} — Cannot build here (PD 1067)</span>
-            <span className="rounded bg-red-800 px-1.5 py-0.5 text-[10px] font-bold text-red-200">
-              Prohibited
+          <div className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-sky-300 bg-sky-950/90 px-3.5 py-1.5 text-xs font-medium text-white shadow-xl backdrop-blur-sm">
+            <MapPin className="h-3.5 w-3.5 text-sky-400 animate-bounce" />
+            <span>Click map to place site in {hoverSiteCoords.waterBodyName || 'Water Body'} · {hoverSiteCoords.lat.toFixed(5)}° N, {hoverSiteCoords.lng.toFixed(5)}° E</span>
+            <span className="rounded bg-red-700 px-1.5 py-0.5 text-[10px] font-bold text-white">
+              Water Body (PD 1067)
             </span>
           </div>
         ) : (
