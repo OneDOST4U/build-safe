@@ -305,10 +305,17 @@ export default function App() {
 
   const handleMinimizeReport = useCallback(() => {
     setReportOpen(false)
+    setAssessPanelOpen(true)
   }, [])
 
   const handleReopenReport = useCallback(() => {
     setReportOpen(true)
+    setAssessPanelOpen(false)
+  }, [])
+
+  const handleOpenAssessmentPopup = useCallback(() => {
+    setAssessPanelOpen(true)
+    setReportOpen(false)
   }, [])
 
   const handleClearHighlightedFacility = useCallback(() => {
@@ -566,7 +573,7 @@ export default function App() {
             hasAssessmentResult={Boolean(assessmentResult)}
             reportOpen={reportOpen}
             hazardPanelOpen={hazardPanelOpen}
-            onReopenReport={handleReopenReport}
+            onReopenReport={handleOpenAssessmentPopup}
             highlightedFacility={highlightedFacility}
             onClearHighlightedFacility={handleClearHighlightedFacility}
             layerVisibility={layerVisibility}
@@ -637,6 +644,7 @@ export default function App() {
             onCancelPickOnMap={handleCancelPickOnMap}
             onRepickSite={() => setPendingSiteCoords(null)}
             onOpenReliability={() => setReliabilityModalOpen(true)}
+            onOpenReport={handleReopenReport}
             isChatbotOpen={chatbotOpen}
           />
           {reportOpen && (
@@ -661,15 +669,21 @@ export default function App() {
               <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
               <button
                 type="button"
-                onClick={handleReopenReport}
+                onClick={handleOpenAssessmentPopup}
                 className="flex items-center gap-1.5 text-xs font-semibold hover:text-emerald-300 transition-colors cursor-pointer"
-                title="Reopen Site Assessment Report"
+                title="Open Live Site Assessment Popup"
               >
                 <FileText className="h-3.5 w-3.5 text-emerald-400" />
-                <span>Activate Site Assessment</span>
-                <span className="rounded bg-emerald-700/60 px-1.5 py-0.2 text-[10px] text-emerald-200">
-                  Open Report
-                </span>
+                <span>Live Assessment</span>
+              </button>
+              <div className="h-3.5 w-px bg-slate-700 mx-0.5" />
+              <button
+                type="button"
+                onClick={handleReopenReport}
+                className="rounded bg-emerald-700/60 hover:bg-emerald-600 px-2 py-0.5 text-[10.5px] font-semibold text-emerald-200 transition-colors cursor-pointer"
+                title="Open Full A4 Report Sheet"
+              >
+                Open Full Report
               </button>
               <div className="h-3.5 w-px bg-slate-700 mx-0.5" />
               <button

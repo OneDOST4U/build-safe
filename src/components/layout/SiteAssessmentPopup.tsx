@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { AlertTriangle, Ban, ClipboardList, Crosshair, MapPin, RotateCcw, ShieldCheck, X } from 'lucide-react'
+import { AlertTriangle, Ban, ClipboardList, Crosshair, FileText, MapPin, RotateCcw, ShieldCheck, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { AssessmentResultsCard, type HighlightedFacilityInfo } from '@/components/layout/AssessmentResultsCard'
@@ -49,6 +49,7 @@ export interface SiteAssessmentPopupProps {
   onCancelPickOnMap?: () => void
   onRepickSite?: () => void
   onOpenReliability?: () => void
+  onOpenReport?: () => void
   isChatbotOpen?: boolean
 }
 
@@ -77,6 +78,7 @@ export function SiteAssessmentPopup({
   onCancelPickOnMap,
   onRepickSite,
   onOpenReliability,
+  onOpenReport,
   isChatbotOpen = false,
 }: SiteAssessmentPopupProps) {
   const isPendingInsideLasam = pendingSiteCoords
@@ -570,11 +572,25 @@ export function SiteAssessmentPopup({
 
               {/* Action Buttons */}
               <div className="pt-2 space-y-2">
+                {assessmentResult && onOpenReport && (
+                  <Button
+                    type="button"
+                    onClick={onOpenReport}
+                    className="w-full h-11 rounded-2xl gap-2 font-bold shadow-md transition-all text-xs cursor-pointer bg-gradient-to-r from-teal-700 via-emerald-700 to-teal-800 hover:from-teal-800 hover:to-emerald-800 text-white shadow-teal-900/20"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>View Full A4 Assessment Report</span>
+                  </Button>
+                )}
+
                 <Button
                   type="button"
                   size="lg"
+                  variant={assessmentResult ? 'outline' : 'default'}
                   className={`w-full h-11 rounded-2xl gap-2 font-bold shadow-md transition-all text-xs cursor-pointer ${
-                    assessCategory === 'farm_lot'
+                    assessmentResult
+                      ? 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-2xs'
+                      : assessCategory === 'farm_lot'
                       ? 'bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-800 text-white shadow-emerald-900/20'
                       : 'bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 hover:bg-slate-800 text-white shadow-slate-900/25'
                   }`}
@@ -582,17 +598,11 @@ export function SiteAssessmentPopup({
                 >
                   <MapPin className="h-4 w-4" />
                   <span>
-
                     {hasCoordinates
-
                       ? assessCategory === 'farm_lot' ? 'Re-pick Farm Lot on Map' : 'Re-pick Point on Map'
-
                       : assessCategory === 'farm_lot' ? 'Pick Farm Lot Directly on Map' : 'Pick Point Directly on Map'}
-
                   </span>
                 </Button>
-
-
               </div>
 
               {assessmentResult && (

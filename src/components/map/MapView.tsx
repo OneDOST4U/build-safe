@@ -1582,8 +1582,11 @@ export function MapView({
         if (hasAssessmentResult) {
           el.onclick = (e) => {
             e.stopPropagation()
+            e.preventDefault()
             onReopenReportRef.current?.()
           }
+          el.onmousedown = (e) => e.stopPropagation()
+          el.ontouchstart = (e) => e.stopPropagation()
         }
         siteMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'bottom', offset: markerOffset })
           .setLngLat(siteCoords)
@@ -1592,14 +1595,21 @@ export function MapView({
         const el = siteMarkerRef.current.getElement()
         el.style.pointerEvents = hasAssessmentResult ? 'auto' : 'none'
         el.style.cursor = hasAssessmentResult ? 'pointer' : 'default'
-        el.title = hasAssessmentResult ? 'Click to reopen Site Assessment Report' : ''
+        el.title = hasAssessmentResult ? 'Click to open Live Site Assessment' : ''
         el.innerHTML = markerHtml
-        el.onclick = hasAssessmentResult
-          ? (e) => {
-              e.stopPropagation()
-              onReopenReportRef.current?.()
-            }
-          : null
+        if (hasAssessmentResult) {
+          el.onclick = (e) => {
+            e.stopPropagation()
+            e.preventDefault()
+            onReopenReportRef.current?.()
+          }
+          el.onmousedown = (e) => e.stopPropagation()
+          el.ontouchstart = (e) => e.stopPropagation()
+        } else {
+          el.onclick = null
+          el.onmousedown = null
+          el.ontouchstart = null
+        }
         siteMarkerRef.current.setOffset(markerOffset)
         siteMarkerRef.current.setLngLat(siteCoords)
       }
