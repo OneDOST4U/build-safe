@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import {
-  AudioLines,
-  ChevronDown,
   FileText,
   MessageSquare,
   MoreVertical,
@@ -79,9 +77,6 @@ export function BuildSafeChatbot({
   const [isTyping, setIsTyping] = useState(false)
   const [contextAttached, setContextAttached] = useState(true)
   const [showMenu, setShowMenu] = useState(false)
-  const [showModelMenu, setShowModelMenu] = useState(false)
-  const [selectedModel, setSelectedModel] = useState('Auto')
-  const [showPlusMenu, setShowPlusMenu] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -385,138 +380,27 @@ export function BuildSafeChatbot({
               )}
 
               {/* Input Row */}
-              <div className="flex items-center gap-1.5">
-                {/* Plus Button */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowPlusMenu((v) => !v)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
-                    title="Attach options"
-                  >
-                    <Plus className="h-4.5 w-4.5" />
-                  </button>
-
-                  {showPlusMenu && (
-                    <div className="absolute bottom-full left-0 mb-1 w-52 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl text-xs z-50 animate-in fade-in zoom-in-95">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setContextAttached(true)
-                          setShowPlusMenu(false)
-                        }}
-                        className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 cursor-pointer"
-                      >
-                        <ShieldCheck className="h-3.5 w-3.5 text-teal-600" />
-                        <span>Attach BUILD-SAFE Context</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleSendMessage('Tell me about the Lasam CLUP zoning map layers')
-                          setShowPlusMenu(false)
-                        }}
-                        className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 cursor-pointer"
-                      >
-                        <FileText className="h-3.5 w-3.5 text-sky-600" />
-                        <span>Query CLUP Map Layers</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-
+              <div className="flex items-center gap-2">
                 {/* Input Text Field */}
                 <input
                   ref={inputRef}
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder="Type @ to add tabs"
-                  className="flex-1 bg-transparent text-[13.5px] text-slate-800 placeholder:text-slate-400 focus:outline-none px-1 py-1"
+                  placeholder="Ask BUILD-SAFE anything..."
+                  className="flex-1 bg-transparent text-[13.5px] text-slate-800 placeholder:text-slate-400 focus:outline-none px-2 py-1"
                 />
 
-                {/* Model Selector Dropdown Badge */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowModelMenu((v) => !v)}
-                    className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-                    title="Select AI Model"
-                  >
-                    <span>{selectedModel}</span>
-                    <ChevronDown className="h-3 w-3 text-slate-500" />
-                  </button>
-
-                  {showModelMenu && (
-                    <div className="absolute bottom-full right-0 mb-1 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-lg text-xs z-50 animate-in fade-in zoom-in-95">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedModel('Auto')
-                          setShowModelMenu(false)
-                        }}
-                        className={`w-full text-left px-2.5 py-1.5 rounded-lg cursor-pointer ${
-                          selectedModel === 'Auto'
-                            ? 'bg-slate-100 font-semibold text-slate-900'
-                            : 'text-slate-600 hover:bg-slate-50'
-                        }`}
-                      >
-                        Auto (Gemini 2.5 Flash)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedModel('CLUP Expert')
-                          setShowModelMenu(false)
-                        }}
-                        className={`w-full text-left px-2.5 py-1.5 rounded-lg cursor-pointer ${
-                          selectedModel === 'CLUP Expert'
-                            ? 'bg-slate-100 font-semibold text-slate-900'
-                            : 'text-slate-600 hover:bg-slate-50'
-                        }`}
-                      >
-                        Lasam CLUP Expert
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedModel('MGB Hazard')
-                          setShowModelMenu(false)
-                        }}
-                        className={`w-full text-left px-2.5 py-1.5 rounded-lg cursor-pointer ${
-                          selectedModel === 'MGB Hazard'
-                            ? 'bg-slate-100 font-semibold text-slate-900'
-                            : 'text-slate-600 hover:bg-slate-50'
-                        }`}
-                      >
-                        MGB Hazard AI
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Right Action Button (Waveform audio icon when empty, Send icon when typing) */}
-                {inputText.trim() ? (
-                  <button
-                    type="submit"
-                    disabled={isTyping}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer shrink-0 disabled:opacity-40"
-                    title="Send message"
-                  >
-                    <Send className="h-3.5 w-3.5" />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      inputRef.current?.focus()
-                    }}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
-                    title="Voice input / Audio mode"
-                  >
-                    <AudioLines className="h-4 w-4" />
-                  </button>
-                )}
+                {/* Send Button */}
+                <button
+                  type="submit"
+                  disabled={!inputText.trim() || isTyping}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer shrink-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Send message"
+                  aria-label="Send message"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                </button>
               </div>
             </form>
           </div>
