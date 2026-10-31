@@ -19,7 +19,6 @@
     "fetch:flood": "node scripts/fetch-flood-mgb.mjs",
     "convert:hazards": "node scripts/convert-hazard-shapefiles.mjs",
     "convert:agri": "node scripts/convert-agri-shapefiles.mjs",
-    "harmonize:layers": "python scripts/harmonize_layers.py",
     "enrich:buildings": "node scripts/enrich-buildings.mjs",
     "process:terrain": "python scripts/hydrology/condition_dem.py && python scripts/hydrology/export_web_assets.py",
     "prepare:terrain": "npm run fetch:dem && npm run fetch:hydrology && npm run process:terrain && npm run enrich:buildings"

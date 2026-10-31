@@ -178,7 +178,6 @@ SUBSYSTEMS = [
             "scripts/generate-buildings.mjs",
             "scripts/convert-agri-shapefiles.mjs",
             "scripts/convert-hazard-shapefiles.mjs",
-            "scripts/harmonize_layers.py",
             "scripts/analyze-hazard-layers.mjs",
             "scripts/hydrology/condition_dem.py",
             "scripts/hydrology/export_web_assets.py",
