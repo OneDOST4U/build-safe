@@ -354,26 +354,34 @@ export function SiteAssessmentPopup({
             {/* Top gradient highlight strip */}
             <div className="h-1.5 w-full bg-gradient-to-r from-teal-600 via-emerald-600 to-sky-600" />
 
-            {/* Header */}
-            <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 bg-gradient-to-b from-slate-50/70 to-white">
-              <div className="flex items-center gap-3">
-                <BrandLogo size="md" className="h-10 w-10 shrink-0 drop-shadow-sm" />
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <h3 id="site-assessment-title" className="text-sm font-bold text-slate-900 tracking-tight">
-                      {assessCategory === 'farm_lot'
-                        ? 'Proposed Farm Lot Assessment'
-                        : 'Proposed Building Site Assessment'}
-                    </h3>
-                  </div>
-                  <p className="text-[11px] text-slate-500">
-                    {assessCategory === 'farm_lot'
-                      ? 'CLUP Agricultural zoning & multi-hazard crop screening'
-                      : 'Multi-hazard screening & CLUP 2020 zoning clearance'}
-                  </p>
-                </div>
+            {/* Header: Centered Logo and BUILD-SAFE Title */}
+            <div className="relative flex shrink-0 flex-col items-center justify-center border-b border-slate-100 px-6 pt-5 pb-3.5 bg-gradient-to-b from-slate-50/80 to-white text-center">
+              {/* Close button at top right */}
+              <button
+                type="button"
+                className="absolute right-4 top-4 h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                onClick={() => onOpenChange(false)}
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              {/* Top Center Logo */}
+              <div className="mb-2 flex items-center justify-center">
+                <BrandLogo size="lg" className="h-12 w-12 object-contain drop-shadow-sm select-none" />
               </div>
-              <div className="flex items-center gap-1.5">
+
+              {/* Title: BUILD-SAFE only */}
+              <h3 id="site-assessment-title" className="text-base font-extrabold tracking-tight text-slate-900">
+                BUILD-SAFE
+              </h3>
+
+              {/* Badges / Links */}
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 text-[10.5px] font-bold text-emerald-800">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Lasam LGU
+                </span>
                 {onOpenReliability && (
                   <button
                     type="button"
@@ -381,25 +389,13 @@ export function SiteAssessmentPopup({
                       onOpenChange(false)
                       onOpenReliability()
                     }}
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700 hover:text-teal-900 hover:underline cursor-pointer mr-1"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700 hover:text-teal-900 hover:underline cursor-pointer"
                     title="View data reliability & coverage details"
                   >
                     <ShieldCheck className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Data Info</span>
+                    <span>Data Info</span>
                   </button>
                 )}
-                <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Lasam LGU
-                </span>
-                <button
-                  type="button"
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                  onClick={() => onOpenChange(false)}
-                  aria-label="Close"
-                >
-                  <X className="h-4 w-4" />
-                </button>
               </div>
             </div>
 
