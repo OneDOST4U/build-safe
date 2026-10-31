@@ -164,7 +164,7 @@ export function BuildSafeChatbot({
     <>
       {/* Floating Action Button (Visible when sidebar is closed) */}
       {!hideFloatingButton && !isOpen && (
-        <div className="fixed bottom-5 right-5 z-[70] flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-300">
+        <div className="fixed bottom-4 right-14 sm:right-16 z-[70] flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-300">
           <button
             type="button"
             onClick={() => setIsOpen(true)}
