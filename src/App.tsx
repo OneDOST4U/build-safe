@@ -395,9 +395,20 @@ export default function App() {
         luLabel.includes('creek') ||
         luLabel.includes('water')
 
+      const isForest =
+        luClass === 'forest' ||
+        luLabel.includes('forest')
+
       if (isWat) {
         setAssessError(
           'Cannot assess site: Establishing building structures or farm lots inside water bodies is strictly prohibited under Presidential Decree No. 1067.',
+        )
+        return
+      }
+
+      if (isForest) {
+        setAssessError(
+          'Cannot assess site: Building construction and agricultural clearing in Forest Conservation zones are strictly prohibited under Lasam CLUP and PD 705.',
         )
         return
       }
@@ -538,9 +549,22 @@ export default function App() {
         luLabel.includes('creek') ||
         luLabel.includes('water')
 
+      const isForest =
+        luClass === 'forest' ||
+        luLabel.includes('forest')
+
       if (isWat) {
         setAssessError(
           'Cannot confirm site: Establishing building structures or farm lots inside water bodies is strictly prohibited under Presidential Decree No. 1067.',
+        )
+        setAssessPanelOpen(true)
+        setActiveTool('pan')
+        return
+      }
+
+      if (isForest) {
+        setAssessError(
+          'Cannot confirm site: Building construction and agricultural clearing in Forest Conservation zones are strictly prohibited under Lasam CLUP and PD 705.',
         )
         setAssessPanelOpen(true)
         setActiveTool('pan')

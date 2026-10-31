@@ -42,7 +42,7 @@ import {
 } from '@/lib/map/hoverLegend'
 import { MapPin } from 'lucide-react'
 import { identifyMunicipality, isPointInsideLasam } from '@/lib/assessment/coverage'
-import { getLandUseAtPoint } from '@/lib/simulation/lguLayerQuery'
+import { getLandUseAtPoint, formatLandUseClass } from '@/lib/simulation/lguLayerQuery'
 import { checkWaterBodyProximity } from '@/lib/assessment/waterBody'
 import { MapLegend } from '@/components/map/MapLegend'
 import { TerrainInfoBar } from '@/components/map/TerrainInfoBar'
@@ -917,8 +917,10 @@ export function MapView({
           const feature = e.features?.[0]
           if (!feature?.properties) return
           const p = feature.properties
-          const label = String(p.land_use_label ?? 'Land Use')
-          const remarks = p.remarks ? String(p.remarks) : ''
+          const rawLabel = String(p.land_use_label ?? 'Land Use').trim()
+          const label = rawLabel === 'Forest' ? 'Forest Area' : rawLabel
+          const rawRemarks = p.remarks ? String(p.remarks).trim() : ''
+          const remarks = rawRemarks && rawRemarks.toUpperCase() !== 'UNTOUCHED' ? rawRemarks : ''
           new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
             .setLngLat(e.lngLat)
             .setHTML(
@@ -1748,7 +1750,8 @@ export function MapView({
           const isInst = c === 'institutional' || l.includes('institutional') || r.includes('school') || r.includes('afp camp')
           const isWat = c === 'water' || l.includes('river') || l.includes('water')
           const isAgri = c === 'agriculture' || c === 'crops' || l.includes('agri') || l.includes('crop')
-          if (isParks || isCem || isInst || isWat) return true
+          const isForest = c === 'forest' || l.includes('forest')
+          if (isParks || isCem || isInst || isWat || isForest) return true
           if (category === 'building' && !isRes && !isComm && !isAgri) return true
           if (category === 'farm_lot' && !isAgri) return true
           return false
@@ -1899,7 +1902,8 @@ export function MapView({
           const isInst = c === 'institutional' || l.includes('institutional') || r.includes('school') || r.includes('afp camp')
           const isWat = c === 'water' || l.includes('river') || l.includes('water')
           const isAgri = c === 'agriculture' || c === 'crops' || l.includes('agri') || l.includes('crop')
-          if (isParks || isCem || isInst || isWat) return true
+          const isForest = c === 'forest' || l.includes('forest')
+          if (isParks || isCem || isInst || isWat || isForest) return true
           if (category === 'building' && !isRes && !isComm && !isAgri) return true
           if (category === 'farm_lot' && !isAgri) return true
           return false
@@ -2206,6 +2210,7 @@ export function MapView({
             const isRes = luClass === 'residential' || luClass === 'socialized_housing' || luLabel.includes('residential') || luLabel.includes('socialized housing')
             const isComm = luClass === 'commercial' || luLabel.includes('commercial')
             const isAgri = luClass === 'agriculture' || luClass === 'crops' || luLabel.includes('agri') || luLabel.includes('crop')
+            const isForest = luClass === 'forest' || luLabel.includes('forest')
 
             if (isWat) {
               new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
@@ -2220,6 +2225,26 @@ export function MapView({
                     </div>
                     <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
                       Parcel is designated as <strong>Rivers & Water Bodies</strong> under Lasam CLUP (2020). Constructing building structures and establishing farm lots in water bodies is strictly prohibited under Presidential Decree No. 1067.
+                    </div>
+                  </div>`,
+                )
+                .addTo(map)
+              return
+            }
+
+            if (isForest) {
+              new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
+                .setLngLat(e.lngLat)
+                .setHTML(
+                  `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
+                    <div style="background:#dc2626;color:#ffffff;padding:5px 8px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                      <span>🚫 Forest Area — Prohibited</span>
+                    </div>
+                    <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
+                      Cannot Build or Farm Here (Forest Area)
+                    </div>
+                    <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
+                      Parcel is designated as <strong>Forest / Watershed Conservation</strong> under Lasam CLUP (2020). Building construction and commercial agricultural clearing in forest protection zones are strictly prohibited under Presidential Decree No. 705.
                     </div>
                   </div>`,
                 )
@@ -2268,7 +2293,9 @@ export function MapView({
             }
 
             if (isInst) {
-              const name = luFeat.properties?.remarks || luFeat.properties?.land_use_label || 'Institutional Zone'
+              const rawRemarks = String(luFeat.properties?.remarks ?? '').trim()
+              const validRemarks = rawRemarks.toLowerCase() !== 'untouched' ? rawRemarks : ''
+              const name = luFeat.properties?.land_use_label || validRemarks || 'Institutional Zone'
               new maplibregl.Popup({
                 closeButton: true,
                 maxWidth: '300px',
@@ -2293,7 +2320,7 @@ export function MapView({
             }
 
             if (category === 'building' && !isRes && !isComm && !isAgri) {
-              const zoneName = luFeat.properties?.land_use_label || luClass || 'Non-Residential / Non-Commercial'
+              const zoneName = isForest ? 'Forest Area' : (luFeat.properties?.land_use_label || luClass || 'Non-Residential / Non-Commercial')
               new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
                 .setLngLat(e.lngLat)
                 .setHTML(
@@ -2314,7 +2341,7 @@ export function MapView({
             }
 
             if (category === 'farm_lot' && !isAgri) {
-              const zoneName = luFeat.properties?.land_use_label || luClass || 'Non-Agricultural Land'
+              const zoneName = isForest ? 'Forest Area' : (luFeat.properties?.land_use_label || luClass || 'Non-Agricultural Land')
               new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
                 .setLngLat(e.lngLat)
                 .setHTML(
@@ -2539,22 +2566,34 @@ export function MapView({
         let isRes = false
         let isComm = false
         let isAgriZone = false
+        let isForest = false
         let zoneLabel = ''
 
         if (landUse) {
           const luFeat = getLandUseAtPoint([lng, lat], landUse)
           if (luFeat) {
             const luClass = String(luFeat.properties?.land_use_class ?? '').toLowerCase().trim()
-            const luLabel = String(luFeat.properties?.land_use_label ?? '').toLowerCase().trim()
-            const luRemarks = String(luFeat.properties?.remarks ?? '').toLowerCase().trim()
-            zoneLabel = luFeat.properties?.remarks || luFeat.properties?.land_use_label || luClass
+            const luLabel = String(luFeat.properties?.land_use_label ?? '').trim()
+            const luRemarks = String(luFeat.properties?.remarks ?? '').trim()
+            const validRemarks = luRemarks.toUpperCase() !== 'UNTOUCHED' ? luRemarks : ''
 
-            isParks = luClass === 'parks' || luLabel.includes('parks') || luLabel.includes('recreation')
-            isCemetery = luClass === 'cemetery' || luLabel.includes('cemetery') || luRemarks.includes('cemetery') || luRemarks.includes('memorial')
-            isInstitutional = luClass === 'institutional' || luLabel.includes('institutional') || luRemarks.includes('school') || luRemarks.includes('afp camp')
-            isRes = luClass === 'residential' || luClass === 'socialized_housing' || luLabel.includes('residential') || luLabel.includes('socialized housing')
-            isComm = luClass === 'commercial' || luLabel.includes('commercial')
-            isAgriZone = luClass === 'agriculture' || luClass === 'crops' || luLabel.includes('agri') || luLabel.includes('crop')
+            isParks = luClass === 'parks' || luLabel.toLowerCase().includes('parks') || luLabel.toLowerCase().includes('recreation')
+            isCemetery = luClass === 'cemetery' || luLabel.toLowerCase().includes('cemetery') || luRemarks.toLowerCase().includes('cemetery') || luRemarks.toLowerCase().includes('memorial')
+            isInstitutional = luClass === 'institutional' || luLabel.toLowerCase().includes('institutional') || luRemarks.toLowerCase().includes('school') || luRemarks.toLowerCase().includes('afp camp')
+            isRes = luClass === 'residential' || luClass === 'socialized_housing' || luLabel.toLowerCase().includes('residential') || luLabel.toLowerCase().includes('socialized housing')
+            isComm = luClass === 'commercial' || luLabel.toLowerCase().includes('commercial')
+            isAgriZone = luClass === 'agriculture' || luClass === 'crops' || luLabel.toLowerCase().includes('agri') || luLabel.toLowerCase().includes('crop')
+            isForest = luClass === 'forest' || luLabel.toLowerCase().includes('forest')
+
+            if (isForest) {
+              zoneLabel = 'Forest Area'
+            } else if (luLabel) {
+              zoneLabel = luLabel
+            } else if (validRemarks) {
+              zoneLabel = validRemarks
+            } else if (luClass) {
+              zoneLabel = formatLandUseClass(luClass as Parameters<typeof formatLandUseClass>[0])
+            }
           }
         }
 
@@ -2608,6 +2647,9 @@ export function MapView({
         } else if (isWater) {
           isProhibited = true
           prohibitedReason = waterName || 'Water Body (PD 1067)'
+        } else if (isForest) {
+          isProhibited = true
+          prohibitedReason = 'Forest Area'
         } else if (isParks) {
           isProhibited = true
           prohibitedReason = 'Parks & Recreation'

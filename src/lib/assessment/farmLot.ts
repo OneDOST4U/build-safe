@@ -164,6 +164,9 @@ export function assessFarmLot(
     luClass === 'crops' ||
     luLabel.includes('agri') ||
     luLabel.includes('crop')
+  const isForestZone =
+    luClass === 'forest' ||
+    luLabel.includes('forest')
 
   // 5. Query Water Bodies & Statutory Agricultural Riparian Easement (20m under PD 1067)
   const waterCheck = checkWaterBodyProximity(coords, {
@@ -182,6 +185,9 @@ export function assessFarmLot(
   if (waterCheck.isWaterBody || isWaterLandUse) {
     suitabilityLevel = 'HIGH_RISK'
     floodEvaluation = `🚫 Active Water Channel: Farm lot falls directly inside ${waterCheck.nearestWaterBodyName || 'water body'}. Establishing farm lots inside water bodies is strictly prohibited under PD 1067.`
+  } else if (isForestZone) {
+    suitabilityLevel = 'HIGH_RISK'
+    floodEvaluation = '🚫 Forest Area: Parcel is designated as Forest / Watershed Conservation under Lasam CLUP (2020). Agricultural clearing and crop cultivation are strictly prohibited in forest preservation zones under PD 705.'
   } else if (isInstitutionalZone) {
     suitabilityLevel = 'HIGH_RISK'
     floodEvaluation = '🚫 Institutional Zone: Parcel is designated for public, educational, and government facilities under Lasam CLUP (2020). Agricultural farm lots are strictly prohibited.'

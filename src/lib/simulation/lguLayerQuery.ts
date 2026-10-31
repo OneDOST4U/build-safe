@@ -105,7 +105,7 @@ export function getLandUseAtPoint(
 export function formatLandUseClass(landUseClass: LandUseClass | undefined): string {
   switch (landUseClass) {
     case 'forest':
-      return 'Forest'
+      return 'Forest Area'
     case 'residential':
       return 'Residential'
     case 'socialized_housing':

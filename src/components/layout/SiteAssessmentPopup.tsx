@@ -137,6 +137,10 @@ export function SiteAssessmentPopup({
     pendingRemarks.includes('school') ||
     pendingRemarks.includes('afp camp')
 
+  const isPendingForest =
+    pendingLandUseClass === 'forest' ||
+    pendingLandUseLabel.toLowerCase().includes('forest')
+
   const isPendingWaterBody = Boolean(waterBodyCheck?.isWaterBody)
 
   const isPendingAgri =
@@ -154,11 +158,13 @@ export function SiteAssessmentPopup({
     !isPendingParks &&
     !isPendingCemetery &&
     !isPendingInstitutional &&
-    !isPendingWaterBody
+    !isPendingWaterBody &&
+    !isPendingForest
 
   const isPendingProhibited =
     !isPendingInsideLasam ||
     isPendingWaterBody ||
+    isPendingForest ||
     isPendingParks ||
     isPendingCemetery ||
     isPendingInstitutional ||
@@ -170,6 +176,8 @@ export function SiteAssessmentPopup({
     confirmDisabledLabel = 'Disabled (Outside)'
   } else if (isPendingWaterBody) {
     confirmDisabledLabel = 'Disabled (Water Body)'
+  } else if (isPendingForest) {
+    confirmDisabledLabel = 'Disabled (Forest Area)'
   } else if (isPendingParks) {
     confirmDisabledLabel = 'Disabled (Parks & Rec)'
   } else if (isPendingCemetery) {
@@ -354,6 +362,19 @@ export function SiteAssessmentPopup({
               </div>
             )}
 
+            {/* Prohibited Forest Conservation Zone Alert */}
+            {isPendingForest && !isPendingWaterBody && (
+              <div className="rounded-lg border border-emerald-800 bg-emerald-950/10 p-2.5 text-xs text-emerald-950">
+                <div className="flex items-center gap-1.5 font-bold text-emerald-800">
+                  <Ban className="h-4 w-4 shrink-0 text-red-600" />
+                  <span>Forest Area — Development Prohibited</span>
+                </div>
+                <p className="mt-1 text-[10.5px] leading-relaxed text-emerald-900">
+                  Parcel is designated as <strong>Forest / Watershed Conservation</strong> under Lasam CLUP (2020). Building construction and agricultural clearing are strictly prohibited in forest preservation zones under PD 705 and municipal zoning ordinances.
+                </p>
+              </div>
+            )}
+
             {/* Prohibited Water Body Warning Alert */}
             {isPendingWaterBody && (
               <div className="rounded-lg border border-red-300 bg-red-50 p-2.5 text-xs text-red-950">
@@ -381,7 +402,7 @@ export function SiteAssessmentPopup({
             )}
 
             {/* Building Prohibited Alert */}
-            {assessCategory === 'building' && !isBuildingAllowed && !isPendingParks && !isPendingCemetery && !isPendingInstitutional && !isPendingWaterBody && (
+            {assessCategory === 'building' && !isBuildingAllowed && !isPendingParks && !isPendingCemetery && !isPendingInstitutional && !isPendingForest && !isPendingWaterBody && (
               <div className="rounded-lg border border-red-300 bg-red-50 p-2.5 text-xs text-red-950">
                 <div className="flex items-center gap-1.5 font-bold text-red-700">
                   <Ban className="h-4 w-4 shrink-0" />
@@ -394,7 +415,7 @@ export function SiteAssessmentPopup({
             )}
 
             {/* Building Non-Conforming in Agricultural Land Alert */}
-            {assessCategory === 'building' && isPendingAgri && !isBuildingConforming && !isPendingParks && !isPendingCemetery && !isPendingInstitutional && !isPendingWaterBody && (
+            {assessCategory === 'building' && isPendingAgri && !isBuildingConforming && !isPendingParks && !isPendingCemetery && !isPendingInstitutional && !isPendingForest && !isPendingWaterBody && (
               <div className="rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-950">
                 <div className="flex items-center gap-1.5 font-bold text-amber-800">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -414,7 +435,7 @@ export function SiteAssessmentPopup({
               </div>
             )}
 
-            {isPendingAgri && assessCategory === 'farm_lot' && !isPendingInstitutional && !isPendingWaterBody && !isPendingParks && !isPendingCemetery && (
+            {isPendingAgri && assessCategory === 'farm_lot' && !isPendingInstitutional && !isPendingWaterBody && !isPendingParks && !isPendingCemetery && !isPendingForest && (
               <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-2 text-xs text-emerald-950">
                 <p className="text-[10.5px] leading-snug text-emerald-900 font-medium">
                   🌾 <strong>CLUP Agricultural Land:</strong> 100% conforming with designated agricultural zoning.
@@ -423,7 +444,7 @@ export function SiteAssessmentPopup({
             )}
 
             {/* Farm Lots Allowed in Agricultural Land only Alert */}
-            {assessCategory === 'farm_lot' && !isPendingAgri && !isPendingParks && !isPendingCemetery && !isPendingInstitutional && !isPendingWaterBody && (
+            {assessCategory === 'farm_lot' && !isPendingAgri && !isPendingParks && !isPendingCemetery && !isPendingInstitutional && !isPendingForest && !isPendingWaterBody && (
               <div className="rounded-lg border border-red-300 bg-red-50 p-2.5 text-xs text-red-950">
                 <div className="flex items-center gap-1.5 font-bold text-red-700">
                   <Ban className="h-4 w-4 shrink-0" />
@@ -440,6 +461,8 @@ export function SiteAssessmentPopup({
                 ? '⚠️ Placement disabled outside boundary. Click inside Lasam to relocate.'
                 : isPendingWaterBody
                 ? '🚫 Construction and farming prohibited in water bodies (PD 1067). Click elsewhere to relocate.'
+                : isPendingForest
+                ? '🚫 Construction and farming prohibited in Forest Areas (PD 705). Click elsewhere to relocate.'
                 : isPendingParks
                 ? '🚫 Construction and farming prohibited in parks & recreation. Click elsewhere to relocate.'
                 : isPendingCemetery

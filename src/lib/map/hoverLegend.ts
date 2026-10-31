@@ -43,7 +43,10 @@ export function parseHoveredLegendFeature(
 
   if (layerId === 'land-use-fill') {
     const rawClass = String(p.land_use_class ?? '').toLowerCase().trim()
-    const label = String(p.land_use_label ?? 'Land Use').trim()
+    const rawLabel = String(p.land_use_label ?? 'Land Use').trim()
+    const label = rawClass === 'forest' || rawLabel.toLowerCase() === 'forest' ? 'Forest Area' : rawLabel
+    const rawRemarks = p.remarks ? String(p.remarks).trim() : ''
+    const subLabel = rawRemarks && rawRemarks.toUpperCase() !== 'UNTOUCHED' ? rawRemarks : undefined
     const color = LAND_USE_COLORS[rawClass as LandUseClass] ?? '#166534'
     let icon = '🗺️'
     if (rawClass === 'forest') icon = '🌲'
@@ -64,7 +67,7 @@ export function parseHoveredLegendFeature(
       layerKey: 'landUse',
       layerTitle: 'Land Use',
       label,
-      subLabel: p.remarks ? String(p.remarks) : undefined,
+      subLabel,
       color,
       icon,
       x: point.x,
