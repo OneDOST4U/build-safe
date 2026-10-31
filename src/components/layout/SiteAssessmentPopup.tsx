@@ -180,8 +180,6 @@ export function SiteAssessmentPopup({
     confirmDisabledLabel = 'Disabled (Non-Permitted)'
   } else if (assessCategory === 'farm_lot' && !isFarmAllowed) {
     confirmDisabledLabel = 'Disabled (Non-Agri)'
-  } else if (assessCategory === 'building' && isPendingAgri && !isBuildingConforming) {
-    confirmDisabledLabel = 'Confirm Point (Non-Conforming)'
   }
 
   const inputLandUse = useMemo(() => {
@@ -400,7 +398,7 @@ export function SiteAssessmentPopup({
               <div className="rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-950">
                 <div className="flex items-center gap-1.5 font-bold text-amber-800">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
-                  <span>⚠️ Non-Conforming (Agricultural Land)</span>
+                  <span>Non-Conforming (Agricultural Land)</span>
                 </div>
                 <p className="mt-1 text-[10.5px] leading-relaxed text-amber-900">
                   Location is zoned as <strong>Agricultural Land</strong> under Lasam CLUP (2020). Developing a {assessBuildingType} is <strong>non-conforming</strong> (only Residential and Commercial areas are conforming) and requires mandatory DAR land-use conversion clearance & Sangguniang Bayan reclassification.
@@ -448,8 +446,6 @@ export function SiteAssessmentPopup({
                 ? '🚫 Construction and farming prohibited in cemetery grounds. Click elsewhere to relocate.'
                 : isPendingInstitutional
                 ? '🚫 Construction and farming prohibited in institutional zones. Click elsewhere to relocate.'
-                : assessCategory === 'building' && isPendingAgri && !isBuildingConforming
-                ? '⚠️ Non-conforming site (Agricultural Land). Click Confirm to proceed with clearance review.'
                 : assessCategory === 'building' && !isBuildingAllowed
                 ? '🚫 Buildings are only permitted in Residential and Commercial zones (or Agricultural as Non-Conforming). Click elsewhere to relocate.'
                 : assessCategory === 'farm_lot' && !isPendingAgri
@@ -490,8 +486,6 @@ export function SiteAssessmentPopup({
                 className={`h-8 flex-1 text-xs font-semibold ${
                   isPendingProhibited
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed hover:bg-slate-200 opacity-60'
-                    : assessCategory === 'building' && isPendingAgri && !isBuildingConforming
-                    ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
                     : 'bg-teal-700 hover:bg-teal-800 text-white'
                 }`}
                 onClick={onConfirmMapSite}
