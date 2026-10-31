@@ -423,9 +423,9 @@ export default function App() {
         return
       }
 
-      if (assessCategory === 'building' && !isRes && !isComm) {
+      if (assessCategory === 'building' && !isRes && !isComm && !isAgri) {
         setAssessError(
-          'Cannot assess site: Under Lasam CLUP 2020, building structures are strictly permitted only in designated Residential and Commercial areas.',
+          'Cannot assess site: Under Lasam CLUP 2020, building structures are permitted in Residential and Commercial areas (or Agricultural land as Non-Conforming). Construction on this zone is prohibited.',
         )
         return
       }
@@ -574,9 +574,9 @@ export default function App() {
         return
       }
 
-      if (assessCategory === 'building' && !isRes && !isComm) {
+      if (assessCategory === 'building' && !isRes && !isComm && !isAgri) {
         setAssessError(
-          'Cannot confirm site: Under Lasam CLUP 2020, building structures are strictly permitted only in designated Residential and Commercial areas.',
+          'Cannot confirm site: Under Lasam CLUP 2020, building structures are permitted in Residential and Commercial areas (or Agricultural land as Non-Conforming). Construction on this zone is prohibited.',
         )
         setAssessPanelOpen(true)
         setActiveTool('pan')

@@ -145,8 +145,9 @@ export function SiteAssessmentPopup({
     pendingLandUseLabel.toLowerCase().includes('agri') ||
     pendingLandUseLabel.toLowerCase().includes('crop')
 
-  // Building structures: strictly restricted to Residential and Commercial zones
-  const isBuildingAllowed = isPendingResidential || isPendingCommercial
+  // Building structures: Conforming in Residential and Commercial zones; Agricultural land allowed as Non-Conforming
+  const isBuildingConforming = isPendingResidential || isPendingCommercial
+  const isBuildingAllowed = isBuildingConforming || isPendingAgri
   // Farm lots: strictly restricted to designated Agricultural zones only
   const isFarmAllowed =
     isPendingAgri &&
@@ -176,9 +177,11 @@ export function SiteAssessmentPopup({
   } else if (isPendingInstitutional) {
     confirmDisabledLabel = 'Disabled (Institutional)'
   } else if (assessCategory === 'building' && !isBuildingAllowed) {
-    confirmDisabledLabel = isPendingAgri ? 'Disabled (Agricultural)' : 'Disabled (Non-Residential)'
+    confirmDisabledLabel = 'Disabled (Non-Permitted)'
   } else if (assessCategory === 'farm_lot' && !isFarmAllowed) {
     confirmDisabledLabel = 'Disabled (Non-Agri)'
+  } else if (assessCategory === 'building' && isPendingAgri && !isBuildingConforming) {
+    confirmDisabledLabel = 'Confirm Point (Non-Conforming)'
   }
 
   const inputLandUse = useMemo(() => {
@@ -379,20 +382,33 @@ export function SiteAssessmentPopup({
               </div>
             )}
 
-            {/* Building Allowed in Residential / Commercial only Alert */}
+            {/* Building Prohibited Alert */}
             {assessCategory === 'building' && !isBuildingAllowed && !isPendingParks && !isPendingCemetery && !isPendingInstitutional && !isPendingWaterBody && (
               <div className="rounded-lg border border-red-300 bg-red-50 p-2.5 text-xs text-red-950">
                 <div className="flex items-center gap-1.5 font-bold text-red-700">
                   <Ban className="h-4 w-4 shrink-0" />
-                  <span>{isPendingAgri ? 'Agricultural Land — Building Prohibited' : 'Non-Conforming Zone — Building Prohibited'}</span>
+                  <span>Non-Permitted Zone — Building Prohibited</span>
                 </div>
                 <p className="mt-1 text-[10.5px] leading-relaxed text-red-900">
-                  Under Lasam CLUP (2020), building structures are strictly restricted to <strong>Residential</strong> and <strong>Commercial</strong> areas only. Constructing a {assessBuildingType} on this parcel is prohibited.
+                  Under Lasam CLUP (2020), building structures are strictly restricted to <strong>Residential</strong> and <strong>Commercial</strong> areas (with Agricultural land strictly non-conforming). Constructing on this parcel is prohibited.
                 </p>
               </div>
             )}
 
-            {assessCategory === 'building' && (isPendingResidential || isPendingCommercial) && (
+            {/* Building Non-Conforming in Agricultural Land Alert */}
+            {assessCategory === 'building' && isPendingAgri && !isBuildingConforming && !isPendingParks && !isPendingCemetery && !isPendingInstitutional && !isPendingWaterBody && (
+              <div className="rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-950">
+                <div className="flex items-center gap-1.5 font-bold text-amber-800">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>⚠️ Non-Conforming (Agricultural Land)</span>
+                </div>
+                <p className="mt-1 text-[10.5px] leading-relaxed text-amber-900">
+                  Location is zoned as <strong>Agricultural Land</strong> under Lasam CLUP (2020). Developing a {assessBuildingType} is <strong>non-conforming</strong> (only Residential and Commercial areas are conforming) and requires mandatory DAR land-use conversion clearance & Sangguniang Bayan reclassification.
+                </p>
+              </div>
+            )}
+
+            {assessCategory === 'building' && isBuildingConforming && (
               <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-2 text-xs text-emerald-950">
                 <p className="text-[10.5px] leading-snug text-emerald-900 font-medium">
                   ✅ <strong>CLUP Zoning Clearance:</strong> Confirmed {isPendingResidential ? 'Residential' : 'Commercial'} Zone (100% conforming for proposed building structure).
@@ -432,8 +448,10 @@ export function SiteAssessmentPopup({
                 ? '🚫 Construction and farming prohibited in cemetery grounds. Click elsewhere to relocate.'
                 : isPendingInstitutional
                 ? '🚫 Construction and farming prohibited in institutional zones. Click elsewhere to relocate.'
+                : assessCategory === 'building' && isPendingAgri && !isBuildingConforming
+                ? '⚠️ Non-conforming site (Agricultural Land). Click Confirm to proceed with clearance review.'
                 : assessCategory === 'building' && !isBuildingAllowed
-                ? '🚫 Buildings are only permitted in Residential and Commercial zones. Click elsewhere to relocate.'
+                ? '🚫 Buildings are only permitted in Residential and Commercial zones (or Agricultural as Non-Conforming). Click elsewhere to relocate.'
                 : assessCategory === 'farm_lot' && !isPendingAgri
                 ? '🚫 Farm lots are only permitted in designated Agricultural areas. Click elsewhere to relocate.'
                 : '📍 Point dropped on map. Click elsewhere to relocate.'}
@@ -472,6 +490,8 @@ export function SiteAssessmentPopup({
                 className={`h-8 flex-1 text-xs font-semibold ${
                   isPendingProhibited
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed hover:bg-slate-200 opacity-60'
+                    : assessCategory === 'building' && isPendingAgri && !isBuildingConforming
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
                     : 'bg-teal-700 hover:bg-teal-800 text-white'
                 }`}
                 onClick={onConfirmMapSite}
@@ -681,13 +701,13 @@ export function SiteAssessmentPopup({
               {/* Status alerts based on input */}
 
               {isInputValidNumber && isInputInsideLasam && isAgriConflictInput && (
-                <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-950 space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-red-800">
-                    <span className="text-base">🚫</span>
+                <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-800">
+                    <span className="text-base">⚠️</span>
                     <span>CLUP 2020: Agricultural Zone (Non-Conforming)</span>
                   </div>
-                  <p className="text-[11px] text-red-900 leading-relaxed">
-                    Location is zoned as <strong>Agricultural Land</strong> under Lasam CLUP (2020). Developing a {assessBuildingType} requires mandatory DAR conversion clearance and municipal reclassification.
+                  <p className="text-[11px] text-amber-900 leading-relaxed">
+                    Location is zoned as <strong>Agricultural Land</strong> under Lasam CLUP (2020). Developing a {assessBuildingType} is <strong>non-conforming</strong> (only Residential and Commercial zones are conforming) and requires mandatory DAR conversion clearance and Sangguniang Bayan reclassification.
                   </p>
                 </div>
               )}

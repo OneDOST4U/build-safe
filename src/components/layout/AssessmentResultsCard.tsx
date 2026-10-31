@@ -301,24 +301,24 @@ export function AssessmentResultsCard({
             (r) =>
               (r.label.includes('land use') || r.label.includes('Zoning')) &&
               r.value.includes('Agricultural Land') &&
-              r.value.includes('🚫'),
+              (r.value.includes('⚠️') || r.value.includes('🚫')),
           ) && (
             <div
-              className={`rounded-xl border border-red-300 bg-red-50/95 p-3 text-red-950 space-y-1.5 shadow-sm ${
+              className={`rounded-xl border border-amber-300 bg-amber-50/95 p-3 text-amber-950 space-y-1.5 shadow-sm ${
                 report ? 'text-[9.5px]' : 'text-xs'
               }`}
             >
-              <div className="flex items-center gap-1.5 font-bold text-red-900">
-                <span className="text-sm">🚫</span>
+              <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                <span className="text-sm">⚠️</span>
                 <span className="uppercase tracking-wider font-extrabold text-[10px] sm:text-[11px]">
-                  CLUP Zoning Alert: Agricultural Land (Non-Conforming Land-Use)
+                  CLUP Zoning Notice: Agricultural Land (Non-Conforming Land-Use)
                 </span>
               </div>
               <p className="leading-snug">
-                This parcel is officially designated for <strong>Agricultural Land Use</strong> under the Lasam Comprehensive Land Use Plan (CLUP 2020). Erecting a <strong>{result.input.buildingType ?? 'residential structure'}</strong> on agricultural land is a non-conforming use.
+                This parcel is officially designated for <strong>Agricultural Land Use</strong> under the Lasam Comprehensive Land Use Plan (CLUP 2020). Erecting a <strong>{result.input.buildingType ?? 'residential structure'}</strong> on agricultural land is a <strong>non-conforming use</strong> (only Residential and Commercial zones are conforming).
               </p>
-              <div className="rounded border border-red-200 bg-white/80 p-2 text-[10px] sm:text-[10.5px] text-red-900 leading-relaxed">
-                <strong>Statutory Requirements:</strong> Under <strong>RA 8435 (AFMA)</strong> and <strong>DAR Administrative Order No. 1 (2019)</strong>, agricultural land conversion requires formal <strong>DAR Land Use Conversion Clearance</strong> and a <strong>Sangguniang Bayan Reclassification Ordinance</strong> (RA 7160 Sec. 20) before any building permit can be lawfully granted.
+              <div className="rounded border border-amber-200 bg-white/80 p-2 text-[10px] sm:text-[10.5px] text-amber-950 leading-relaxed">
+                <strong>Statutory Requirements:</strong> Under <strong>RA 8435 (AFMA)</strong> and <strong>DAR Administrative Order No. 1 (2019)</strong>, agricultural land development requires formal <strong>DAR Land Use Conversion Clearance</strong> and a <strong>Sangguniang Bayan Reclassification Ordinance</strong> (RA 7160 Sec. 20) before a building permit can be lawfully granted.
               </div>
             </div>
           )}

@@ -219,6 +219,7 @@ export function MapView({
     isInstitutional?: boolean
     institutionalName?: string
     isProhibited?: boolean
+    isNonConforming?: boolean
     prohibitedReason?: string
     point: { x: number; y: number }
   } | null>(null)
@@ -1748,9 +1749,21 @@ export function MapView({
           const isWat = c === 'water' || l.includes('river') || l.includes('water')
           const isAgri = c === 'agriculture' || c === 'crops' || l.includes('agri') || l.includes('crop')
           if (isParks || isCem || isInst || isWat) return true
-          if (category === 'building' && !isRes && !isComm) return true
+          if (category === 'building' && !isRes && !isComm && !isAgri) return true
           if (category === 'farm_lot' && !isAgri) return true
           return false
+        })()
+      )
+
+      const isNonConformingAgriLocation = Boolean(
+        siteCoords && landUse && (() => {
+          const lu = getLandUseAtPoint(siteCoords, landUse)
+          const c = String(lu?.properties?.land_use_class ?? '').toLowerCase().trim()
+          const l = String(lu?.properties?.land_use_label ?? '').toLowerCase().trim()
+          const isRes = c === 'residential' || c === 'socialized_housing' || l.includes('residential') || l.includes('socialized housing')
+          const isComm = c === 'commercial' || l.includes('commercial')
+          const isAgri = c === 'agriculture' || c === 'crops' || l.includes('agri') || l.includes('crop')
+          return category === 'building' && isAgri && !isRes && !isComm
         })()
       )
 
@@ -1764,6 +1777,18 @@ export function MapView({
               <span style="font-size:8.5px;background:rgba(255,255,255,0.25);padding:1px 5px;border-radius:4px;font-weight:800;letter-spacing:0.2px;">OPEN</span>
             </div>
             <div style="width:6px;height:6px;border-radius:50%;background:#ef4444;margin-top:4px;box-shadow:0 0 6px #dc2626;"></div>
+          </div>
+        `
+          : isNonConformingAgriLocation
+          ? `
+          <div class="live-site-assessment-badge" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;user-select:none;transition:transform 0.15s ease;">
+            <div style="display:flex;align-items:center;gap:4.5px;background:#b45309;color:#ffffff;padding:3px 9px;border-radius:9999px;font-size:10.5px;font-weight:700;letter-spacing:0.3px;border:1.5px solid #ffffff;box-shadow:0 3px 10px rgba(0,0,0,0.35);white-space:nowrap;">
+              <span style="font-size:10px;">⚠️</span>
+              <span>NON-CONFORMING SITE</span>
+              <span style="font-size:8.5px;background:rgba(255,255,255,0.25);padding:1px 5px;border-radius:4px;font-weight:800;letter-spacing:0.2px;">OPEN</span>
+            </div>
+            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid #b45309;margin-top:-1px;"></div>
+            <div style="width:6px;height:6px;border-radius:50%;background:#f59e0b;margin-top:2px;box-shadow:0 0 6px #d97706;"></div>
           </div>
         `
           : `
@@ -1875,7 +1900,7 @@ export function MapView({
           const isWat = c === 'water' || l.includes('river') || l.includes('water')
           const isAgri = c === 'agriculture' || c === 'crops' || l.includes('agri') || l.includes('crop')
           if (isParks || isCem || isInst || isWat) return true
-          if (category === 'building' && !isRes && !isComm) return true
+          if (category === 'building' && !isRes && !isComm && !isAgri) return true
           if (category === 'farm_lot' && !isAgri) return true
           return false
         })()
@@ -2254,20 +2279,20 @@ export function MapView({
               return
             }
 
-            if (category === 'building' && !isRes && !isComm) {
-              const zoneName = isAgri ? 'Agricultural Land' : luFeat.properties?.land_use_label || 'Non-Residential'
+            if (category === 'building' && !isRes && !isComm && !isAgri) {
+              const zoneName = luFeat.properties?.land_use_label || luClass || 'Non-Residential / Non-Commercial'
               new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
                 .setLngLat(e.lngLat)
                 .setHTML(
                   `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
                     <div style="background:#dc2626;color:#ffffff;padding:5px 8px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
-                      <span>🚫 Only Residential & Commercial Allowed</span>
+                      <span>🚫 Non-Permitted Zone</span>
                     </div>
                     <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
                       Cannot Build Here (${zoneName})
                     </div>
                     <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
-                      Under Lasam CLUP (2020), building structures are strictly restricted to <strong>Residential</strong> and <strong>Commercial</strong> areas only. Building on ${zoneName.toLowerCase()} is prohibited.
+                      Under Lasam CLUP (2020), building structures are strictly restricted to <strong>Residential</strong> and <strong>Commercial</strong> areas (with Agricultural land strictly non-conforming). Building on ${zoneName.toLowerCase()} is prohibited.
                     </div>
                   </div>`,
                 )
@@ -2561,6 +2586,7 @@ export function MapView({
         }
 
         let isProhibited = false
+        let isNonConforming = false
         let prohibitedReason = ''
 
         if (!insideLasam) {
@@ -2578,9 +2604,11 @@ export function MapView({
         } else if (isInstitutional) {
           isProhibited = true
           prohibitedReason = zoneLabel || 'Institutional Zone'
-        } else if (category === 'building' && !isRes && !isComm) {
+        } else if (category === 'building' && !isRes && !isComm && !isAgriZone) {
           isProhibited = true
-          prohibitedReason = isAgriZone ? 'Agricultural Land' : (zoneLabel || 'Non-Residential / Non-Commercial')
+          prohibitedReason = zoneLabel || 'Non-Residential / Non-Commercial'
+        } else if (category === 'building' && isAgriZone && !isRes && !isComm) {
+          isNonConforming = true
         } else if (category === 'farm_lot' && !isAgriZone) {
           isProhibited = true
           prohibitedReason = zoneLabel ? `Non-Agri (${zoneLabel})` : 'Non-Agricultural Land'
@@ -2596,6 +2624,7 @@ export function MapView({
           isInstitutional,
           institutionalName: zoneLabel,
           isProhibited,
+          isNonConforming,
           prohibitedReason,
           point: { x: e.point.x, y: e.point.y },
         })
@@ -2712,6 +2741,8 @@ export function MapView({
               className={`mb-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold shadow-xl backdrop-blur-md transition-colors ${
                 hoverSiteCoords.isProhibited
                   ? 'border border-red-300 bg-red-950/95 text-red-200'
+                  : hoverSiteCoords.isNonConforming
+                  ? 'border border-amber-300 bg-amber-950/95 text-amber-200'
                   : 'border border-sky-300/80 bg-slate-900/95 text-white'
               }`}
             >
@@ -2720,10 +2751,15 @@ export function MapView({
                   <span>🚫</span>
                   <span>Prohibited: {hoverSiteCoords.prohibitedReason}</span>
                 </span>
+              ) : hoverSiteCoords.isNonConforming ? (
+                <span className="flex items-center gap-1.5 text-amber-200">
+                  <span>⚠️</span>
+                  <span>Non-Conforming (Agricultural Land) · Click to Land Pin</span>
+                </span>
               ) : (
                 <span className="flex items-center gap-1.5">
                   <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                  <span>Left-Click to Land Pin</span>
+                  <span>{category === 'building' ? 'Conforming Zone · Click to Land Pin' : 'Left-Click to Land Pin'}</span>
                   {hoveredLegend && (
                     <span className="ml-1 inline-flex items-center gap-1 rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-bold text-white">
                       <span>{hoveredLegend.icon}</span>
@@ -2771,6 +2807,18 @@ export function MapView({
             </span>
             <span className="rounded bg-red-900 px-1.5 py-0.5 text-[10px] font-bold text-red-200">
               Disabled
+            </span>
+          </div>
+        ) : hoverSiteCoords.isNonConforming ? (
+          <div className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-amber-300 bg-amber-950/95 px-4 py-2 text-xs font-semibold text-amber-100 shadow-2xl backdrop-blur-sm">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-600 text-white font-bold text-xs">
+              ⚠️
+            </span>
+            <span>
+              Agricultural Land (Non-Conforming for Building) · Left-Click to drop pin
+            </span>
+            <span className="rounded bg-amber-800 px-1.5 py-0.5 text-[10px] font-bold text-amber-200">
+              Non-Conforming
             </span>
           </div>
         ) : (

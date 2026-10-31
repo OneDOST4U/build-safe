@@ -255,15 +255,15 @@ function evaluateLandUseZoning(
     // Proposed is Residential, Commercial, Industrial, Institutional, etc. on Agricultural land
     if (isNpaaadProtected) {
       return {
-        landUseRow: `🚫 Agricultural Land (CLUP 2020) — Classified for agricultural production. Non-conforming for ${buildingType.toLowerCase()}.`,
-        zoningComplianceRow: `🚫 Prohibited / Prime Protected Farmland — Sited on designated Agricultural land within NPAAAD (${npaaadLabel || 'irrigated farmland'}). Under RA 8435 (AFMA Sec. 9), conversion of prime agricultural land is non-negotiable / prohibited.`,
+        landUseRow: `⚠️ Agricultural Land (CLUP 2020) — Classified for agricultural production. Non-conforming for ${buildingType.toLowerCase()}.`,
+        zoningComplianceRow: `⚠️ Non-Conforming / Prime Farmland (NPAAAD) — Sited on designated Agricultural land within NPAAAD (${npaaadLabel || 'irrigated farmland'}). Building development is non-conforming (only Residential and Commercial areas are conforming) and requires DAR conversion clearance & SB reclassification under RA 8435.`,
         isAgriConflict: true,
       }
     }
 
     return {
-      landUseRow: `🚫 Agricultural Land (CLUP 2020) — Officially classified for Agriculture.`,
-      zoningComplianceRow: `🚫 Prohibited — Under Lasam CLUP (2020), building construction is strictly restricted to Residential and Commercial zones only. Constructing a ${buildingType} on agricultural land is prohibited.`,
+      landUseRow: `⚠️ Agricultural Land (CLUP 2020) — Officially classified for Agriculture.`,
+      zoningComplianceRow: `⚠️ Non-Conforming — Under Lasam CLUP (2020), only Residential and Commercial zones are conforming for building structures. Developing on agricultural land is non-conforming and requires mandatory DAR land-use conversion clearance.`,
       isAgriConflict: true,
     }
   }
@@ -353,7 +353,7 @@ function evaluateLandUseZoning(
   if (category === 'building' && !isResidentialZone && !isCommercialZone) {
     return {
       landUseRow: `🚫 ${normalized} (CLUP 2020) — Non-residential / non-commercial land use.`,
-      zoningComplianceRow: `🚫 Prohibited — Under Lasam CLUP (2020), building construction is strictly restricted to designated Residential and Commercial areas only.`,
+      zoningComplianceRow: `🚫 Prohibited — Under Lasam CLUP (2020), building construction is strictly restricted to designated Residential and Commercial areas (or Agricultural land as Non-Conforming). Building on ${normalized.toLowerCase()} is prohibited.`,
       isAgriConflict: true,
     }
   }
