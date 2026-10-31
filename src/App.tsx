@@ -34,6 +34,7 @@ import {
 } from '@/lib/simulation/volcano'
 import { assessSite, isPointInsideLasam } from '@/lib/assessment/siteAssessment'
 import { checkWaterBodyProximity } from '@/lib/assessment/waterBody'
+import { getLandUseAtPoint } from '@/lib/simulation/lguLayerQuery'
 import type {
   HazardMode,
   MapTool,
@@ -384,6 +385,42 @@ export default function App() {
     const [lng, lat] = pendingSiteCoords
     if (!isPointInsideLasam(lng, lat, data.boundary)) {
       setAssessError('Picked point is outside the official municipal boundary of Lasam.')
+      setAssessPanelOpen(true)
+      setActiveTool('pan')
+      return
+    }
+
+    if (data.landUse) {
+      const lu = getLandUseAtPoint(pendingSiteCoords, data.landUse)
+      const luClass = String(lu?.properties?.land_use_class ?? '').toLowerCase().trim()
+      const luLabel = String(lu?.properties?.land_use_label ?? '').toLowerCase().trim()
+      const luRemarks = String(lu?.properties?.remarks ?? '').toLowerCase().trim()
+      if (
+        luClass === 'institutional' ||
+        luLabel.includes('institutional') ||
+        luRemarks.includes('school') ||
+        luRemarks.includes('afp camp')
+      ) {
+        setAssessError(
+          'Cannot confirm site: Building structures and farm lots are strictly prohibited in designated Institutional zones under Lasam CLUP.',
+        )
+        setAssessPanelOpen(true)
+        setActiveTool('pan')
+        return
+      }
+    }
+
+    const waterCheck = checkWaterBodyProximity(pendingSiteCoords, {
+      riversMain: data.riversMain,
+      riversTributaries: data.riversTributaries,
+      riverbanks: data.riverbanks,
+      drainage: data.drainage,
+    })
+
+    if (waterCheck.isWaterBody) {
+      setAssessError(
+        'Cannot confirm site: Establishing building structures or farm lots inside water bodies is strictly prohibited under Presidential Decree No. 1067.',
+      )
       setAssessPanelOpen(true)
       setActiveTool('pan')
       return

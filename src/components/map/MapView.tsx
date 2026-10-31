@@ -40,6 +40,7 @@ import {
 } from '@/lib/map/hoverLegend'
 import { MapPin } from 'lucide-react'
 import { identifyMunicipality, isPointInsideLasam } from '@/lib/assessment/coverage'
+import { getLandUseAtPoint } from '@/lib/simulation/lguLayerQuery'
 import { MapLegend } from '@/components/map/MapLegend'
 import { TerrainInfoBar } from '@/components/map/TerrainInfoBar'
 import type {
@@ -211,6 +212,8 @@ export function MapView({
     isInsideLasam?: boolean
     isWaterBody?: boolean
     waterBodyName?: string
+    isInstitutional?: boolean
+    institutionalName?: string
     point: { x: number; y: number }
   } | null>(null)
   const [hoveredWater, setHoveredWater] = useState<{
@@ -1076,29 +1079,24 @@ export function MapView({
       ]
 
       const onWaterClick = (e: MapLayerMouseEvent) => {
-        // If user is placing a site pin, allow landing pin directly on water bodies
+        // If user is placing a site pin, do not allow placing in water bodies
         if (activeToolRef.current === 'place-site') {
-          const lng = e.lngLat.lng
-          const lat = e.lngLat.lat
-          const insideBoundary = isPointInsideLasam(lng, lat, boundaryRef.current ?? boundary)
-          if (!insideBoundary) {
-            const muniName = identifyMunicipality(lng, lat, boundaryRef.current ?? boundary)
-            new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
-              .setLngLat(e.lngLat)
-              .setHTML(
-                `<div style="font-family:system-ui,-apple-system,sans-serif;padding:2px 0;">
-                  <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
-                    Cannot Place Site Here (${muniName})
-                  </div>
-                  <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
-                    The proposed site must be located strictly within the official municipal boundary of Lasam, Cagayan.
-                  </div>
-                </div>`,
-              )
-              .addTo(map)
-            return
-          }
-          onSitePlaceRef.current([lng, lat])
+          new maplibregl.Popup({ closeButton: true, maxWidth: '300px', className: 'water-warning-popup' })
+            .setLngLat(e.lngLat)
+            .setHTML(
+              `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
+                <div style="background:#dc2626;color:#ffffff;padding:5px 8px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                  <span>🚫 Water Body — Prohibited</span>
+                </div>
+                <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
+                  Cannot Place Building or Farm Here
+                </div>
+                <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
+                  Establishing building structures or farm lots inside active waterways and riverbeds is strictly prohibited under Presidential Decree No. 1067 (Water Code) and PD 1096.
+                </div>
+              </div>`,
+            )
+            .addTo(map)
           return
         }
 
@@ -1550,8 +1548,29 @@ export function MapView({
         ],
       })
 
+      const isProhibitedLocation = Boolean(
+        siteCoords && landUse && (() => {
+          const lu = getLandUseAtPoint(siteCoords, landUse)
+          const c = String(lu?.properties?.land_use_class ?? '').toLowerCase().trim()
+          const l = String(lu?.properties?.land_use_label ?? '').toLowerCase().trim()
+          const r = String(lu?.properties?.remarks ?? '').toLowerCase().trim()
+          return c === 'institutional' || l.includes('institutional') || r.includes('school') || r.includes('afp camp') || c === 'water'
+        })()
+      )
+
       const markerHtml = hasAssessmentResult
-        ? `
+        ? isProhibitedLocation
+          ? `
+          <div class="live-site-assessment-badge" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;user-select:none;transition:transform 0.15s ease;">
+            <div style="display:flex;align-items:center;gap:4.5px;background:#dc2626;color:#ffffff;padding:3px 9px;border-radius:9999px;font-size:10.5px;font-weight:700;letter-spacing:0.3px;border:1.5px solid #ffffff;box-shadow:0 3px 10px rgba(0,0,0,0.35);white-space:nowrap;">
+              <span style="font-size:10px;">🚫</span>
+              <span>PROHIBITED SITE</span>
+              <span style="font-size:8.5px;background:rgba(255,255,255,0.25);padding:1px 5px;border-radius:4px;font-weight:800;letter-spacing:0.2px;">OPEN</span>
+            </div>
+            <div style="width:6px;height:6px;border-radius:50%;background:#ef4444;margin-top:4px;box-shadow:0 0 6px #dc2626;"></div>
+          </div>
+        `
+          : `
         <div class="live-site-assessment-badge" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;user-select:none;transition:transform 0.15s ease;">
           <div style="display:flex;align-items:center;gap:4.5px;background:#065f46;color:#ffffff;padding:3px 9px;border-radius:9999px;font-size:10.5px;font-weight:700;letter-spacing:0.3px;border:1.5px solid #ffffff;box-shadow:0 3px 10px rgba(0,0,0,0.35);white-space:nowrap;">
             <span style="font-size:10px;">📍</span>
@@ -1646,7 +1665,17 @@ export function MapView({
     const syncFacilityRoute = () => {
       const lineSource = map.getSource('facility-route-line') as maplibregl.GeoJSONSource | undefined
 
-      if (!highlightedFacility || !siteCoords) {
+      const isProhibitedLocation = Boolean(
+        siteCoords && landUse && (() => {
+          const lu = getLandUseAtPoint(siteCoords, landUse)
+          const c = String(lu?.properties?.land_use_class ?? '').toLowerCase().trim()
+          const l = String(lu?.properties?.land_use_label ?? '').toLowerCase().trim()
+          const r = String(lu?.properties?.remarks ?? '').toLowerCase().trim()
+          return c === 'institutional' || l.includes('institutional') || r.includes('school') || r.includes('afp camp') || c === 'water'
+        })()
+      )
+
+      if (!highlightedFacility || !siteCoords || isProhibitedLocation) {
         lineSource?.setData({
           type: 'FeatureCollection',
           features: [],
@@ -1900,7 +1929,86 @@ export function MapView({
           return
         }
 
-        // Water bodies are allowed to be clicked and assessed
+        // Check Institutional Land Use Zone
+        if (landUse) {
+          const luFeat = getLandUseAtPoint([lng, lat], landUse)
+          if (luFeat) {
+            const luClass = String(luFeat.properties?.land_use_class ?? '').toLowerCase().trim()
+            const luLabel = String(luFeat.properties?.land_use_label ?? '').toLowerCase().trim()
+            const luRemarks = String(luFeat.properties?.remarks ?? '').toLowerCase().trim()
+            if (
+              luClass === 'institutional' ||
+              luLabel.includes('institutional') ||
+              luRemarks.includes('school') ||
+              luRemarks.includes('afp camp')
+            ) {
+              const name = luFeat.properties?.remarks || luFeat.properties?.land_use_label || 'Institutional Zone'
+              new maplibregl.Popup({
+                closeButton: true,
+                maxWidth: '300px',
+                className: 'institutional-warning-popup',
+              })
+                .setLngLat(e.lngLat)
+                .setHTML(
+                  `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
+                    <div style="background:#7e22ce;color:#ffffff;padding:5px 8px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                      <span>🚫 Institutional Zone — Prohibited</span>
+                    </div>
+                    <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
+                      Cannot Build or Farm Here (${name})
+                    </div>
+                    <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
+                      Parcel is designated as <strong>Institutional Land Use</strong> under Lasam CLUP (2020) for government and public educational facilities. Private building development and farm lots are strictly prohibited.
+                    </div>
+                  </div>`,
+                )
+                .addTo(map)
+              return
+            }
+          }
+        }
+
+        // Check Water Body
+        const existingWaterLayers = [
+          'rivers-main',
+          'rivers-tributaries',
+          'riverbanks-fill',
+          'riverbanks-line',
+          'drainage',
+          'water',
+          'waterway',
+        ].filter((id) => map.getLayer(id))
+
+        if (existingWaterLayers.length > 0) {
+          const waterFeats = map.queryRenderedFeatures(e.point, {
+            layers: existingWaterLayers,
+          })
+          if (waterFeats.length > 0) {
+            const featP = waterFeats[0].properties
+            const rName = featP?.name || featP?.waterway || 'Water Body'
+            new maplibregl.Popup({
+              closeButton: true,
+              maxWidth: '300px',
+              className: 'water-warning-popup',
+            })
+              .setLngLat(e.lngLat)
+              .setHTML(
+                `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
+                  <div style="background:#dc2626;color:#ffffff;padding:5px 8px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                    <span>🚫 Water Body — Prohibited</span>
+                  </div>
+                  <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
+                    Cannot Build or Farm Here (${rName})
+                  </div>
+                  <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
+                    Establishing building structures or farm lots inside active waterways and riverbeds is strictly prohibited under Presidential Decree No. 1067 and PD 1096.
+                  </div>
+                </div>`,
+              )
+              .addTo(map)
+            return
+          }
+        }
 
         onSitePlace([lng, lat])
         return
@@ -2024,6 +2132,27 @@ export function MapView({
         const insideLasam = isPointInsideLasam(lng, lat, boundaryRef.current ?? boundary)
         const muni = insideLasam ? 'Lasam' : identifyMunicipality(lng, lat, boundaryRef.current ?? boundary)
 
+        // Check if inside institutional land use
+        let isInstitutional = false
+        let institutionalName: string | undefined
+        if (landUse) {
+          const luFeat = getLandUseAtPoint([lng, lat], landUse)
+          if (luFeat) {
+            const luClass = String(luFeat.properties?.land_use_class ?? '').toLowerCase().trim()
+            const luLabel = String(luFeat.properties?.land_use_label ?? '').toLowerCase().trim()
+            const luRemarks = String(luFeat.properties?.remarks ?? '').toLowerCase().trim()
+            if (
+              luClass === 'institutional' ||
+              luLabel.includes('institutional') ||
+              luRemarks.includes('school') ||
+              luRemarks.includes('afp camp')
+            ) {
+              isInstitutional = true
+              institutionalName = luFeat.properties?.remarks || luFeat.properties?.land_use_label || 'Institutional Zone'
+            }
+          }
+        }
+
         const existingWaterLayers = [
           'rivers-main',
           'rivers-tributaries',
@@ -2051,6 +2180,8 @@ export function MapView({
           }
         }
 
+        const isProhibited = !insideLasam || isWater || isInstitutional
+
         setHoverSiteCoords({
           lng,
           lat,
@@ -2058,10 +2189,12 @@ export function MapView({
           isInsideLasam: insideLasam,
           isWaterBody: isWater,
           waterBodyName: waterName,
+          isInstitutional,
+          institutionalName,
           point: { x: e.point.x, y: e.point.y },
         })
 
-        if (!insideLasam) {
+        if (isProhibited) {
           map.getCanvas().style.cursor = 'not-allowed'
         } else {
           map.getCanvas().style.cursor = 'crosshair'
@@ -2168,13 +2301,15 @@ export function MapView({
           }}
         >
           <div className="relative flex flex-col items-center">
-            {/* Tooltip badge floating directly above the pin */}
+            {/* Tooltip badge floating directly above cursor */}
             <div
               className={`mb-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold shadow-xl backdrop-blur-md transition-colors ${
                 !hoverSiteCoords.isInsideLasam
                   ? 'border border-amber-300 bg-amber-950/95 text-amber-200'
                   : hoverSiteCoords.isWaterBody
                   ? 'border border-red-300 bg-red-950/95 text-red-200'
+                  : hoverSiteCoords.isInstitutional
+                  ? 'border border-purple-300 bg-purple-950/95 text-purple-200'
                   : 'border border-sky-300/80 bg-slate-900/95 text-white'
               }`}
             >
@@ -2185,11 +2320,13 @@ export function MapView({
                 </span>
               ) : hoverSiteCoords.isWaterBody ? (
                 <span className="flex items-center gap-1.5">
-                  <span className="inline-block h-2 w-2 rounded-full bg-red-400 animate-ping" />
-                  <span>Left-Click to Land Pin</span>
-                  <span className="ml-1 inline-flex items-center gap-1 rounded bg-red-800/80 px-1.5 py-0.5 text-[10px] font-bold text-red-100">
-                    <span>🌊 Water Body (PD 1067)</span>
-                  </span>
+                  <span>🚫</span>
+                  <span>Prohibited: Water Body (PD 1067)</span>
+                </span>
+              ) : hoverSiteCoords.isInstitutional ? (
+                <span className="flex items-center gap-1.5">
+                  <span>🚫</span>
+                  <span>Prohibited: Institutional Zone</span>
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5">
@@ -2205,42 +2342,29 @@ export function MapView({
               )}
             </div>
 
-            {/* Pin graphic pointing directly at mouse cursor */}
-            <div className="relative flex flex-col items-center">
-              <img
-                src="/markers/site-pin.svg"
-                alt=""
-                width="34"
-                height="46"
-                draggable={false}
-                className={`drop-shadow-xl transition-all ${
-                  !hoverSiteCoords.isInsideLasam
-                    ? 'grayscale contrast-125 opacity-70'
-                    : 'animate-bounce'
-                }`}
-                style={{ animationDuration: '2.4s' }}
-              />
-
-              {/* Precise target radar pulse at cursor point */}
-              <div
-                className={`absolute -bottom-1 h-5 w-5 rounded-full animate-ping ${
-                  !hoverSiteCoords.isInsideLasam
-                    ? 'bg-amber-400/50'
-                    : hoverSiteCoords.isWaterBody
-                    ? 'bg-red-500/50'
-                    : 'bg-sky-400/60'
-                }`}
-              />
-              <div
-                className={`absolute -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-white shadow-sm ${
-                  !hoverSiteCoords.isInsideLasam
-                    ? 'bg-amber-600'
-                    : hoverSiteCoords.isWaterBody
-                    ? 'bg-red-600'
-                    : 'bg-sky-500'
-                }`}
-              />
-            </div>
+            {/* When permitted, show bouncing pin arrow. When prohibited, disable the arrow pointing to it! */}
+            {hoverSiteCoords.isInsideLasam && !hoverSiteCoords.isWaterBody && !hoverSiteCoords.isInstitutional ? (
+              <div className="relative flex flex-col items-center">
+                <img
+                  src="/markers/site-pin.svg"
+                  alt=""
+                  width="34"
+                  height="46"
+                  draggable={false}
+                  className="drop-shadow-xl animate-bounce"
+                  style={{ animationDuration: '2.4s' }}
+                />
+                <div className="absolute -bottom-1 h-5 w-5 rounded-full animate-ping bg-sky-400/60" />
+                <div className="absolute -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-white shadow-sm bg-sky-500" />
+              </div>
+            ) : (
+              /* When prohibited (Institutional, Water Body, or Outside Lasam), DISABLE THE ARROW POINTING TO IT */
+              <div className="relative flex flex-col items-center">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-red-600 text-white shadow-lg font-bold text-xs">
+                  🚫
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -2256,11 +2380,23 @@ export function MapView({
             </span>
           </div>
         ) : hoverSiteCoords.isWaterBody ? (
-          <div className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-sky-300 bg-sky-950/90 px-3.5 py-1.5 text-xs font-medium text-white shadow-xl backdrop-blur-sm">
-            <MapPin className="h-3.5 w-3.5 text-sky-400 animate-bounce" />
-            <span>Click map to place site in {hoverSiteCoords.waterBodyName || 'Water Body'} · {hoverSiteCoords.lat.toFixed(5)}° N, {hoverSiteCoords.lng.toFixed(5)}° E</span>
-            <span className="rounded bg-red-700 px-1.5 py-0.5 text-[10px] font-bold text-white">
-              Water Body (PD 1067)
+          <div className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-red-400 bg-red-950/95 px-4 py-2 text-xs font-semibold text-white shadow-2xl backdrop-blur-sm animate-pulse">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white font-bold text-xs">
+              🚫
+            </span>
+            <span>Water Body ({hoverSiteCoords.waterBodyName || 'PD 1067'}) — Building & Farming Prohibited</span>
+            <span className="rounded bg-red-900 px-1.5 py-0.5 text-[10px] font-bold text-red-200">
+              Disabled
+            </span>
+          </div>
+        ) : hoverSiteCoords.isInstitutional ? (
+          <div className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-purple-400 bg-purple-950/95 px-4 py-2 text-xs font-semibold text-white shadow-2xl backdrop-blur-sm animate-pulse">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-700 text-white font-bold text-xs">
+              🚫
+            </span>
+            <span>Institutional Zone ({hoverSiteCoords.institutionalName || 'CLUP 2020'}) — Building & Farming Prohibited</span>
+            <span className="rounded bg-purple-900 px-1.5 py-0.5 text-[10px] font-bold text-purple-200">
+              Disabled
             </span>
           </div>
         ) : (

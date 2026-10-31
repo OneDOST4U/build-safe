@@ -186,11 +186,18 @@ function evaluateLandUseZoning(
 
   const rawLabel = String(match.properties?.land_use_label ?? '').trim()
   const rawClass = String(match.properties?.land_use_class ?? '').toLowerCase().trim()
+  const rawRemarks = String(match.properties?.remarks ?? '').toLowerCase().trim()
   const isAgri =
     rawClass === 'agriculture' ||
     rawClass === 'crops' ||
     rawLabel.toLowerCase().includes('agri') ||
     rawLabel.toLowerCase().includes('crop')
+
+  const isInstitutionalZone =
+    rawClass === 'institutional' ||
+    rawLabel.toLowerCase().includes('institutional') ||
+    rawRemarks.includes('school') ||
+    rawRemarks.includes('afp camp')
 
   const isResidentialZone =
     rawClass === 'residential' ||
@@ -289,6 +296,16 @@ function evaluateLandUseZoning(
     }
   }
 
+  if (isInstitutionalZone) {
+    return {
+      landUseRow:
+        '🚫 Institutional (CLUP 2020) — Designated for government, educational, and public facilities.',
+      zoningComplianceRow:
+        '🚫 Prohibited — Private building development and farm lots are strictly prohibited in designated Institutional zones under Lasam CLUP.',
+      isAgriConflict: true,
+    }
+  }
+
   if (isForestZone) {
     return {
       landUseRow: '🚫 Forest Conservation (CLUP 2020) — Protected forest & watershed.',
@@ -302,8 +319,8 @@ function evaluateLandUseZoning(
     return {
       landUseRow: '🚫 Water Body (CLUP 2020) — Lakes, rivers, and natural drainage channels.',
       zoningComplianceRow:
-        '🚫 Prohibited — Construction within open water bodies strictly prohibited under PD 1067.',
-      isAgriConflict: false,
+        '🚫 Prohibited — Construction of buildings and establishment of farm lots inside water bodies is strictly prohibited under PD 1067 (Water Code) & PD 1096.',
+      isAgriConflict: true,
     }
   }
 

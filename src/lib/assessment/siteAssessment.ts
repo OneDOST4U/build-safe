@@ -44,6 +44,7 @@ export function assessSite(
       input.cropType ?? 'Palay (Rice - Lowland / Irrigated)',
       {
         boundary: ctx.boundary,
+        landUse: ctx.landUse,
         mgbFlood: ctx.mgbFlood,
         lguFlood: ctx.lguFlood,
         erosion: ctx.erosion,

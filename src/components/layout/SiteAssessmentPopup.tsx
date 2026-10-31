@@ -108,6 +108,16 @@ export function SiteAssessmentPopup({
 
   const pendingLandUseClass = String(pendingLandUse?.properties?.land_use_class ?? '').toLowerCase().trim()
   const pendingLandUseLabel = String(pendingLandUse?.properties?.land_use_label ?? '').trim()
+  const pendingRemarks = String(pendingLandUse?.properties?.remarks ?? '').toLowerCase().trim()
+  const isPendingInstitutional =
+    pendingLandUseClass === 'institutional' ||
+    pendingLandUseLabel.toLowerCase().includes('institutional') ||
+    pendingRemarks.includes('school') ||
+    pendingRemarks.includes('afp camp')
+
+  const isPendingWaterBody = Boolean(waterBodyCheck?.isWaterBody)
+  const isPendingProhibited = !isPendingInsideLasam || isPendingWaterBody || isPendingInstitutional
+
   const isPendingAgri =
     pendingLandUseClass === 'agriculture' ||
     pendingLandUseClass === 'crops' ||
@@ -198,13 +208,21 @@ export function SiteAssessmentPopup({
           <div className="pointer-events-auto w-[min(92vw,23rem)] rounded-2xl border border-slate-200/90 bg-white/98 p-4.5 shadow-2xl backdrop-blur-md space-y-3 animate-in zoom-in-95 duration-150 ring-1 ring-slate-900/5">
             <div className="flex items-start gap-2.5">
               <div className="relative mt-0.5">
-                <span className={`absolute -inset-1 rounded-full animate-ping ${isPendingInsideLasam ? 'bg-sky-400/30' : 'bg-amber-400/30'}`} />
-                <img
-                  src="/markers/site-pin.svg"
-                  alt=""
-                  className={`relative h-8 w-6 shrink-0 object-contain drop-shadow ${!isPendingInsideLasam ? 'grayscale contrast-125' : ''}`}
-                  aria-hidden
-                />
+                {isPendingProhibited ? (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-100 text-red-600 font-bold text-base shadow-sm border border-red-200">
+                    🚫
+                  </div>
+                ) : (
+                  <>
+                    <span className="absolute -inset-1 rounded-full animate-ping bg-sky-400/30" />
+                    <img
+                      src="/markers/site-pin.svg"
+                      alt=""
+                      className="relative h-8 w-6 shrink-0 object-contain drop-shadow"
+                      aria-hidden
+                    />
+                  </>
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-1">
@@ -244,15 +262,28 @@ export function SiteAssessmentPopup({
               </div>
             )}
 
+            {/* Prohibited Institutional Zone Alert */}
+            {isPendingInstitutional && (
+              <div className="rounded-lg border border-purple-300 bg-purple-50 p-2.5 text-xs text-purple-950">
+                <div className="flex items-center gap-1.5 font-bold text-purple-800">
+                  <Ban className="h-4 w-4 shrink-0 text-purple-700" />
+                  <span>Institutional Zone — Development Prohibited</span>
+                </div>
+                <p className="mt-1 text-[10.5px] leading-relaxed text-purple-900">
+                  Parcel is officially designated as <strong>Institutional Land Use</strong> under Lasam CLUP (2020) for government, educational, and public facilities. Constructing a private building structure or establishing a farm lot here is strictly prohibited.
+                </p>
+              </div>
+            )}
+
             {/* Prohibited Water Body Warning Alert */}
-            {waterBodyCheck?.isWaterBody && (
+            {isPendingWaterBody && (
               <div className="rounded-lg border border-red-300 bg-red-50 p-2.5 text-xs text-red-950">
                 <div className="flex items-center gap-1.5 font-bold text-red-700">
                   <Ban className="h-4 w-4 shrink-0" />
-                  <span>Water Body — Construction Prohibited</span>
+                  <span>Water Body — Construction & Farming Prohibited</span>
                 </div>
                 <p className="mt-1 text-[10.5px] leading-relaxed text-red-900">
-                  Location is directly inside <strong>{waterBodyCheck.nearestWaterBodyName}</strong>. Under Presidential Decree No. 1067 (Water Code, Art. 51), construction of any structure is strictly prohibited.
+                  Location is directly inside <strong>{waterBodyCheck?.nearestWaterBodyName || 'water body'}</strong>. Under Presidential Decree No. 1067 (Water Code, Art. 51) and PD 1096, establishing building structures or farm lots inside water bodies is strictly prohibited.
                 </p>
               </div>
             )}
@@ -283,7 +314,7 @@ export function SiteAssessmentPopup({
               </div>
             )}
 
-            {isPendingAgri && assessCategory === 'farm_lot' && (
+            {isPendingAgri && assessCategory === 'farm_lot' && !isPendingInstitutional && !isPendingWaterBody && (
               <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-2 text-xs text-emerald-950">
                 <p className="text-[10.5px] leading-snug text-emerald-900 font-medium">
                   🌾 <strong>CLUP Agricultural Land:</strong> 100% conforming with designated agricultural zoning.
@@ -294,6 +325,10 @@ export function SiteAssessmentPopup({
             <p className="text-[10px] leading-tight text-slate-500">
               {!isPendingInsideLasam
                 ? '⚠️ Placement disabled outside boundary. Click inside Lasam to relocate.'
+                : isPendingWaterBody
+                ? '🚫 Construction and farming prohibited in water bodies (PD 1067). Click elsewhere to relocate.'
+                : isPendingInstitutional
+                ? '🚫 Construction and farming prohibited in institutional zones (Lasam CLUP 2020). Click elsewhere to relocate.'
                 : '📍 Point dropped on map. Click elsewhere to relocate.'}
             </p>
 
@@ -326,20 +361,20 @@ export function SiteAssessmentPopup({
               <Button
                 type="button"
                 size="sm"
-                disabled={!isPendingInsideLasam}
+                disabled={isPendingProhibited}
                 className={`h-8 flex-1 text-xs font-semibold ${
-                  !isPendingInsideLasam
+                  isPendingProhibited
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed hover:bg-slate-200 opacity-60'
-                    : waterBodyCheck?.isWaterBody
-                    ? 'bg-red-700 hover:bg-red-800 text-white'
                     : 'bg-teal-700 hover:bg-teal-800 text-white'
                 }`}
                 onClick={onConfirmMapSite}
               >
                 {!isPendingInsideLasam
                   ? 'Disabled (Outside)'
-                  : waterBodyCheck?.isWaterBody
-                  ? 'Confirm (Flagged)'
+                  : isPendingWaterBody
+                  ? 'Disabled (Water Body)'
+                  : isPendingInstitutional
+                  ? 'Disabled (Institutional)'
                   : 'Confirm Point'}
               </Button>
             </div>

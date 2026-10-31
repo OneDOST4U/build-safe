@@ -2,6 +2,7 @@ import type { FeatureCollection } from 'geojson'
 import { getMgbSusceptibilityAtPoint, type MgbSusceptibility } from '@/lib/simulation/mgbFlood'
 import {
   getErosionAtPoint,
+  getLandUseAtPoint,
   getLguFloodAtPoint,
   getLiquefactionAtPoint,
   getNpaaadAtPoint,
@@ -81,6 +82,7 @@ export interface FarmLotAssessmentResult {
 
 export interface FarmLotAssessmentContext {
   boundary?: FeatureCollection | null
+  landUse?: FeatureCollection | null
   mgbFlood?: FeatureCollection | null
   lguFlood?: FeatureCollection | null
   erosion?: FeatureCollection | null
@@ -133,6 +135,22 @@ export function assessFarmLot(
   const npaaadLabel = npaaadFeat?.properties?.label ?? npaaadFeat?.properties?.description
   const safdzLabel = safdzFeat?.properties?.label ?? safdzFeat?.properties?.description
 
+  // 4b. Query CLUP Land Use Zone (Check Institutional and Water Zones)
+  const landUseFeat = getLandUseAtPoint(coords, ctx.landUse)
+  const luClass = String(landUseFeat?.properties?.land_use_class ?? '').toLowerCase().trim()
+  const luLabel = String(landUseFeat?.properties?.land_use_label ?? '').toLowerCase().trim()
+  const luRemarks = String(landUseFeat?.properties?.remarks ?? '').toLowerCase().trim()
+  const isInstitutionalZone =
+    luClass === 'institutional' ||
+    luLabel.includes('institutional') ||
+    luRemarks.includes('school') ||
+    luRemarks.includes('afp camp')
+  const isWaterLandUse =
+    luClass === 'water' ||
+    luLabel.includes('river') ||
+    luLabel.includes('creek') ||
+    luLabel.includes('water')
+
   // 5. Query Water Bodies & Statutory Agricultural Riparian Easement (20m under PD 1067)
   const waterCheck = checkWaterBodyProximity(coords, {
     riversMain: ctx.riversMain,
@@ -147,9 +165,12 @@ export function assessFarmLot(
   let erosionEvaluation = ''
   let managementRecommendation = ''
 
-  if (waterCheck.isWaterBody) {
+  if (waterCheck.isWaterBody || isWaterLandUse) {
     suitabilityLevel = 'HIGH_RISK'
-    floodEvaluation = `🚫 Active Water Channel: Farm lot falls directly inside ${waterCheck.nearestWaterBodyName}. Unfarmable submerged bed.`
+    floodEvaluation = `🚫 Active Water Channel: Farm lot falls directly inside ${waterCheck.nearestWaterBodyName || 'water body'}. Establishing farm lots inside water bodies is strictly prohibited under PD 1067.`
+  } else if (isInstitutionalZone) {
+    suitabilityLevel = 'HIGH_RISK'
+    floodEvaluation = '🚫 Institutional Zone: Parcel is designated for public, educational, and government facilities under Lasam CLUP (2020). Agricultural farm lots are strictly prohibited.'
   } else if (crop.startsWith('Palay')) {
     // Palay Evaluation
     if (isHighFlood) {
@@ -259,9 +280,14 @@ export function assessFarmLot(
     waterEasementEvaluation = `✅ Compliant with Riparian Setbacks — Located ${waterCheck.nearestDistanceM != null ? `${waterCheck.nearestDistanceM}m` : '>20m'} from nearest waterway, outside the 20m statutory agricultural easement margin (PD 1067). Safe distance for sustainable irrigation intake.`
   }
 
-  // Factor in Agricultural Zoning (NPAAAD / SAFDZ)
+  // Factor in Agricultural Zoning (NPAAAD / SAFDZ / CLUP Institutional & Water)
   let agriZoningEvaluation: string
-  if (isInPrimeAgriZone) {
+  if (isInstitutionalZone) {
+    agriZoningEvaluation =
+      '🚫 Prohibited — Designated Institutional Land Use (Lasam CLUP 2020) for government & public educational facilities. Agricultural farm lots and crops are strictly prohibited here.'
+  } else if (waterCheck.isWaterBody || isWaterLandUse) {
+    agriZoningEvaluation = `🚫 Prohibited — Farm lot falls inside an active water body (${waterCheck.nearestWaterBodyName || 'water body'}). Cultivation and farming inside water bodies are strictly prohibited under Presidential Decree No. 1067.`
+  } else if (isInPrimeAgriZone) {
     agriZoningEvaluation = `🟢 Prime Protected Agricultural Land (RA 8435 - AFMA) — Site is officially designated within ${
       npaaadLabel ? `NPAAAD (${npaaadLabel})` : ''
     }${npaaadLabel && safdzLabel ? ' and ' : ''}${
@@ -277,7 +303,15 @@ export function assessFarmLot(
   let badgeClass = ''
   let color = ''
 
-  if (suitabilityLevel === 'HIGHLY_SUITABLE') {
+  if (isInstitutionalZone) {
+    suitabilityTitle = 'Prohibited: Institutional Zone (Lasam CLUP 2020)'
+    badgeClass = 'bg-purple-100 text-purple-950 border-purple-300'
+    color = '#7e22ce'
+  } else if (waterCheck.isWaterBody || isWaterLandUse) {
+    suitabilityTitle = 'Prohibited: Active Water Body (PD 1067)'
+    badgeClass = 'bg-red-100 text-red-950 border-red-300'
+    color = '#dc2626'
+  } else if (suitabilityLevel === 'HIGHLY_SUITABLE') {
     suitabilityTitle = `Highly Suitable for ${crop.split(' ')[0]}`
     badgeClass = 'bg-emerald-100 text-emerald-900 border-emerald-300'
     color = '#059669'
