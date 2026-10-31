@@ -95,6 +95,7 @@ function buildSystemInstruction(context?: ChatContext): string {
    - **Municipal Evacuation Center 1**: Located in Centro 3 near Natalged Arena (18°03'57.3"N 121°35'35.1"E / 121.59308° E, 18.06592° N).
    - **Municipal Evacuation Center 2**: Located in Centro 1 (18°04'01.1"N 121°36'07.0"E / 121.60194° E, 18.06697° N).
    - **Lasam Multi-Purpose Building**: Located in Centro 1 (18°04'00.3"N 121°36'09.2"E / 121.60255° E, 18.06675° N).
+   - **Lasam Rural Health Unit (RHU) & Municipal Health Office**: Located in Centro 1 (18.06741° N, 121.60279° E).
 
 ### Parcel Context:
 ${contextInfo}`

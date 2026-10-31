@@ -129,14 +129,15 @@
         "name": "Lasam Rural Health Unit (RHU) & Municipal Health Office",
         "category": "govt_health",
         "amenity": "clinic",
+        "barangay": "CENTRO 01",
         "validation_status": "trusted_doh_verified",
-        "data_source": "Department of Health (DOH CHD II) / LGU Lasam"
+        "data_source": "Department of Health (DOH CHD II) / LGU Lasam (Verified Coordinates)"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          121.5992,
-          18.0639
+          121.60279161956103,
+          18.067408864378496
         ]
       }
     },

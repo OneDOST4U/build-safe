@@ -346,6 +346,29 @@ Lasam's prime agricultural soils and alluvial terraces are highly fertile:
     }
   }
 
+  // 8c. Health Facilities & RHU
+  if (
+    q.includes('rhu') ||
+    q.includes('health') ||
+    q.includes('hospital') ||
+    q.includes('clinic') ||
+    q.includes('doctor')
+  ) {
+    return {
+      text: `🏥 **Government Health Facilities in Lasam:**
+
+• **Lasam Rural Health Unit (RHU) & Municipal Health Office:** Located in Centro 1 (18.06741° N, 121.60279° E) for primary medical care and municipal health clearances.
+• **Lasam District Hospital:** DOH Level 1 public hospital located along the main road for emergency operations and inpatient care.
+
+You can click **Nearest Government Health Facility** in the assessment panel to trace the live road route on the 3D map!`,
+      suggestions: [
+        'Where are the evacuation centers in Lasam?',
+        'What is the 7-step building permit process in Lasam?',
+        'What are the mandatory river easement setbacks?',
+      ],
+    }
+  }
+
   // 9a. Building Permit 7-Step Procedure & Processing Time
   if (
     q.includes('step') ||
