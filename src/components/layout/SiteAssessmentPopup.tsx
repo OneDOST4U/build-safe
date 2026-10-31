@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
-import { AlertTriangle, Ban, Building2, ClipboardList, Crosshair, MapPin, RotateCcw, ShieldCheck, Sprout, X } from 'lucide-react'
+import { AlertTriangle, Ban, ClipboardList, Crosshair, MapPin, RotateCcw, ShieldCheck, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { AssessmentResultsCard, type HighlightedFacilityInfo } from '@/components/layout/AssessmentResultsCard'
 import { GoogleEarthLink } from '@/components/layout/GoogleEarthLink'
+import { BrandLogo } from '@/components/layout/BrandLogo'
 import type { FeatureCollection } from 'geojson'
 import {
   PROPOSED_BUILDING_TYPE_GROUPS,
@@ -64,8 +65,6 @@ export function SiteAssessmentPopup({
   landUse = null,
   highlightedFacility = null,
   onSelectFacility,
-  onAssessLatChange,
-  onAssessLngChange,
   onAssessCategoryChange,
   onAssessBuildingTypeChange,
   onAssessCropTypeChange,
@@ -82,9 +81,18 @@ export function SiteAssessmentPopup({
     ? isPointInsideLasam(pendingSiteCoords[0], pendingSiteCoords[1], boundary)
     : true
 
-  const numLat = Number(assessLat)
-  const numLng = Number(assessLng)
-  const isInputValidNumber = Number.isFinite(numLat) && Number.isFinite(numLng)
+  const hasCoordinates = Boolean(
+    assessLat &&
+    assessLng &&
+    assessLat.trim() !== '' &&
+    assessLng.trim() !== '' &&
+    Number.isFinite(Number(assessLat)) &&
+    Number.isFinite(Number(assessLng))
+  )
+
+  const numLat = hasCoordinates ? Number(assessLat) : NaN
+  const numLng = hasCoordinates ? Number(assessLng) : NaN
+  const isInputValidNumber = hasCoordinates
   const isInputInsideLasam = isInputValidNumber
     ? isPointInsideLasam(numLng, numLat, boundary)
     : true
@@ -349,17 +357,7 @@ export function SiteAssessmentPopup({
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 bg-gradient-to-b from-slate-50/70 to-white">
               <div className="flex items-center gap-3">
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl shadow-sm text-white ${
-                  assessCategory === 'farm_lot'
-                    ? 'bg-gradient-to-tr from-emerald-700 to-teal-600 ring-2 ring-emerald-500/20'
-                    : 'bg-gradient-to-tr from-slate-800 to-slate-950 ring-2 ring-slate-900/20'
-                }`}>
-                  {assessCategory === 'farm_lot' ? (
-                    <Sprout className="h-5 w-5" />
-                  ) : (
-                    <Building2 className="h-5 w-5" />
-                  )}
-                </div>
+                <BrandLogo size="md" className="h-10 w-10 shrink-0 drop-shadow-sm" />
                 <div>
                   <div className="flex items-center gap-1.5">
                     <h3 id="site-assessment-title" className="text-sm font-bold text-slate-900 tracking-tight">
@@ -376,6 +374,20 @@ export function SiteAssessmentPopup({
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
+                {onOpenReliability && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenChange(false)
+                      onOpenReliability()
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700 hover:text-teal-900 hover:underline cursor-pointer mr-1"
+                    title="View data reliability & coverage details"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Data Info</span>
+                  </button>
+                )}
                 <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Lasam LGU
@@ -393,74 +405,31 @@ export function SiteAssessmentPopup({
 
             {/* Scrollable Body */}
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 text-slate-800">
-              {/* Coverage and Data Info Banner */}
-              <div className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200/80 px-3 py-2 text-[11px] text-slate-600">
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="text-teal-700 font-bold">📍 Coverage:</span>
-                  <span className="truncate">Municipality of Lasam (PSGC 0201517000)</span>
-                </div>
-                {onOpenReliability && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onOpenChange(false)
-                      onOpenReliability()
-                    }}
-                    className="shrink-0 inline-flex items-center gap-1 font-semibold text-teal-700 hover:text-teal-900 underline text-[10.5px] cursor-pointer"
-                  >
-                    <ShieldCheck className="h-3 w-3" />
-                    Data Info
-                  </button>
-                )}
-              </div>
-
-              {/* Coordinates Section with Quick Landmarks */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Crosshair className="h-3.5 w-3.5 text-teal-600" />
-                    <span>Geographic Coordinates</span>
-                  </Label>
-                  <span className="text-[10px] text-slate-400 font-medium">WGS84 Decimal Degrees</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2 focus-within:border-teal-600 focus-within:bg-white focus-within:ring-2 focus-within:ring-teal-600/15 transition-all">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      <span>Latitude (N)</span>
-                      <span className="text-[9px] text-teal-700 font-mono">17.99° - 18.12°</span>
-                    </div>
-                    <input
-                      className="w-full bg-transparent font-mono text-xs font-semibold text-slate-900 focus:outline-none"
-                      value={assessLat}
-                      onChange={(e) => onAssessLatChange(e.target.value)}
-                      placeholder="Not set (Pick on Map)"
-                      inputMode="decimal"
-                    />
+              {/* Only display Geographic Coordinates & Coverage when a site point has been confirmed */}
+              {hasCoordinates && (
+                <div className="space-y-2 rounded-2xl border border-slate-200/90 bg-slate-50/80 p-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <Crosshair className="h-3.5 w-3.5 text-teal-600" />
+                      <span>Selected Site Coordinates</span>
+                    </Label>
+                    <span className="text-[10px] text-teal-700 font-semibold bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                      📍 Lasam (PSGC 0201517000)
+                    </span>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2 focus-within:border-teal-600 focus-within:bg-white focus-within:ring-2 focus-within:ring-teal-600/15 transition-all">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      <span>Longitude (E)</span>
-                      <span className="text-[9px] text-teal-700 font-mono">121.40° - 121.65°</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-xl border border-slate-200 bg-white p-2">
+                      <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Latitude</span>
+                      <span className="font-mono text-xs font-bold text-slate-900">{numLat.toFixed(5)}° N</span>
                     </div>
-                    <input
-                      className="w-full bg-transparent font-mono text-xs font-semibold text-slate-900 focus:outline-none"
-                      value={assessLng}
-                      onChange={(e) => onAssessLngChange(e.target.value)}
-                      placeholder="Not set (Pick on Map)"
-                      inputMode="decimal"
-                    />
+                    <div className="rounded-xl border border-slate-200 bg-white p-2">
+                      <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Longitude</span>
+                      <span className="font-mono text-xs font-bold text-slate-900">{numLng.toFixed(5)}° E</span>
+                    </div>
                   </div>
                 </div>
-
-                {!assessLat && !assessLng && (
-                  <p className="text-[10.5px] text-slate-500 italic flex items-center gap-1 pt-0.5">
-                    <span>📍</span>
-                    <span>No coordinates selected yet. Click the button below to pick on the live map.</span>
-                  </p>
-                )}
-              </div>
+              )}
 
               {/* Site Land-Use Purpose Selector */}
               <div className="space-y-1.5">
@@ -617,7 +586,15 @@ export function SiteAssessmentPopup({
                   onClick={onPickSiteOnMap}
                 >
                   <MapPin className="h-4 w-4" />
-                  <span>{assessCategory === 'farm_lot' ? 'Pick Farm Lot Directly on Map' : 'Pick Point Directly on Map'}</span>
+                  <span>
+
+                    {hasCoordinates
+
+                      ? assessCategory === 'farm_lot' ? 'Re-pick Farm Lot on Map' : 'Re-pick Point on Map'
+
+                      : assessCategory === 'farm_lot' ? 'Pick Farm Lot Directly on Map' : 'Pick Point Directly on Map'}
+
+                  </span>
                 </Button>
 
 
