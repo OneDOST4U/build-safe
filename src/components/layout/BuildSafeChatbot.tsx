@@ -1,20 +1,22 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import {
-  Bot,
-  CornerDownLeft,
-  MessageSquareText,
+  AudioLines,
+  ChevronDown,
+  FileText,
+  MessageSquare,
+  MoreVertical,
+  PenLine,
+  Plus,
   RotateCcw,
-  Sparkles,
-  User,
+  Send,
+  ShieldCheck,
   X,
 } from 'lucide-react'
 import {
   generateAiResponse,
-  INITIAL_GREETING_MESSAGE,
   type ChatContext,
   type ChatMessage,
 } from '@/lib/ai/buildSafeKnowledge'
-import { APP_LOGO_PATH } from '@/lib/constants'
 
 export interface BuildSafeChatbotProps {
   context?: ChatContext
@@ -23,49 +25,33 @@ export interface BuildSafeChatbotProps {
   hideFloatingButton?: boolean
 }
 
-function getInitialGreeting(context?: ChatContext): ChatMessage {
-  if (context?.assessmentResult) {
-    const res = context.assessmentResult
-    const targetLabel =
-      context.category === 'farm_lot'
-        ? `Proposed Farm Lot (${context.cropType?.split(' ')[0] ?? 'Crops'})`
-        : (context.buildingType ?? 'Proposed Structure')
-
-    const zoningRow = res.lgu.find((r) => r.label.toLowerCase().includes('zoning'))
-    const floodRow = res.lgu.find((r) => r.label.toLowerCase().includes('flood'))
-    const allRows = [...res.lgu, ...res.seismic, ...res.volcanic, ...res.hydromet]
-    const isProhibited = allRows.some((r) => r.value.includes('🚫') || r.value.includes('PROHIBITED'))
-    const isRestricted = allRows.some((r) => r.value.includes('⚠️') || r.value.includes('RESTRICTED') || r.value.includes('Data Gap'))
-
-    const statusBadge = isProhibited
-      ? '🚫 **CRITICAL: PROHIBITED LOCATION**'
-      : isRestricted
-      ? '⚠️ **CAUTION: RESTRICTED ZONE**'
-      : '✅ **CLEAR SCREENING**'
-
-    return {
-      id: `welcome-${Date.now()}`,
-      sender: 'assistant',
-      text: `👋 **Assessment Complete! I am BUILD-SAFE AI.**
-
-I've synced with your assessment for **${targetLabel}** at **${res.input.lat.toFixed(5)}° N, ${res.input.lng.toFixed(5)}° E** (${res.coverage?.municipality ?? 'Lasam'}):
-
-• **CLUP Zoning:** ${zoningRow?.value ?? 'Zoned'}
-• **Flood Hazard:** ${floodRow?.value ?? 'Evaluated'}
-• **Status:** ${statusBadge}
-
-Ask me anything about required municipal permits, flood mitigation, zoning clearance, or crop suitability!`,
-      timestamp: 'Just now',
-      suggestions: [
-        'What permits are required for this site in Lasam?',
-        'How can I mitigate flood risk here?',
-        'Can I convert this agricultural land?',
-        'Nearest agricultural business or facility',
-      ],
-    }
-  }
-
-  return INITIAL_GREETING_MESSAGE
+/**
+ * Pixel-accurate Google Gemini 4-pointed sparkle SVG icon
+ */
+export function GeminiSparkle({ className = 'h-7 w-7' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="geminiSparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#4285F4" />
+          <stop offset="30%" stopColor="#9B72CB" />
+          <stop offset="65%" stopColor="#D96570" />
+          <stop offset="85%" stopColor="#F4B400" />
+          <stop offset="100%" stopColor="#0F9D58" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M12 0C12 6.62742 6.62742 12 0 12C6.62742 12 12 17.3726 12 24C12 17.3726 17.3726 12 24 12C17.3726 12 12 6.62742 12 0Z"
+        fill="url(#geminiSparkleGrad)"
+      />
+    </svg>
+  )
 }
 
 export function BuildSafeChatbot({
@@ -87,28 +73,45 @@ export function BuildSafeChatbot({
     }
   }
 
-  const [messages, setMessages] = useState<ChatMessage[]>(() => [getInitialGreeting(context)])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputText, setInputText] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [contextAttached, setContextAttached] = useState(true)
+  const [showMenu, setShowMenu] = useState(false)
+  const [showModelMenu, setShowModelMenu] = useState(false)
+  const [selectedModel, setSelectedModel] = useState('Auto')
+  const [showPlusMenu, setShowPlusMenu] = useState(false)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (context?.assessmentResult) {
-      setMessages([getInitialGreeting(context)])
-    }
-  }, [context?.assessmentResult])
-
+  // Scroll to bottom when messages change
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && messages.length > 0) {
       scrollToBottom()
+    }
+    if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 150)
     }
   }, [isOpen, messages, isTyping])
+
+  // Close popup menus on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showMenu])
 
   const handleSendMessage = (textToSend: string) => {
     const trimmed = textToSend.trim()
@@ -127,7 +130,8 @@ export function BuildSafeChatbot({
 
     // Simulate natural AI thinking delay
     setTimeout(() => {
-      const response = generateAiResponse(trimmed, context)
+      const activeCtx = contextAttached ? context : undefined
+      const response = generateAiResponse(trimmed, activeCtx)
       const aiMsg: ChatMessage = {
         id: `assistant-${Date.now()}`,
         sender: 'assistant',
@@ -146,219 +150,376 @@ export function BuildSafeChatbot({
   }
 
   const handleResetChat = () => {
-    setMessages([getInitialGreeting(context)])
+    setMessages([])
     setIsTyping(false)
+    setShowMenu(false)
   }
 
-  const siteInfo = context?.assessmentResult
-    ? `${context.assessmentResult.coverage?.municipality ?? 'Lasam'} (${context.assessmentResult.input.lat.toFixed(4)}° N, ${context.assessmentResult.input.lng.toFixed(4)}° E)`
-    : null
+  // Determine context label for attached chip
+  const contextLabel = context?.assessmentResult
+    ? `Sharing "Assessment: ${context.assessmentResult.input.lat.toFixed(4)}° N, ${context.assessmentResult.input.lng.toFixed(4)}° E"`
+    : 'Sharing "BUILD-SAFE: Multi-Hazard Site Intelli... "'
 
   return (
     <>
-      {/* Floating Action Button (Message Icon below) */}
-      {!hideFloatingButton && (
-        <div className="fixed bottom-5 right-5 z-[70] flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          {!isOpen && (
-            <div className="flex items-center gap-1.5 rounded-full bg-slate-900/90 text-white px-3 py-1.5 text-xs font-semibold shadow-lg backdrop-blur border border-slate-700/60 animate-in fade-in slide-in-from-right-2 pointer-events-none">
-              <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
-              <span>BUILD-SAFE AI</span>
-            </div>
-          )}
-
+      {/* Floating Action Button (Visible when sidebar is closed) */}
+      {!hideFloatingButton && !isOpen && (
+        <div className="fixed bottom-5 right-5 z-[70] flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-300">
           <button
             type="button"
-            onClick={() => setIsOpen((prev) => !prev)}
-            className={`group relative flex h-13 w-13 items-center justify-center rounded-full shadow-2xl transition-all duration-300 active:scale-95 cursor-pointer ${
-              isOpen
-                ? 'bg-slate-900 text-white hover:bg-slate-800 ring-4 ring-slate-900/10'
-                : 'bg-gradient-to-tr from-emerald-700 via-teal-700 to-emerald-600 text-white hover:scale-105 ring-4 ring-emerald-500/25 shadow-emerald-900/30'
-            }`}
-            aria-label={isOpen ? 'Close BUILD-SAFE AI chat' : 'Open BUILD-SAFE AI chat'}
-            title={isOpen ? 'Close chat' : 'Chat with BUILD-SAFE AI'}
+            onClick={() => setIsOpen(true)}
+            className="group flex items-center gap-2.5 rounded-full border border-slate-200/90 bg-white/95 px-4 py-2.5 text-slate-800 shadow-xl backdrop-blur-md transition-all duration-200 hover:scale-105 hover:shadow-2xl hover:border-slate-300 active:scale-95 cursor-pointer ring-4 ring-slate-900/5"
+            aria-label="Open BUILD-SAFE AI chat"
+            title="Chat with BUILD-SAFE AI"
           >
-            {isOpen ? (
-              <X className="h-6 w-6 transition-transform group-hover:rotate-90 duration-200" />
-            ) : (
-              <>
-                <MessageSquareText className="h-6 w-6 transition-transform group-hover:scale-110 duration-200" />
-                {/* Online pulse indicator */}
-                <span className="absolute top-0 right-0 flex h-3.5 w-3.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
-                </span>
-              </>
-            )}
+            <GeminiSparkle className="h-5 w-5 shrink-0" />
+            <span className="text-xs font-semibold tracking-tight text-slate-800">
+              BUILD-SAFE AI
+            </span>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
           </button>
         </div>
       )}
 
-      {/* Small Popup Chatbox: BUILD-SAFE AI */}
+      {/* Full-Height Right Docked Sidebar (Styled like Google Gemini) */}
       {isOpen && (
-        <div
+        <aside
           role="dialog"
           aria-label="BUILD-SAFE AI Chat"
-          className="fixed bottom-20 right-4 sm:right-5 z-[75] flex h-[520px] max-h-[82vh] w-[92vw] sm:w-[390px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/25 animate-in fade-in slide-in-from-bottom-4 duration-250"
+          className="fixed top-0 right-0 bottom-0 z-[75] flex h-full w-full sm:w-[420px] lg:w-[460px] xl:w-[480px] flex-col justify-between overflow-hidden border-l border-slate-200/80 bg-gradient-to-b from-[#ffffff] via-[#f8faff] to-[#edf4fc] shadow-2xl shadow-slate-900/15 animate-in slide-in-from-right duration-300 font-sans select-text"
         >
-          {/* Header */}
-          <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 px-3.5 py-3 text-white">
-            <div className="flex items-center gap-2.5">
-              <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 p-1 backdrop-blur-xs border border-white/20">
-                <img src={APP_LOGO_PATH} alt="BUILD-SAFE" className="h-6 w-6 object-contain" />
-                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-emerald-900" />
-              </div>
-              <div className="leading-tight">
-                <div className="flex items-center gap-1.5">
-                  <h3 className="font-bold text-sm tracking-wide">BUILD-SAFE AI</h3>
-                  <span className="rounded bg-emerald-500/30 border border-emerald-400/40 px-1 py-0.2 text-[9px] font-semibold text-emerald-200 uppercase tracking-wider">
-                    Online
-                  </span>
-                </div>
-                <p className="text-[10.5px] text-emerald-100/80">Lasam Multi-Hazard & Zoning Assistant</p>
-              </div>
+          {/* Top Header Bar */}
+          <div className="flex shrink-0 items-center justify-between px-3.5 py-3 border-b border-transparent">
+            <div className="flex items-center gap-2">
+              {messages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleResetChat}
+                  className="flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/80 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-white hover:text-slate-900 transition-colors shadow-2xs cursor-pointer"
+                  title="Start a new chat"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>New chat</span>
+                </button>
+              )}
             </div>
 
-            <div className="flex items-center gap-1 text-white/80">
+            {/* Top Right Controls (Three-dots menu and Close X) */}
+            <div className="flex items-center gap-1 relative" ref={menuRef}>
               <button
                 type="button"
-                onClick={handleResetChat}
-                className="rounded-lg p-1.5 hover:bg-white/15 hover:text-white transition-colors cursor-pointer"
-                title="Restart conversation"
+                onClick={() => setShowMenu((prev) => !prev)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-200/60 transition-colors cursor-pointer"
+                title="More options"
+                aria-label="More options"
               >
-                <RotateCcw className="h-3.5 w-3.5" />
+                <MoreVertical className="h-4 w-4" />
               </button>
+
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="rounded-lg p-1.5 hover:bg-white/15 hover:text-white transition-colors cursor-pointer"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-200/60 transition-colors cursor-pointer"
                 title="Close chat"
+                aria-label="Close chat"
               >
                 <X className="h-4 w-4" />
               </button>
+
+              {/* Three-dots Dropdown Menu */}
+              {showMenu && (
+                <div className="absolute top-10 right-0 z-50 w-56 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl text-xs text-slate-700 animate-in fade-in zoom-in-95 duration-150">
+                  <button
+                    type="button"
+                    onClick={handleResetChat}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left hover:bg-slate-100 transition-colors cursor-pointer font-medium"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5 text-slate-500" />
+                    <span>Clear conversation</span>
+                  </button>
+                  <div className="my-1 h-px bg-slate-100" />
+                  <div className="px-3 py-1 text-[10.5px] font-semibold text-slate-400 uppercase tracking-wider">
+                    Reference Knowledge
+                  </div>
+                  <div className="px-3 py-1.5 text-[11.5px] text-slate-600 leading-snug">
+                    • Lasam CLUP (2020–2029)<br />
+                    • DENR-MGB 1:10k Flood Data<br />
+                    • PHIVOLCS Fault Lines & NSCP<br />
+                    • PD 1067 Waterway Easements
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Active site context pill (if site assessed) */}
-          {siteInfo && (
-            <div className="flex items-center justify-between border-b border-emerald-100 bg-emerald-50/70 px-3 py-1.5 text-[10.5px] text-emerald-900">
-              <div className="flex items-center gap-1.5 truncate">
-                <span className="text-emerald-600 font-bold">📍 Active Site:</span>
-                <span className="truncate font-medium">{siteInfo}</span>
+          {/* Main Body */}
+          {messages.length === 0 ? (
+            /* Idle Screen: Exact layout matching user screenshot */
+            <div className="flex flex-1 flex-col justify-between px-6 pb-4">
+              {/* Center Sparkle and Greeting */}
+              <div className="flex flex-1 flex-col items-center justify-center text-center -mt-8">
+                <GeminiSparkle className="h-10 w-10 mb-5 drop-shadow-sm" />
+                <h1 className="text-[26px] sm:text-[28px] font-normal text-slate-800 tracking-tight leading-snug">
+                  What's the vibe, manoling?
+                </h1>
               </div>
-              <span className="shrink-0 text-[9.5px] text-emerald-700 font-semibold bg-emerald-100/80 rounded px-1.5 py-0.5">
-                Context Synced
-              </span>
+
+              {/* Stacked Suggestion Pills (above bottom input box) */}
+              <div className="flex flex-col gap-2.5 mb-3 w-full animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <button
+                  type="button"
+                  onClick={() => handleSendMessage('Explain the BUILD-SAFE site assessment process')}
+                  className="w-fit max-w-full rounded-full border border-slate-200/90 bg-white/95 px-4 py-2.5 text-[13px] font-medium text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-center gap-2.5 cursor-pointer text-left active:scale-[0.99]"
+                >
+                  <FileText className="h-4 w-4 text-slate-600 shrink-0" />
+                  <span className="truncate">Explain the BUILD-SAFE site assessment process</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSendMessage('Discuss a topic with me')}
+                  className="w-fit max-w-full rounded-full border border-slate-200/90 bg-white/95 px-4 py-2.5 text-[13px] font-medium text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-center gap-2.5 cursor-pointer text-left active:scale-[0.99]"
+                >
+                  <MessageSquare className="h-4 w-4 text-slate-600 shrink-0" />
+                  <span className="truncate">Discuss a topic with me</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSendMessage('Help me with my writing')}
+                  className="w-fit max-w-full rounded-full border border-slate-200/90 bg-white/95 px-4 py-2.5 text-[13px] font-medium text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-center gap-2.5 cursor-pointer text-left active:scale-[0.99]"
+                >
+                  <PenLine className="h-4 w-4 text-slate-600 shrink-0" />
+                  <span className="truncate">Help me with my writing</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Active Conversation Scroll View */
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                >
+                  {msg.sender === 'user' ? (
+                    <div className="rounded-3xl bg-slate-100 px-4 py-2.5 text-[13.5px] font-normal text-slate-800 leading-relaxed max-w-[85%] shadow-2xs">
+                      {msg.text}
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-2.5 max-w-[95%]">
+                      <div className="shrink-0 mt-0.5">
+                        <GeminiSparkle className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <div className="text-[13.5px] leading-relaxed text-slate-800 whitespace-pre-wrap">
+                          {renderFormattedText(msg.text)}
+                        </div>
+
+                        {/* Suggestion Chips */}
+                        {msg.suggestions && msg.suggestions.length > 0 && (
+                          <div className="pt-1 flex flex-wrap gap-1.5">
+                            {msg.suggestions.map((sug, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => handleSendMessage(sug)}
+                                className="rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer text-left shadow-2xs active:scale-95"
+                              >
+                                {sug}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  <span className="text-[9.5px] text-slate-400 mt-1 px-1">
+                    {msg.timestamp}
+                  </span>
+                </div>
+              ))}
+
+              {/* Typing Shimmer */}
+              {isTyping && (
+                <div className="flex items-center gap-2.5 text-slate-500 pt-1">
+                  <GeminiSparkle className="h-5 w-5 shrink-0 animate-pulse" />
+                  <div className="flex items-center gap-1 rounded-2xl bg-white border border-slate-200 px-3 py-2 shadow-2xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-slate-500 animate-bounce" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-slate-500 animate-bounce [animation-delay:0.2s]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-slate-500 animate-bounce [animation-delay:0.4s]" />
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
             </div>
           )}
 
-          {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50/50">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
-              >
-                <div
-                  className={`flex gap-2 max-w-[92%] ${
-                    msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'
-                  }`}
-                >
-                  {/* Sender Avatar */}
-                  <div
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white text-[10px] mt-0.5 ${
-                      msg.sender === 'user'
-                        ? 'bg-slate-700'
-                        : 'bg-gradient-to-tr from-emerald-600 to-teal-700 shadow-xs'
-                    }`}
-                  >
-                    {msg.sender === 'user' ? (
-                      <User className="h-3.5 w-3.5" />
-                    ) : (
-                      <Bot className="h-3.5 w-3.5" />
-                    )}
+          {/* Bottom Input Card Container */}
+          <div className="p-3 pt-0 shrink-0">
+            <form
+              onSubmit={handleSubmit}
+              className="rounded-3xl border border-slate-200/90 bg-white p-2.5 shadow-sm hover:shadow-md transition-shadow relative"
+            >
+              {/* Context Pill at top of input card */}
+              {contextAttached && (
+                <div className="mb-2 flex items-center justify-between rounded-full bg-slate-100/90 px-3 py-1 text-[11.5px] text-slate-600">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <ShieldCheck className="h-3.5 w-3.5 text-teal-600 shrink-0" />
+                    <span className="truncate font-medium">{contextLabel}</span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setContextAttached(false)}
+                    className="text-slate-400 hover:text-slate-700 p-0.5 rounded-full cursor-pointer ml-1"
+                    title="Detach context"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
 
-                  {/* Message Bubble */}
-                  <div
-                    className={`rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-xs whitespace-pre-wrap ${
-                      msg.sender === 'user'
-                        ? 'bg-teal-700 text-white rounded-tr-xs font-medium'
-                        : 'bg-white text-slate-800 rounded-tl-xs border border-slate-200/80 shadow-slate-100'
-                    }`}
+              {/* Input Row */}
+              <div className="flex items-center gap-1.5">
+                {/* Plus Button */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowPlusMenu((v) => !v)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+                    title="Attach options"
                   >
-                    {renderFormattedText(msg.text)}
-                  </div>
+                    <Plus className="h-4.5 w-4.5" />
+                  </button>
+
+                  {showPlusMenu && (
+                    <div className="absolute bottom-full left-0 mb-1 w-52 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl text-xs z-50 animate-in fade-in zoom-in-95">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setContextAttached(true)
+                          setShowPlusMenu(false)
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 cursor-pointer"
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5 text-teal-600" />
+                        <span>Attach BUILD-SAFE Context</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleSendMessage('Tell me about the Lasam CLUP zoning map layers')
+                          setShowPlusMenu(false)
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 cursor-pointer"
+                      >
+                        <FileText className="h-3.5 w-3.5 text-sky-600" />
+                        <span>Query CLUP Map Layers</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                <span className="text-[9.5px] text-slate-400 mt-1 px-8">
-                  {msg.timestamp}
-                </span>
+                {/* Input Text Field */}
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder="Type @ to add tabs"
+                  className="flex-1 bg-transparent text-[13.5px] text-slate-800 placeholder:text-slate-400 focus:outline-none px-1 py-1"
+                />
 
-                {/* Follow-up Suggestion Chips */}
-                {msg.suggestions && msg.suggestions.length > 0 && (
-                  <div className="mt-2 pl-8 flex flex-col gap-1.5 w-full">
-                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-                      Suggested questions:
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      {msg.suggestions.map((sug, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => handleSendMessage(sug)}
-                          className="rounded-full border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-[11px] font-medium text-emerald-900 transition-all hover:bg-emerald-100 hover:border-emerald-300 active:scale-95 text-left cursor-pointer"
-                        >
-                          {sug}
-                        </button>
-                      ))}
+                {/* Model Selector Dropdown Badge */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowModelMenu((v) => !v)}
+                    className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                    title="Select AI Model"
+                  >
+                    <span>{selectedModel}</span>
+                    <ChevronDown className="h-3 w-3 text-slate-500" />
+                  </button>
+
+                  {showModelMenu && (
+                    <div className="absolute bottom-full right-0 mb-1 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-lg text-xs z-50 animate-in fade-in zoom-in-95">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedModel('Auto')
+                          setShowModelMenu(false)
+                        }}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-lg cursor-pointer ${
+                          selectedModel === 'Auto'
+                            ? 'bg-slate-100 font-semibold text-slate-900'
+                            : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        Auto (Gemini 2.5 Flash)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedModel('CLUP Expert')
+                          setShowModelMenu(false)
+                        }}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-lg cursor-pointer ${
+                          selectedModel === 'CLUP Expert'
+                            ? 'bg-slate-100 font-semibold text-slate-900'
+                            : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        Lasam CLUP Expert
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedModel('MGB Hazard')
+                          setShowModelMenu(false)
+                        }}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-lg cursor-pointer ${
+                          selectedModel === 'MGB Hazard'
+                            ? 'bg-slate-100 font-semibold text-slate-900'
+                            : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        MGB Hazard AI
+                      </button>
                     </div>
-                  </div>
+                  )}
+                </div>
+
+                {/* Right Action Button (Waveform audio icon when empty, Send icon when typing) */}
+                {inputText.trim() ? (
+                  <button
+                    type="submit"
+                    disabled={isTyping}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer shrink-0 disabled:opacity-40"
+                    title="Send message"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      inputRef.current?.focus()
+                    }}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+                    title="Voice input / Audio mode"
+                  >
+                    <AudioLines className="h-4 w-4" />
+                  </button>
                 )}
               </div>
-            ))}
-
-            {/* Typing Indicator */}
-            {isTyping && (
-              <div className="flex items-center gap-2 text-slate-500">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-white text-[10px]">
-                  <Bot className="h-3.5 w-3.5" />
-                </div>
-                <div className="flex items-center gap-1 rounded-2xl rounded-tl-xs bg-white border border-slate-200 px-3.5 py-2 shadow-xs">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-bounce" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-bounce [animation-delay:0.2s]" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-bounce [animation-delay:0.4s]" />
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input & Footer */}
-          <div className="border-t border-slate-200 bg-white p-2.5">
-            <form onSubmit={handleSubmit} className="flex items-center gap-1.5">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="Ask about zoning, hazards, or permits in Lasam…"
-                className="flex-1 rounded-xl border border-slate-300 bg-slate-50/80 px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-emerald-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-600"
-              />
-              <button
-                type="submit"
-                disabled={!inputText.trim() || isTyping}
-                className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white shadow-xs transition-all hover:bg-emerald-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                title="Send message"
-              >
-                <CornerDownLeft className="h-4 w-4" />
-              </button>
             </form>
-            <p className="mt-1.5 text-center text-[9px] text-slate-400">
-              BUILD-SAFE AI decision support · Lasam CLUP (2020–2029) & Building Code (PD 1096)
-            </p>
           </div>
-        </div>
+        </aside>
       )}
     </>
   )

@@ -740,20 +740,18 @@ export default function App() {
               hazardPanelOpen={hazardPanelOpen}
             />
           )}
-          {assessmentResult && (
-            <BuildSafeChatbot
-              isOpen={chatbotOpen}
-              onOpenChange={setChatbotOpen}
-              hideFloatingButton={reportOpen}
-              context={{
-                siteCoords,
-                assessmentResult,
-                category: assessCategory,
-                buildingType: assessBuildingType,
-                cropType: assessCropType,
-              }}
-            />
-          )}
+          <BuildSafeChatbot
+            isOpen={chatbotOpen}
+            onOpenChange={setChatbotOpen}
+            hideFloatingButton={reportOpen}
+            context={{
+              siteCoords: siteCoords ?? undefined,
+              assessmentResult: assessmentResult ?? undefined,
+              category: assessCategory,
+              buildingType: assessBuildingType,
+              cropType: assessCropType,
+            }}
+          />
         </div>
 
         <MobileHazardDrawer
