@@ -214,6 +214,8 @@ export function MapView({
     waterBodyName?: string
     isInstitutional?: boolean
     institutionalName?: string
+    isProhibited?: boolean
+    prohibitedReason?: string
     point: { x: number; y: number }
   } | null>(null)
   const [hoveredWater, setHoveredWater] = useState<{
@@ -1554,7 +1556,15 @@ export function MapView({
           const c = String(lu?.properties?.land_use_class ?? '').toLowerCase().trim()
           const l = String(lu?.properties?.land_use_label ?? '').toLowerCase().trim()
           const r = String(lu?.properties?.remarks ?? '').toLowerCase().trim()
-          return c === 'institutional' || l.includes('institutional') || r.includes('school') || r.includes('afp camp') || c === 'water'
+          const isRes = c === 'residential' || c === 'socialized_housing' || l.includes('residential') || l.includes('socialized housing')
+          const isComm = c === 'commercial' || l.includes('commercial')
+          const isParks = c === 'parks' || l.includes('parks') || l.includes('recreation')
+          const isCem = c === 'cemetery' || l.includes('cemetery') || r.includes('cemetery') || r.includes('memorial')
+          const isInst = c === 'institutional' || l.includes('institutional') || r.includes('school') || r.includes('afp camp')
+          const isWat = c === 'water' || l.includes('river') || l.includes('water')
+          if (isParks || isCem || isInst || isWat) return true
+          if (category === 'building' && !isRes && !isComm) return true
+          return false
         })()
       )
 
@@ -1671,7 +1681,15 @@ export function MapView({
           const c = String(lu?.properties?.land_use_class ?? '').toLowerCase().trim()
           const l = String(lu?.properties?.land_use_label ?? '').toLowerCase().trim()
           const r = String(lu?.properties?.remarks ?? '').toLowerCase().trim()
-          return c === 'institutional' || l.includes('institutional') || r.includes('school') || r.includes('afp camp') || c === 'water'
+          const isRes = c === 'residential' || c === 'socialized_housing' || l.includes('residential') || l.includes('socialized housing')
+          const isComm = c === 'commercial' || l.includes('commercial')
+          const isParks = c === 'parks' || l.includes('parks') || l.includes('recreation')
+          const isCem = c === 'cemetery' || l.includes('cemetery') || r.includes('cemetery') || r.includes('memorial')
+          const isInst = c === 'institutional' || l.includes('institutional') || r.includes('school') || r.includes('afp camp')
+          const isWat = c === 'water' || l.includes('river') || l.includes('water')
+          if (isParks || isCem || isInst || isWat) return true
+          if (category === 'building' && !isRes && !isComm) return true
+          return false
         })()
       )
 
@@ -1929,19 +1947,62 @@ export function MapView({
           return
         }
 
-        // Check Institutional Land Use Zone
+        // Check Land Use Zone Restrictions (Parks, Cemetery, Institutional, Residential & Commercial for Building)
         if (landUse) {
           const luFeat = getLandUseAtPoint([lng, lat], landUse)
           if (luFeat) {
             const luClass = String(luFeat.properties?.land_use_class ?? '').toLowerCase().trim()
             const luLabel = String(luFeat.properties?.land_use_label ?? '').toLowerCase().trim()
             const luRemarks = String(luFeat.properties?.remarks ?? '').toLowerCase().trim()
-            if (
-              luClass === 'institutional' ||
-              luLabel.includes('institutional') ||
-              luRemarks.includes('school') ||
-              luRemarks.includes('afp camp')
-            ) {
+
+            const isParks = luClass === 'parks' || luLabel.includes('parks') || luLabel.includes('recreation')
+            const isCem = luClass === 'cemetery' || luLabel.includes('cemetery') || luRemarks.includes('cemetery') || luRemarks.includes('memorial')
+            const isInst = luClass === 'institutional' || luLabel.includes('institutional') || luRemarks.includes('school') || luRemarks.includes('afp camp')
+            const isRes = luClass === 'residential' || luClass === 'socialized_housing' || luLabel.includes('residential') || luLabel.includes('socialized housing')
+            const isComm = luClass === 'commercial' || luLabel.includes('commercial')
+            const isAgri = luClass === 'agriculture' || luClass === 'crops' || luLabel.includes('agri') || luLabel.includes('crop')
+
+            if (isParks) {
+              new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
+                .setLngLat(e.lngLat)
+                .setHTML(
+                  `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
+                    <div style="background:#dc2626;color:#ffffff;padding:5px 8px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                      <span>🚫 Parks & Recreation — Prohibited</span>
+                    </div>
+                    <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
+                      Cannot Build or Farm Here
+                    </div>
+                    <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
+                      Parcel is designated as <strong>Parks & Recreation</strong> under Lasam CLUP (2020). Building construction and establishing farm lots are strictly prohibited in public recreational spaces.
+                    </div>
+                  </div>`,
+                )
+                .addTo(map)
+              return
+            }
+
+            if (isCem) {
+              new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
+                .setLngLat(e.lngLat)
+                .setHTML(
+                  `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
+                    <div style="background:#dc2626;color:#ffffff;padding:5px 8px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                      <span>🚫 Cemetery Grounds — Prohibited</span>
+                    </div>
+                    <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
+                      Cannot Build or Farm Here
+                    </div>
+                    <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
+                      Parcel is designated as a <strong>Cemetery / Memorial Park</strong> under Lasam CLUP (2020). Constructing private building structures and farm lots is strictly prohibited.
+                    </div>
+                  </div>`,
+                )
+                .addTo(map)
+              return
+            }
+
+            if (isInst) {
               const name = luFeat.properties?.remarks || luFeat.properties?.land_use_label || 'Institutional Zone'
               new maplibregl.Popup({
                 closeButton: true,
@@ -1959,6 +2020,27 @@ export function MapView({
                     </div>
                     <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
                       Parcel is designated as <strong>Institutional Land Use</strong> under Lasam CLUP (2020) for government and public educational facilities. Private building development and farm lots are strictly prohibited.
+                    </div>
+                  </div>`,
+                )
+                .addTo(map)
+              return
+            }
+
+            if (category === 'building' && !isRes && !isComm) {
+              const zoneName = isAgri ? 'Agricultural Land' : luFeat.properties?.land_use_label || 'Non-Residential'
+              new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
+                .setLngLat(e.lngLat)
+                .setHTML(
+                  `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
+                    <div style="background:#dc2626;color:#ffffff;padding:5px 8px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                      <span>🚫 Only Residential & Commercial Allowed</span>
+                    </div>
+                    <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
+                      Cannot Build Here (${zoneName})
+                    </div>
+                    <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
+                      Under Lasam CLUP (2020), building structures are strictly restricted to <strong>Residential</strong> and <strong>Commercial</strong> areas only. Building on ${zoneName.toLowerCase()} is prohibited.
                     </div>
                   </div>`,
                 )
@@ -2132,24 +2214,29 @@ export function MapView({
         const insideLasam = isPointInsideLasam(lng, lat, boundaryRef.current ?? boundary)
         const muni = insideLasam ? 'Lasam' : identifyMunicipality(lng, lat, boundaryRef.current ?? boundary)
 
-        // Check if inside institutional land use
+        // Check if inside land use zones
         let isInstitutional = false
-        let institutionalName: string | undefined
+        let isParks = false
+        let isCemetery = false
+        let isRes = false
+        let isComm = false
+        let isAgriZone = false
+        let zoneLabel = ''
+
         if (landUse) {
           const luFeat = getLandUseAtPoint([lng, lat], landUse)
           if (luFeat) {
             const luClass = String(luFeat.properties?.land_use_class ?? '').toLowerCase().trim()
             const luLabel = String(luFeat.properties?.land_use_label ?? '').toLowerCase().trim()
             const luRemarks = String(luFeat.properties?.remarks ?? '').toLowerCase().trim()
-            if (
-              luClass === 'institutional' ||
-              luLabel.includes('institutional') ||
-              luRemarks.includes('school') ||
-              luRemarks.includes('afp camp')
-            ) {
-              isInstitutional = true
-              institutionalName = luFeat.properties?.remarks || luFeat.properties?.land_use_label || 'Institutional Zone'
-            }
+            zoneLabel = luFeat.properties?.remarks || luFeat.properties?.land_use_label || luClass
+
+            isParks = luClass === 'parks' || luLabel.includes('parks') || luLabel.includes('recreation')
+            isCemetery = luClass === 'cemetery' || luLabel.includes('cemetery') || luRemarks.includes('cemetery') || luRemarks.includes('memorial')
+            isInstitutional = luClass === 'institutional' || luLabel.includes('institutional') || luRemarks.includes('school') || luRemarks.includes('afp camp')
+            isRes = luClass === 'residential' || luClass === 'socialized_housing' || luLabel.includes('residential') || luLabel.includes('socialized housing')
+            isComm = luClass === 'commercial' || luLabel.includes('commercial')
+            isAgriZone = luClass === 'agriculture' || luClass === 'crops' || luLabel.includes('agri') || luLabel.includes('crop')
           }
         }
 
@@ -2180,7 +2267,28 @@ export function MapView({
           }
         }
 
-        const isProhibited = !insideLasam || isWater || isInstitutional
+        let isProhibited = false
+        let prohibitedReason = ''
+
+        if (!insideLasam) {
+          isProhibited = true
+          prohibitedReason = `Outside Lasam (${muni})`
+        } else if (isWater) {
+          isProhibited = true
+          prohibitedReason = waterName || 'Water Body (PD 1067)'
+        } else if (isParks) {
+          isProhibited = true
+          prohibitedReason = 'Parks & Recreation'
+        } else if (isCemetery) {
+          isProhibited = true
+          prohibitedReason = 'Cemetery Grounds'
+        } else if (isInstitutional) {
+          isProhibited = true
+          prohibitedReason = zoneLabel || 'Institutional Zone'
+        } else if (category === 'building' && !isRes && !isComm) {
+          isProhibited = true
+          prohibitedReason = isAgriZone ? 'Agricultural Land' : (zoneLabel || 'Non-Residential / Non-Commercial')
+        }
 
         setHoverSiteCoords({
           lng,
@@ -2190,7 +2298,9 @@ export function MapView({
           isWaterBody: isWater,
           waterBodyName: waterName,
           isInstitutional,
-          institutionalName,
+          institutionalName: zoneLabel,
+          isProhibited,
+          prohibitedReason,
           point: { x: e.point.x, y: e.point.y },
         })
 
@@ -2304,29 +2414,15 @@ export function MapView({
             {/* Tooltip badge floating directly above cursor */}
             <div
               className={`mb-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold shadow-xl backdrop-blur-md transition-colors ${
-                !hoverSiteCoords.isInsideLasam
-                  ? 'border border-amber-300 bg-amber-950/95 text-amber-200'
-                  : hoverSiteCoords.isWaterBody
+                hoverSiteCoords.isProhibited
                   ? 'border border-red-300 bg-red-950/95 text-red-200'
-                  : hoverSiteCoords.isInstitutional
-                  ? 'border border-purple-300 bg-purple-950/95 text-purple-200'
                   : 'border border-sky-300/80 bg-slate-900/95 text-white'
               }`}
             >
-              {!hoverSiteCoords.isInsideLasam ? (
+              {hoverSiteCoords.isProhibited ? (
                 <span className="flex items-center gap-1.5">
                   <span>🚫</span>
-                  <span>Outside Lasam ({hoverSiteCoords.muni})</span>
-                </span>
-              ) : hoverSiteCoords.isWaterBody ? (
-                <span className="flex items-center gap-1.5">
-                  <span>🚫</span>
-                  <span>Prohibited: Water Body (PD 1067)</span>
-                </span>
-              ) : hoverSiteCoords.isInstitutional ? (
-                <span className="flex items-center gap-1.5">
-                  <span>🚫</span>
-                  <span>Prohibited: Institutional Zone</span>
+                  <span>Prohibited: {hoverSiteCoords.prohibitedReason}</span>
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5">
@@ -2343,7 +2439,7 @@ export function MapView({
             </div>
 
             {/* When permitted, show bouncing pin arrow. When prohibited, disable the arrow pointing to it! */}
-            {hoverSiteCoords.isInsideLasam && !hoverSiteCoords.isWaterBody && !hoverSiteCoords.isInstitutional ? (
+            {!hoverSiteCoords.isProhibited ? (
               <div className="relative flex flex-col items-center">
                 <img
                   src="/markers/site-pin.svg"
@@ -2358,7 +2454,7 @@ export function MapView({
                 <div className="absolute -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-white shadow-sm bg-sky-500" />
               </div>
             ) : (
-              /* When prohibited (Institutional, Water Body, or Outside Lasam), DISABLE THE ARROW POINTING TO IT */
+              /* When prohibited (Parks, Cemetery, Institutional, Water Body, Outside Lasam, or Non-Residential/Commercial for Building), DISABLE THE ARROW POINTING TO IT */
               <div className="relative flex flex-col items-center">
                 <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-red-600 text-white shadow-lg font-bold text-xs">
                   🚫
@@ -2369,33 +2465,15 @@ export function MapView({
         </div>
       )}
       {activeTool === 'place-site' && hoverSiteCoords && !siteCoords && (
-        !hoverSiteCoords.isInsideLasam ? (
-          <div className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-amber-300 bg-amber-950/95 px-4 py-2 text-xs font-semibold text-white shadow-2xl backdrop-blur-sm animate-pulse">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-600 text-white font-bold text-xs">
-              🚫
-            </span>
-            <span>Outside Lasam Boundary ({hoverSiteCoords.muni}) — Placement Disabled</span>
-            <span className="rounded bg-amber-800 px-1.5 py-0.5 text-[10px] font-bold text-amber-200">
-              Not Allowed
-            </span>
-          </div>
-        ) : hoverSiteCoords.isWaterBody ? (
+        hoverSiteCoords.isProhibited ? (
           <div className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-red-400 bg-red-950/95 px-4 py-2 text-xs font-semibold text-white shadow-2xl backdrop-blur-sm animate-pulse">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white font-bold text-xs">
               🚫
             </span>
-            <span>Water Body ({hoverSiteCoords.waterBodyName || 'PD 1067'}) — Building & Farming Prohibited</span>
+            <span>
+              {hoverSiteCoords.prohibitedReason} — {category === 'building' ? 'Building Prohibited (Only Residential & Commercial Permitted)' : 'Farming Prohibited'}
+            </span>
             <span className="rounded bg-red-900 px-1.5 py-0.5 text-[10px] font-bold text-red-200">
-              Disabled
-            </span>
-          </div>
-        ) : hoverSiteCoords.isInstitutional ? (
-          <div className="pointer-events-none absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-purple-400 bg-purple-950/95 px-4 py-2 text-xs font-semibold text-white shadow-2xl backdrop-blur-sm animate-pulse">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-700 text-white font-bold text-xs">
-              🚫
-            </span>
-            <span>Institutional Zone ({hoverSiteCoords.institutionalName || 'CLUP 2020'}) — Building & Farming Prohibited</span>
-            <span className="rounded bg-purple-900 px-1.5 py-0.5 text-[10px] font-bold text-purple-200">
               Disabled
             </span>
           </div>

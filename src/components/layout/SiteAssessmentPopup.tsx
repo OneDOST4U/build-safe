@@ -109,6 +109,28 @@ export function SiteAssessmentPopup({
   const pendingLandUseClass = String(pendingLandUse?.properties?.land_use_class ?? '').toLowerCase().trim()
   const pendingLandUseLabel = String(pendingLandUse?.properties?.land_use_label ?? '').trim()
   const pendingRemarks = String(pendingLandUse?.properties?.remarks ?? '').toLowerCase().trim()
+
+  const isPendingResidential =
+    pendingLandUseClass === 'residential' ||
+    pendingLandUseClass === 'socialized_housing' ||
+    pendingLandUseLabel.toLowerCase().includes('residential') ||
+    pendingLandUseLabel.toLowerCase().includes('socialized housing')
+
+  const isPendingCommercial =
+    pendingLandUseClass === 'commercial' ||
+    pendingLandUseLabel.toLowerCase().includes('commercial')
+
+  const isPendingParks =
+    pendingLandUseClass === 'parks' ||
+    pendingLandUseLabel.toLowerCase().includes('parks') ||
+    pendingLandUseLabel.toLowerCase().includes('recreation')
+
+  const isPendingCemetery =
+    pendingLandUseClass === 'cemetery' ||
+    pendingLandUseLabel.toLowerCase().includes('cemetery') ||
+    pendingRemarks.includes('cemetery') ||
+    pendingRemarks.includes('memorial')
+
   const isPendingInstitutional =
     pendingLandUseClass === 'institutional' ||
     pendingLandUseLabel.toLowerCase().includes('institutional') ||
@@ -116,7 +138,6 @@ export function SiteAssessmentPopup({
     pendingRemarks.includes('afp camp')
 
   const isPendingWaterBody = Boolean(waterBodyCheck?.isWaterBody)
-  const isPendingProhibited = !isPendingInsideLasam || isPendingWaterBody || isPendingInstitutional
 
   const isPendingAgri =
     pendingLandUseClass === 'agriculture' ||
@@ -124,10 +145,43 @@ export function SiteAssessmentPopup({
     pendingLandUseLabel.toLowerCase().includes('agri') ||
     pendingLandUseLabel.toLowerCase().includes('crop')
 
-  const isAgriConflictPending =
-    isPendingAgri &&
-    assessCategory === 'building' &&
-    assessBuildingType !== 'Agricultural structure (barn, poultry shed)'
+  // Building structures: strictly restricted to Residential and Commercial zones
+  const isBuildingAllowed = isPendingResidential || isPendingCommercial
+  // Farm lots: strictly prohibited in parks, cemetery, institutional, water, forest, road, infrastructure
+  const isFarmProhibited =
+    isPendingParks ||
+    isPendingCemetery ||
+    isPendingInstitutional ||
+    isPendingWaterBody ||
+    pendingLandUseClass === 'forest' ||
+    pendingLandUseClass === 'road' ||
+    pendingLandUseClass === 'infrastructure'
+
+  const isPendingProhibited =
+    !isPendingInsideLasam ||
+    isPendingWaterBody ||
+    isPendingParks ||
+    isPendingCemetery ||
+    isPendingInstitutional ||
+    (assessCategory === 'building' && !isBuildingAllowed) ||
+    (assessCategory === 'farm_lot' && isFarmProhibited)
+
+  let confirmDisabledLabel = 'Confirm Point'
+  if (!isPendingInsideLasam) {
+    confirmDisabledLabel = 'Disabled (Outside)'
+  } else if (isPendingWaterBody) {
+    confirmDisabledLabel = 'Disabled (Water Body)'
+  } else if (isPendingParks) {
+    confirmDisabledLabel = 'Disabled (Parks & Rec)'
+  } else if (isPendingCemetery) {
+    confirmDisabledLabel = 'Disabled (Cemetery)'
+  } else if (isPendingInstitutional) {
+    confirmDisabledLabel = 'Disabled (Institutional)'
+  } else if (assessCategory === 'building' && !isBuildingAllowed) {
+    confirmDisabledLabel = isPendingAgri ? 'Disabled (Agricultural)' : 'Disabled (Non-Residential)'
+  } else if (assessCategory === 'farm_lot' && isFarmProhibited) {
+    confirmDisabledLabel = 'Disabled (Non-Agri)'
+  }
 
   const inputLandUse = useMemo(() => {
     if (!isInputValidNumber || !landUse) return null
@@ -262,6 +316,32 @@ export function SiteAssessmentPopup({
               </div>
             )}
 
+            {/* Prohibited Parks & Recreation Alert */}
+            {isPendingParks && (
+              <div className="rounded-lg border border-red-300 bg-red-50 p-2.5 text-xs text-red-950">
+                <div className="flex items-center gap-1.5 font-bold text-red-700">
+                  <Ban className="h-4 w-4 shrink-0" />
+                  <span>Parks & Recreation — Development Prohibited</span>
+                </div>
+                <p className="mt-1 text-[10.5px] leading-relaxed text-red-900">
+                  Parcel is designated as <strong>Parks & Recreation</strong> under Lasam CLUP (2020). Building construction and establishing farm lots are strictly prohibited in public recreational spaces.
+                </p>
+              </div>
+            )}
+
+            {/* Prohibited Cemetery Alert */}
+            {isPendingCemetery && (
+              <div className="rounded-lg border border-red-300 bg-red-50 p-2.5 text-xs text-red-950">
+                <div className="flex items-center gap-1.5 font-bold text-red-700">
+                  <Ban className="h-4 w-4 shrink-0" />
+                  <span>Cemetery Grounds — Development Prohibited</span>
+                </div>
+                <p className="mt-1 text-[10.5px] leading-relaxed text-red-900">
+                  Parcel is designated as a <strong>Cemetery / Memorial Park</strong> under Lasam CLUP (2020). Constructing buildings and establishing farm lots are strictly prohibited.
+                </p>
+              </div>
+            )}
+
             {/* Prohibited Institutional Zone Alert */}
             {isPendingInstitutional && (
               <div className="rounded-lg border border-purple-300 bg-purple-50 p-2.5 text-xs text-purple-950">
@@ -301,20 +381,28 @@ export function SiteAssessmentPopup({
               </div>
             )}
 
-            {/* CLUP Agricultural Land Conflict Alert */}
-            {isAgriConflictPending && (
+            {/* Building Allowed in Residential / Commercial only Alert */}
+            {assessCategory === 'building' && !isBuildingAllowed && !isPendingParks && !isPendingCemetery && !isPendingInstitutional && !isPendingWaterBody && (
               <div className="rounded-lg border border-red-300 bg-red-50 p-2.5 text-xs text-red-950">
                 <div className="flex items-center gap-1.5 font-bold text-red-700">
-                  <span className="text-sm">🚫</span>
-                  <span>CLUP Land Use: Agricultural Land</span>
+                  <Ban className="h-4 w-4 shrink-0" />
+                  <span>{isPendingAgri ? 'Agricultural Land — Building Prohibited' : 'Non-Conforming Zone — Building Prohibited'}</span>
                 </div>
                 <p className="mt-1 text-[10.5px] leading-relaxed text-red-900">
-                  Parcel is officially designated as <strong>Agricultural Land</strong> under Lasam CLUP (2020). Constructing a <strong>{assessBuildingType}</strong> here is a non-conforming use requiring DAR conversion clearance.
+                  Under Lasam CLUP (2020), building structures are strictly restricted to <strong>Residential</strong> and <strong>Commercial</strong> areas only. Constructing a {assessBuildingType} on this parcel is prohibited.
                 </p>
               </div>
             )}
 
-            {isPendingAgri && assessCategory === 'farm_lot' && !isPendingInstitutional && !isPendingWaterBody && (
+            {assessCategory === 'building' && (isPendingResidential || isPendingCommercial) && (
+              <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-2 text-xs text-emerald-950">
+                <p className="text-[10.5px] leading-snug text-emerald-900 font-medium">
+                  ✅ <strong>CLUP Zoning Clearance:</strong> Confirmed {isPendingResidential ? 'Residential' : 'Commercial'} Zone (100% conforming for proposed building structure).
+                </p>
+              </div>
+            )}
+
+            {isPendingAgri && assessCategory === 'farm_lot' && !isPendingInstitutional && !isPendingWaterBody && !isPendingParks && !isPendingCemetery && (
               <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-2 text-xs text-emerald-950">
                 <p className="text-[10.5px] leading-snug text-emerald-900 font-medium">
                   🌾 <strong>CLUP Agricultural Land:</strong> 100% conforming with designated agricultural zoning.
@@ -327,8 +415,14 @@ export function SiteAssessmentPopup({
                 ? '⚠️ Placement disabled outside boundary. Click inside Lasam to relocate.'
                 : isPendingWaterBody
                 ? '🚫 Construction and farming prohibited in water bodies (PD 1067). Click elsewhere to relocate.'
+                : isPendingParks
+                ? '🚫 Construction and farming prohibited in parks & recreation. Click elsewhere to relocate.'
+                : isPendingCemetery
+                ? '🚫 Construction and farming prohibited in cemetery grounds. Click elsewhere to relocate.'
                 : isPendingInstitutional
-                ? '🚫 Construction and farming prohibited in institutional zones (Lasam CLUP 2020). Click elsewhere to relocate.'
+                ? '🚫 Construction and farming prohibited in institutional zones. Click elsewhere to relocate.'
+                : assessCategory === 'building' && !isBuildingAllowed
+                ? '🚫 Buildings are only permitted in Residential and Commercial zones. Click elsewhere to relocate.'
                 : '📍 Point dropped on map. Click elsewhere to relocate.'}
             </p>
 
@@ -369,13 +463,7 @@ export function SiteAssessmentPopup({
                 }`}
                 onClick={onConfirmMapSite}
               >
-                {!isPendingInsideLasam
-                  ? 'Disabled (Outside)'
-                  : isPendingWaterBody
-                  ? 'Disabled (Water Body)'
-                  : isPendingInstitutional
-                  ? 'Disabled (Institutional)'
-                  : 'Confirm Point'}
+                {confirmDisabledLabel}
               </Button>
             </div>
           </div>

@@ -145,6 +145,15 @@ export function assessFarmLot(
     luLabel.includes('institutional') ||
     luRemarks.includes('school') ||
     luRemarks.includes('afp camp')
+  const isParksZone =
+    luClass === 'parks' ||
+    luLabel.includes('parks') ||
+    luLabel.includes('recreation')
+  const isCemeteryZone =
+    luClass === 'cemetery' ||
+    luLabel.includes('cemetery') ||
+    luRemarks.includes('cemetery') ||
+    luRemarks.includes('memorial')
   const isWaterLandUse =
     luClass === 'water' ||
     luLabel.includes('river') ||
@@ -171,6 +180,12 @@ export function assessFarmLot(
   } else if (isInstitutionalZone) {
     suitabilityLevel = 'HIGH_RISK'
     floodEvaluation = '🚫 Institutional Zone: Parcel is designated for public, educational, and government facilities under Lasam CLUP (2020). Agricultural farm lots are strictly prohibited.'
+  } else if (isParksZone) {
+    suitabilityLevel = 'HIGH_RISK'
+    floodEvaluation = '🚫 Parks & Recreation: Parcel is designated for public parks and recreation under Lasam CLUP (2020). Agricultural farm lots are strictly prohibited.'
+  } else if (isCemeteryZone) {
+    suitabilityLevel = 'HIGH_RISK'
+    floodEvaluation = '🚫 Cemetery Zone: Parcel is designated as a cemetery / burial ground under Lasam CLUP (2020). Agricultural farm lots are strictly prohibited.'
   } else if (crop.startsWith('Palay')) {
     // Palay Evaluation
     if (isHighFlood) {
@@ -280,9 +295,15 @@ export function assessFarmLot(
     waterEasementEvaluation = `✅ Compliant with Riparian Setbacks — Located ${waterCheck.nearestDistanceM != null ? `${waterCheck.nearestDistanceM}m` : '>20m'} from nearest waterway, outside the 20m statutory agricultural easement margin (PD 1067). Safe distance for sustainable irrigation intake.`
   }
 
-  // Factor in Agricultural Zoning (NPAAAD / SAFDZ / CLUP Institutional & Water)
+  // Factor in Agricultural Zoning (NPAAAD / SAFDZ / CLUP Institutional, Parks, Cemetery & Water)
   let agriZoningEvaluation: string
-  if (isInstitutionalZone) {
+  if (isParksZone) {
+    agriZoningEvaluation =
+      '🚫 Prohibited — Designated Parks & Recreation Land Use (Lasam CLUP 2020). Agricultural farm lots and crops are strictly prohibited in public recreational spaces.'
+  } else if (isCemeteryZone) {
+    agriZoningEvaluation =
+      '🚫 Prohibited — Designated Cemetery / Memorial Land Use (Lasam CLUP 2020). Agricultural farm lots and crops are strictly prohibited in sacred burial grounds.'
+  } else if (isInstitutionalZone) {
     agriZoningEvaluation =
       '🚫 Prohibited — Designated Institutional Land Use (Lasam CLUP 2020) for government & public educational facilities. Agricultural farm lots and crops are strictly prohibited here.'
   } else if (waterCheck.isWaterBody || isWaterLandUse) {
@@ -303,7 +324,15 @@ export function assessFarmLot(
   let badgeClass = ''
   let color = ''
 
-  if (isInstitutionalZone) {
+  if (isParksZone) {
+    suitabilityTitle = 'Prohibited: Parks & Recreation (Lasam CLUP 2020)'
+    badgeClass = 'bg-red-100 text-red-950 border-red-300'
+    color = '#dc2626'
+  } else if (isCemeteryZone) {
+    suitabilityTitle = 'Prohibited: Cemetery Grounds (Lasam CLUP 2020)'
+    badgeClass = 'bg-red-100 text-red-950 border-red-300'
+    color = '#dc2626'
+  } else if (isInstitutionalZone) {
     suitabilityTitle = 'Prohibited: Institutional Zone (Lasam CLUP 2020)'
     badgeClass = 'bg-purple-100 text-purple-950 border-purple-300'
     color = '#7e22ce'

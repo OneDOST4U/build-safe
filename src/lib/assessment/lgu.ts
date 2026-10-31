@@ -199,6 +199,17 @@ function evaluateLandUseZoning(
     rawRemarks.includes('school') ||
     rawRemarks.includes('afp camp')
 
+  const isParksZone =
+    rawClass === 'parks' ||
+    rawLabel.toLowerCase().includes('parks') ||
+    rawLabel.toLowerCase().includes('recreation')
+
+  const isCemeteryZone =
+    rawClass === 'cemetery' ||
+    rawLabel.toLowerCase().includes('cemetery') ||
+    rawRemarks.includes('cemetery') ||
+    rawRemarks.includes('memorial')
+
   const isResidentialZone =
     rawClass === 'residential' ||
     rawClass === 'socialized_housing' ||
@@ -207,10 +218,6 @@ function evaluateLandUseZoning(
 
   const isCommercialZone =
     rawClass === 'commercial' || rawLabel.toLowerCase().includes('commercial')
-  const isIndustrialZone =
-    rawClass === 'industrial' ||
-    rawClass === 'agri_industrial' ||
-    rawLabel.toLowerCase().includes('industrial')
 
   const isForestZone = rawClass === 'forest' || rawLabel.toLowerCase().includes('forest')
   const isWaterZone =
@@ -255,8 +262,8 @@ function evaluateLandUseZoning(
     }
 
     return {
-      landUseRow: `🚫 Agricultural Land (CLUP 2020) — Officially classified for Agriculture. Not zoned for residential / urban construction.`,
-      zoningComplianceRow: `🚫 Non-Conforming / Agricultural Land — Site is classified as Agricultural Land. Constructing a ${buildingType} requires formal DAR Land-Use Conversion Clearance (DAR AO 1-2019) and Sangguniang Bayan Reclassification Ordinance (RA 7160 Sec. 20) before building permits can be lawfully issued.`,
+      landUseRow: `🚫 Agricultural Land (CLUP 2020) — Officially classified for Agriculture.`,
+      zoningComplianceRow: `🚫 Prohibited — Under Lasam CLUP (2020), building construction is strictly restricted to Residential and Commercial zones only. Constructing a ${buildingType} on agricultural land is prohibited.`,
       isAgriConflict: true,
     }
   }
@@ -279,20 +286,30 @@ function evaluateLandUseZoning(
 
   if (isCommercialZone) {
     return {
-      landUseRow: 'Commercial (CLUP 2020) — Designated for commercial and business enterprises.',
+      landUseRow: '✅ Commercial (CLUP 2020) — Designated for commercial and business enterprises.',
       zoningComplianceRow:
         category === 'farm_lot'
           ? '⚠️ Conditional — Farm lot inside commercial zone requires zoning clearance.'
-          : `Locational Clearance Required — Proposed ${buildingType} subject to commercial zone regulations.`,
+          : `✅ Conforming — Proposed ${buildingType} is conforming with Lasam CLUP Commercial zoning.`,
       isAgriConflict: false,
     }
   }
 
-  if (isIndustrialZone) {
+  if (isParksZone) {
     return {
-      landUseRow: 'Agri-Industrial (CLUP 2020) — Designated for agricultural processing and light industrial.',
-      zoningComplianceRow: `Locational Clearance Required — Proposed ${buildingType} subject to industrial zone regulations.`,
-      isAgriConflict: false,
+      landUseRow: '🚫 Parks & Recreation (CLUP 2020) — Public open space and community recreational grounds.',
+      zoningComplianceRow:
+        '🚫 Prohibited — Construction of buildings and establishing farm lots are strictly prohibited in designated Parks & Recreation zones under Lasam CLUP.',
+      isAgriConflict: true,
+    }
+  }
+
+  if (isCemeteryZone) {
+    return {
+      landUseRow: '🚫 Cemetery (CLUP 2020) — Sacred burial and memorial grounds.',
+      zoningComplianceRow:
+        '🚫 Prohibited — Construction of buildings and farm lots is strictly prohibited in designated Cemetery grounds under Lasam CLUP and Sanitation Code.',
+      isAgriConflict: true,
     }
   }
 
@@ -311,7 +328,7 @@ function evaluateLandUseZoning(
       landUseRow: '🚫 Forest Conservation (CLUP 2020) — Protected forest & watershed.',
       zoningComplianceRow:
         '🚫 Prohibited — Urban and residential development strictly prohibited in forest protection zones without DENR permit.',
-      isAgriConflict: false,
+      isAgriConflict: true,
     }
   }
 
@@ -327,6 +344,14 @@ function evaluateLandUseZoning(
   const normalized =
     formatLandUseClass(match.properties?.land_use_class as Parameters<typeof formatLandUseClass>[0]) ||
     rawLabel
+
+  if (category === 'building' && !isResidentialZone && !isCommercialZone) {
+    return {
+      landUseRow: `🚫 ${normalized} (CLUP 2020) — Non-residential / non-commercial land use.`,
+      zoningComplianceRow: `🚫 Prohibited — Under Lasam CLUP (2020), building construction is strictly restricted to designated Residential and Commercial areas only.`,
+      isAgriConflict: true,
+    }
+  }
   return {
     landUseRow: normalized,
     zoningComplianceRow: `Locational Clearance Required — Verify permitted uses for ${normalized} with Lasam MPDO.`,

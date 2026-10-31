@@ -335,6 +335,93 @@ export default function App() {
       setAssessError('Coordinates must be strictly within the official municipal boundary of Lasam.')
       return
     }
+
+    const pt: [number, number] = [lng, lat]
+    const waterCheck = checkWaterBodyProximity(pt, {
+      riversMain: data.riversMain,
+      riversTributaries: data.riversTributaries,
+      riverbanks: data.riverbanks,
+      drainage: data.drainage,
+    })
+    if (waterCheck.isWaterBody) {
+      setAssessError(
+        'Cannot assess site: Establishing building structures or farm lots inside water bodies is strictly prohibited under Presidential Decree No. 1067.',
+      )
+      return
+    }
+
+    if (data.landUse) {
+      const lu = getLandUseAtPoint(pt, data.landUse)
+      const luClass = String(lu?.properties?.land_use_class ?? '').toLowerCase().trim()
+      const luLabel = String(lu?.properties?.land_use_label ?? '').toLowerCase().trim()
+      const luRemarks = String(lu?.properties?.remarks ?? '').toLowerCase().trim()
+
+      const isParks =
+        luClass === 'parks' ||
+        luLabel.includes('parks') ||
+        luLabel.includes('recreation')
+
+      const isCem =
+        luClass === 'cemetery' ||
+        luLabel.includes('cemetery') ||
+        luRemarks.includes('cemetery') ||
+        luRemarks.includes('memorial')
+
+      const isInst =
+        luClass === 'institutional' ||
+        luLabel.includes('institutional') ||
+        luRemarks.includes('school') ||
+        luRemarks.includes('afp camp')
+
+      const isRes =
+        luClass === 'residential' ||
+        luClass === 'socialized_housing' ||
+        luLabel.includes('residential') ||
+        luLabel.includes('socialized housing')
+
+      const isComm =
+        luClass === 'commercial' ||
+        luLabel.includes('commercial')
+
+      if (isParks) {
+        setAssessError(
+          'Cannot assess site: Building structures and farm lots are strictly prohibited in Parks & Recreation zones under Lasam CLUP.',
+        )
+        return
+      }
+
+      if (isCem) {
+        setAssessError(
+          'Cannot assess site: Building structures and farm lots are strictly prohibited in Cemetery grounds under Lasam CLUP.',
+        )
+        return
+      }
+
+      if (isInst) {
+        setAssessError(
+          'Cannot assess site: Building structures and farm lots are strictly prohibited in designated Institutional zones under Lasam CLUP.',
+        )
+        return
+      }
+
+      if (assessCategory === 'building' && !isRes && !isComm) {
+        setAssessError(
+          'Cannot assess site: Under Lasam CLUP 2020, building structures are strictly permitted only in designated Residential and Commercial areas.',
+        )
+        return
+      }
+
+      if (
+        assessCategory === 'farm_lot' &&
+        (luClass === 'forest' || luClass === 'road' || luClass === 'infrastructure')
+      ) {
+        setAssessError(
+          'Cannot assess site: Agricultural farm lots are strictly prohibited in forest, road, and infrastructure zones.',
+        )
+        return
+      }
+    }
+
     setAssessError(null)
     const result = assessSite(
       {
@@ -395,14 +482,76 @@ export default function App() {
       const luClass = String(lu?.properties?.land_use_class ?? '').toLowerCase().trim()
       const luLabel = String(lu?.properties?.land_use_label ?? '').toLowerCase().trim()
       const luRemarks = String(lu?.properties?.remarks ?? '').toLowerCase().trim()
-      if (
+
+      const isParks =
+        luClass === 'parks' ||
+        luLabel.includes('parks') ||
+        luLabel.includes('recreation')
+
+      const isCem =
+        luClass === 'cemetery' ||
+        luLabel.includes('cemetery') ||
+        luRemarks.includes('cemetery') ||
+        luRemarks.includes('memorial')
+
+      const isInst =
         luClass === 'institutional' ||
         luLabel.includes('institutional') ||
         luRemarks.includes('school') ||
         luRemarks.includes('afp camp')
-      ) {
+
+      const isRes =
+        luClass === 'residential' ||
+        luClass === 'socialized_housing' ||
+        luLabel.includes('residential') ||
+        luLabel.includes('socialized housing')
+
+      const isComm =
+        luClass === 'commercial' ||
+        luLabel.includes('commercial')
+
+      if (isParks) {
+        setAssessError(
+          'Cannot confirm site: Building structures and farm lots are strictly prohibited in Parks & Recreation zones under Lasam CLUP.',
+        )
+        setAssessPanelOpen(true)
+        setActiveTool('pan')
+        return
+      }
+
+      if (isCem) {
+        setAssessError(
+          'Cannot confirm site: Building structures and farm lots are strictly prohibited in Cemetery grounds under Lasam CLUP.',
+        )
+        setAssessPanelOpen(true)
+        setActiveTool('pan')
+        return
+      }
+
+      if (isInst) {
         setAssessError(
           'Cannot confirm site: Building structures and farm lots are strictly prohibited in designated Institutional zones under Lasam CLUP.',
+        )
+        setAssessPanelOpen(true)
+        setActiveTool('pan')
+        return
+      }
+
+      if (assessCategory === 'building' && !isRes && !isComm) {
+        setAssessError(
+          'Cannot confirm site: Under Lasam CLUP 2020, building structures are strictly permitted only in designated Residential and Commercial areas.',
+        )
+        setAssessPanelOpen(true)
+        setActiveTool('pan')
+        return
+      }
+
+      if (
+        assessCategory === 'farm_lot' &&
+        (luClass === 'forest' || luClass === 'road' || luClass === 'infrastructure')
+      ) {
+        setAssessError(
+          'Cannot confirm site: Agricultural farm lots are strictly prohibited in forest, road, and infrastructure zones.',
         )
         setAssessPanelOpen(true)
         setActiveTool('pan')
