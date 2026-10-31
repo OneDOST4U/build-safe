@@ -3,11 +3,10 @@ import { generateAiResponse } from './buildSafeKnowledge'
 
 const GEMINI_API_KEY = (import.meta.env.VITE_GEMINI_API_KEY as string | undefined)?.trim() || ''
 
-// Tested and verified models on Google AI Studio
+// Tested and verified working models on Google AI Studio
 const PREFERRED_MODELS = [
   'gemini-3.5-flash-lite',
   'gemini-3-flash-preview',
-  'gemini-flash-latest',
 ]
 
 /**
@@ -121,6 +120,7 @@ export async function askGemini(
       const data = await res.json()
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
       if (text && typeof text === 'string' && text.trim()) {
+        console.log(`✨ [BUILD-SAFE AI] Response successfully received from live Google Gemini API (${model}). Tokens used:`, data?.usageMetadata?.totalTokenCount)
         return {
           text: text.trim(),
           suggestions: extractSuggestions(text, context),
