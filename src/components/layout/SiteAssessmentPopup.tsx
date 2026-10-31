@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { AlertTriangle, Ban, ClipboardList, MapPin, RotateCcw, ShieldCheck, X } from 'lucide-react'
+import { AlertTriangle, Ban, Building2, ClipboardList, Crosshair, MapPin, RotateCcw, ShieldCheck, Sparkles, Sprout, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { AssessmentResultsCard, type HighlightedFacilityInfo } from '@/components/layout/AssessmentResultsCard'
@@ -19,6 +19,12 @@ import { identifyMunicipality, isPointInsideLasam } from '@/lib/assessment/cover
 import { getLandUseAtPoint } from '@/lib/simulation/lguLayerQuery'
 import type { WaterBodyCheckResult } from '@/lib/assessment/waterBody'
 import type { SiteAssessmentResult } from '@/types'
+
+const LASAM_LOCATION_PRESETS = [
+  { name: '🏛️ Centro 2', lat: '18.064500', lng: '121.601500', desc: 'LGU Commercial / Town Proper' },
+  { name: '🌾 Alannay', lat: '18.060930', lng: '121.571580', desc: 'Agricultural Rice Basin' },
+  { name: '🏡 Nabannagan', lat: '18.045000', lng: '121.615000', desc: 'Residential Corridor' },
+]
 
 export interface SiteAssessmentPopupProps {
   open: boolean
@@ -69,6 +75,7 @@ export function SiteAssessmentPopup({
   onAssessCategoryChange,
   onAssessBuildingTypeChange,
   onAssessCropTypeChange,
+  onAssessSite,
   onPickSiteOnMap,
   pickingOnMap = false,
   pendingSiteCoords = null,
@@ -333,44 +340,72 @@ export function SiteAssessmentPopup({
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
           role="dialog"
           aria-modal="true"
           aria-labelledby="site-assessment-title"
           onClick={() => onOpenChange(false)}
         >
           <div
-            className="flex max-h-[min(90vh,42rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl animate-in zoom-in-95 duration-150"
+            className="flex max-h-[min(92vh,46rem)] w-full max-w-[460px] flex-col overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-2xl shadow-slate-900/20 animate-in zoom-in-95 duration-150 font-sans"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-3.5">
-              <div>
-                <h3 id="site-assessment-title" className="text-sm font-bold text-slate-900">
-                  {assessCategory === 'farm_lot'
-                    ? 'Proposed Farm Lot & Crop Assessment'
-                    : 'Proposed Building Site Assessment'}
-                </h3>
-                <p className="text-[11px] text-slate-500">
-                  {assessCategory === 'farm_lot'
-                    ? 'Crop resilience screening against flood, erosion & soil hazards'
-                    : 'Screening against hazards & zoning rules'}
-                </p>
+            {/* Top gradient highlight strip */}
+            <div className="h-1.5 w-full bg-gradient-to-r from-teal-600 via-emerald-600 to-sky-600" />
+
+            {/* Header */}
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 bg-gradient-to-b from-slate-50/70 to-white">
+              <div className="flex items-center gap-3">
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl shadow-sm text-white ${
+                  assessCategory === 'farm_lot'
+                    ? 'bg-gradient-to-tr from-emerald-700 to-teal-600 ring-2 ring-emerald-500/20'
+                    : 'bg-gradient-to-tr from-slate-800 to-slate-950 ring-2 ring-slate-900/20'
+                }`}>
+                  {assessCategory === 'farm_lot' ? (
+                    <Sprout className="h-5 w-5" />
+                  ) : (
+                    <Building2 className="h-5 w-5" />
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h3 id="site-assessment-title" className="text-sm font-bold text-slate-900 tracking-tight">
+                      {assessCategory === 'farm_lot'
+                        ? 'Proposed Farm Lot Assessment'
+                        : 'Proposed Building Site Assessment'}
+                    </h3>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    {assessCategory === 'farm_lot'
+                      ? 'CLUP Agricultural zoning & multi-hazard crop screening'
+                      : 'Multi-hazard screening & CLUP 2020 zoning clearance'}
+                  </p>
+                </div>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-700"
-                onClick={() => onOpenChange(false)}
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Lasam LGU
+                </span>
+                <button
+                  type="button"
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  onClick={() => onOpenChange(false)}
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
-            <div className="min-h-0 flex-1 space-y-3.5 overflow-y-auto p-5">
-              <div className="flex items-center justify-between gap-1 text-[11px] text-slate-500">
-                <span>Official municipal coverage for Lasam, Cagayan.</span>
+            {/* Scrollable Body */}
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 text-slate-800">
+              {/* Coverage and Data Info Banner */}
+              <div className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200/80 px-3 py-2 text-[11px] text-slate-600">
+                <div className="flex items-center gap-1.5 truncate">
+                  <span className="text-teal-700 font-bold">📍 Coverage:</span>
+                  <span className="truncate">Municipality of Lasam (PSGC 0201517000)</span>
+                </div>
                 {onOpenReliability && (
                   <button
                     type="button"
@@ -378,98 +413,161 @@ export function SiteAssessmentPopup({
                       onOpenChange(false)
                       onOpenReliability()
                     }}
-                    className="inline-flex items-center gap-1 font-semibold text-teal-700 hover:text-teal-900 underline text-[10.5px]"
+                    className="shrink-0 inline-flex items-center gap-1 font-semibold text-teal-700 hover:text-teal-900 underline text-[10.5px] cursor-pointer"
                   >
                     <ShieldCheck className="h-3 w-3" />
-                    Coverage info
+                    Data Info
                   </button>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label className="text-xs">Latitude</Label>
-                  <input
-                    className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm"
-                    value={assessLat}
-                    onChange={(e) => onAssessLatChange(e.target.value)}
-                    placeholder="18.0645"
-                    inputMode="decimal"
-                  />
+              {/* Coordinates Section with Quick Landmarks */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Crosshair className="h-3.5 w-3.5 text-teal-600" />
+                    <span>Geographic Coordinates</span>
+                  </Label>
+                  <span className="text-[10px] text-slate-400 font-medium">WGS84 Decimal Degrees</span>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Longitude</Label>
-                  <input
-                    className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm"
-                    value={assessLng}
-                    onChange={(e) => onAssessLngChange(e.target.value)}
-                    placeholder="121.6015"
-                    inputMode="decimal"
-                  />
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2 focus-within:border-teal-600 focus-within:bg-white focus-within:ring-2 focus-within:ring-teal-600/15 transition-all">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      <span>Latitude (N)</span>
+                      <span className="text-[9px] text-teal-700 font-mono">17.99° - 18.12°</span>
+                    </div>
+                    <input
+                      className="w-full bg-transparent font-mono text-xs font-semibold text-slate-900 focus:outline-none"
+                      value={assessLat}
+                      onChange={(e) => onAssessLatChange(e.target.value)}
+                      placeholder="18.064500"
+                      inputMode="decimal"
+                    />
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2 focus-within:border-teal-600 focus-within:bg-white focus-within:ring-2 focus-within:ring-teal-600/15 transition-all">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      <span>Longitude (E)</span>
+                      <span className="text-[9px] text-teal-700 font-mono">121.40° - 121.65°</span>
+                    </div>
+                    <input
+                      className="w-full bg-transparent font-mono text-xs font-semibold text-slate-900 focus:outline-none"
+                      value={assessLng}
+                      onChange={(e) => onAssessLngChange(e.target.value)}
+                      placeholder="121.601500"
+                      inputMode="decimal"
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Presets Pills */}
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider shrink-0">
+                    Quick test:
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {LASAM_LOCATION_PRESETS.map((preset) => (
+                      <button
+                        key={preset.name}
+                        type="button"
+                        onClick={() => {
+                          onAssessLatChange(preset.lat)
+                          onAssessLngChange(preset.lng)
+                        }}
+                        className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-[10.5px] font-medium text-slate-600 hover:border-teal-400 hover:bg-teal-50 hover:text-teal-900 transition-all cursor-pointer shadow-2xs"
+                        title={preset.desc}
+                      >
+                        {preset.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
+              {/* Site Land-Use Purpose Selector */}
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-slate-700">Site Land-Use Purpose</Label>
-                <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-slate-200 bg-slate-100/80 p-1">
+                <Label className="text-xs font-bold text-slate-800">
+                  Land-Use Purpose Classification
+                </Label>
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => onAssessCategoryChange?.('building')}
-                    className={`flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition-all ${
+                    className={`flex flex-col items-start p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${
                       assessCategory === 'building'
-                        ? 'bg-white text-slate-900 shadow-sm border border-slate-200/60'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'border-slate-900 bg-slate-900 text-white shadow-md ring-2 ring-slate-900/10'
+                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
                     }`}
                   >
-                    <span>🏢</span>
-                    <span>Building Structure</span>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-base">🏢</span>
+                      <span className="text-xs font-bold">Building Structure</span>
+                    </div>
+                    <span className={`text-[10px] leading-tight ${assessCategory === 'building' ? 'text-slate-300' : 'text-slate-500'}`}>
+                      Residential, Commercial, Industrial, Public Facilities
+                    </span>
                   </button>
+
                   <button
                     type="button"
                     onClick={() => onAssessCategoryChange?.('farm_lot')}
-                    className={`flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition-all ${
+                    className={`flex flex-col items-start p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${
                       assessCategory === 'farm_lot'
-                        ? 'bg-emerald-700 text-white shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'border-emerald-700 bg-gradient-to-tr from-emerald-800 to-teal-700 text-white shadow-md ring-2 ring-emerald-600/15'
+                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
                     }`}
                   >
-                    <span>🌾</span>
-                    <span>Farm Lot / Crops</span>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-base">🌾</span>
+                      <span className="text-xs font-bold">Farm Lot & Crops</span>
+                    </div>
+                    <span className={`text-[10px] leading-tight ${assessCategory === 'farm_lot' ? 'text-emerald-100' : 'text-slate-500'}`}>
+                      Palay, Corn, Vegetables & Agribusiness Logistics
+                    </span>
                   </button>
                 </div>
               </div>
 
+              {/* Specific Establishment or Crop Variety Selector */}
               {assessCategory === 'building' ? (
-                <div className="space-y-1">
-                  <Label className="text-xs">Building / establishment type</Label>
-                  <select
-                    className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm"
-                    value={assessBuildingType}
-                    onChange={(e) =>
-                      onAssessBuildingTypeChange(e.target.value as ProposedBuildingType)
-                    }
-                  >
-                    {PROPOSED_BUILDING_TYPE_GROUPS.map((group) => (
-                      <optgroup key={group.label} label={group.label}>
-                        {group.types.map((type) => (
-                          <option key={type} value={type}>
-                            {type}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-slate-800">
+                      Proposed Building / Establishment Type
+                    </Label>
+                    <span className="text-[10px] text-slate-500 font-medium">PD 1096 National Building Code</span>
+                  </div>
+                  <div className="relative">
+                    <select
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-xs font-semibold text-slate-800 focus:border-teal-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-teal-600 cursor-pointer"
+                      value={assessBuildingType}
+                      onChange={(e) =>
+                        onAssessBuildingTypeChange(e.target.value as ProposedBuildingType)
+                      }
+                    >
+                      {PROPOSED_BUILDING_TYPE_GROUPS.map((group) => (
+                        <optgroup key={group.label} label={group.label}>
+                          {group.types.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-1.5 animate-in fade-in duration-150">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold text-slate-900">Intended Crop Variety</Label>
-                    <span className="text-[10px] text-emerald-800 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                      DA-BSWM & MGB Screening
+                    <Label className="text-xs font-bold text-slate-800">Intended Crop Variety</Label>
+                    <span className="text-[10px] text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      DA-BSWM & MGB Validated
                     </span>
                   </div>
                   <select
-                    className="w-full rounded-md border border-emerald-300 bg-white px-2 py-1.5 text-sm font-medium focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    className="w-full rounded-xl border border-emerald-300 bg-emerald-50/40 px-3 py-2 text-xs font-bold text-emerald-950 focus:border-emerald-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer"
                     value={assessCropType}
                     onChange={(e) => onAssessCropTypeChange?.(e.target.value as FarmCropType)}
                   >
@@ -482,61 +580,79 @@ export function SiteAssessmentPopup({
                   {(() => {
                     const selected = FARM_CROP_OPTIONS.find((c) => c.value === assessCropType) ?? FARM_CROP_OPTIONS[0]
                     return (
-                      <div className="rounded-lg border border-emerald-200/80 bg-emerald-50/60 p-2 text-[10.5px] leading-relaxed text-emerald-950">
-                        <strong>Crop Profile:</strong> {selected.description}
+                      <div className="rounded-xl border border-emerald-200/90 bg-emerald-50/70 p-2.5 text-[11px] leading-relaxed text-emerald-950 shadow-2xs">
+                        <strong className="text-emerald-900">Crop Profile:</strong> {selected.description}
                       </div>
                     )
                   })()}
                 </div>
               )}
 
+              {/* Status alerts based on input */}
               {isInputValidNumber && !isInputInsideLasam && (
-                <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-950">
-                  <div className="flex items-center gap-1 font-semibold text-amber-800">
-                    <Ban className="h-3.5 w-3.5 shrink-0 text-amber-700" />
-                    <span>Outside Lasam ({identifyMunicipality(numLng, numLat, boundary)})</span>
+                <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-800">
+                    <Ban className="h-4 w-4 shrink-0 text-amber-700" />
+                    <span>Outside Lasam Boundary ({identifyMunicipality(numLng, numLat, boundary)})</span>
                   </div>
-                  <p className="mt-0.5 text-[10.5px] text-amber-900 leading-snug">
-                    Entered coordinates fall outside the official Lasam municipal boundary. Planning assessments are restricted to Lasam.
+                  <p className="text-[11px] text-amber-900 leading-relaxed">
+                    Entered coordinates fall outside the official municipal boundary of Lasam. Site intelligence screenings are strictly configured for Lasam.
                   </p>
                 </div>
               )}
 
               {isInputValidNumber && isInputInsideLasam && isAgriConflictInput && (
-                <div className="rounded-md border border-red-300 bg-red-50 p-2 text-xs text-red-950 space-y-0.5">
-                  <div className="flex items-center gap-1 font-semibold text-red-800">
-                    <span className="text-sm">🚫</span>
-                    <span>CLUP Land Use: Agricultural Land (Non-Conforming)</span>
+                <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-950 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-red-800">
+                    <span className="text-base">🚫</span>
+                    <span>CLUP 2020: Agricultural Zone (Non-Conforming)</span>
                   </div>
-                  <p className="text-[10.5px] text-red-900 leading-snug">
-                    Entered coordinates fall on designated <strong>Agricultural Land</strong> under Lasam CLUP (2020). Developing a {assessBuildingType} requires DAR conversion clearance and SB zoning reclassification.
+                  <p className="text-[11px] text-red-900 leading-relaxed">
+                    Location is zoned as <strong>Agricultural Land</strong> under Lasam CLUP (2020). Developing a {assessBuildingType} requires mandatory DAR conversion clearance and municipal reclassification.
                   </p>
                 </div>
               )}
 
               {isInputValidNumber && isInputInsideLasam && isInputAgri && assessCategory === 'farm_lot' && (
-                <div className="rounded-md border border-emerald-300 bg-emerald-50/70 p-1.5 text-xs text-emerald-950">
-                  <p className="text-[10.5px] text-emerald-900 leading-snug font-medium">
-                    🌾 <strong>CLUP Zoning:</strong> Confirmed Agricultural Land (100% conforming for farm lot).
+                <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-2.5 text-xs text-emerald-950">
+                  <p className="text-[11px] text-emerald-900 font-medium">
+                    🌾 <strong>CLUP Zoning Clearance:</strong> Confirmed Agricultural Land (100% conforming for proposed farm lot).
                   </p>
                 </div>
               )}
 
-              {assessError && <p className="text-[11px] text-red-600">{assessError}</p>}
+              {assessError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-2 text-xs text-red-700 font-medium">
+                  {assessError}
+                </div>
+              )}
 
-              <div className="pt-1">
+              {/* Action Buttons */}
+              <div className="pt-2 space-y-2">
                 <Button
-                  size="sm"
-                  className={`w-full h-10 rounded-xl gap-2 font-semibold shadow-xs transition-all text-white ${
+                  type="button"
+                  size="lg"
+                  className={`w-full h-11 rounded-2xl gap-2 font-bold shadow-md transition-all text-xs cursor-pointer ${
                     assessCategory === 'farm_lot'
-                      ? 'bg-emerald-700 hover:bg-emerald-800'
-                      : 'bg-slate-900 hover:bg-slate-800'
+                      ? 'bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-800 text-white shadow-emerald-900/20'
+                      : 'bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 hover:bg-slate-800 text-white shadow-slate-900/25'
                   }`}
                   onClick={onPickSiteOnMap}
                 >
                   <MapPin className="h-4 w-4" />
-                  {assessCategory === 'farm_lot' ? 'Pick Farm Lot Directly on Map' : 'Pick Point Directly on Map'}
+                  <span>{assessCategory === 'farm_lot' ? 'Pick Farm Lot Directly on Map' : 'Pick Point Directly on Map'}</span>
                 </Button>
+
+                {onAssessSite && isInputValidNumber && isInputInsideLasam && (
+                  <button
+                    type="button"
+                    onClick={onAssessSite}
+                    className="w-full h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-teal-600" />
+                    <span>Run Assessment for Entered Coordinates</span>
+                  </button>
+                )}
               </div>
 
               {assessmentResult && (
