@@ -16,6 +16,7 @@ import {
   type ChatContext,
   type ChatMessage,
 } from '@/lib/ai/buildSafeKnowledge'
+import { askGemini } from '@/lib/ai/geminiClient'
 
 export interface BuildSafeChatbotProps {
   context?: ChatContext
@@ -109,7 +110,7 @@ export function BuildSafeChatbot({
     }
   }, [showMenu])
 
-  const handleSendMessage = (textToSend: string) => {
+  const handleSendMessage = async (textToSend: string) => {
     const trimmed = textToSend.trim()
     if (!trimmed) return
 
@@ -124,10 +125,9 @@ export function BuildSafeChatbot({
     setInputText('')
     setIsTyping(true)
 
-    // Simulate natural AI thinking delay
-    setTimeout(() => {
-      const activeCtx = contextAttached ? context : undefined
-      const response = generateAiResponse(trimmed, activeCtx)
+    const activeCtx = contextAttached ? context : undefined
+    try {
+      const response = await askGemini(trimmed, activeCtx, messages)
       const aiMsg: ChatMessage = {
         id: `assistant-${Date.now()}`,
         sender: 'assistant',
@@ -136,8 +136,20 @@ export function BuildSafeChatbot({
         suggestions: response.suggestions,
       }
       setMessages((prev) => [...prev, aiMsg])
+    } catch (err) {
+      console.error('Gemini chat error:', err)
+      const fallback = generateAiResponse(trimmed, activeCtx)
+      const aiMsg: ChatMessage = {
+        id: `assistant-${Date.now()}`,
+        sender: 'assistant',
+        text: fallback.text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        suggestions: fallback.suggestions,
+      }
+      setMessages((prev) => [...prev, aiMsg])
+    } finally {
       setIsTyping(false)
-    }, 450)
+    }
   }
 
   const handleSubmit = (e: FormEvent) => {
