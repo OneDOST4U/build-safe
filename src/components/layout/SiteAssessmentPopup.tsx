@@ -486,7 +486,9 @@ export function SiteAssessmentPopup({
                 className={`h-8 flex-1 text-xs font-semibold ${
                   isPendingProhibited
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed hover:bg-slate-200 opacity-60'
-                    : 'bg-teal-700 hover:bg-teal-800 text-white'
+                    : assessCategory === 'building'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+                    : 'bg-teal-700 hover:bg-teal-800 text-white shadow-sm'
                 }`}
                 onClick={onConfirmMapSite}
               >
@@ -600,7 +602,7 @@ export function SiteAssessmentPopup({
                     onClick={() => onAssessCategoryChange?.('building')}
                     className={`flex flex-col items-start p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${
                       assessCategory === 'building'
-                        ? 'border-slate-900 bg-slate-900 text-white shadow-md ring-2 ring-slate-900/10'
+                        ? 'border-blue-600 bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-600 text-white shadow-md ring-2 ring-blue-500/20'
                         : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
                     }`}
                   >
@@ -608,7 +610,7 @@ export function SiteAssessmentPopup({
                       <span className="text-base">🏢</span>
                       <span className="text-xs font-bold">Building Structure</span>
                     </div>
-                    <span className={`text-[10px] leading-tight ${assessCategory === 'building' ? 'text-slate-300' : 'text-slate-500'}`}>
+                    <span className={`text-[10px] leading-tight ${assessCategory === 'building' ? 'text-blue-100' : 'text-slate-500'}`}>
                       Residential, Commercial, Industrial, Public Facilities
                     </span>
                   </button>
@@ -644,7 +646,7 @@ export function SiteAssessmentPopup({
                   </div>
                   <div className="relative">
                     <select
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-xs font-semibold text-slate-800 focus:border-teal-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-teal-600 cursor-pointer"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-xs font-semibold text-slate-800 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer"
                       value={assessBuildingType}
                       onChange={(e) =>
                         onAssessBuildingTypeChange(e.target.value as ProposedBuildingType)
@@ -738,7 +740,11 @@ export function SiteAssessmentPopup({
                   <Button
                     type="button"
                     onClick={onOpenReport}
-                    className="w-full h-11 rounded-2xl gap-2 font-bold shadow-md transition-all text-xs cursor-pointer bg-gradient-to-r from-teal-700 via-emerald-700 to-teal-800 hover:from-teal-800 hover:to-emerald-800 text-white shadow-teal-900/20"
+                    className={`w-full h-11 rounded-2xl gap-2 font-bold shadow-md transition-all text-xs cursor-pointer text-white ${
+                      assessCategory === 'building'
+                        ? 'bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 hover:from-blue-800 hover:to-indigo-700 shadow-blue-900/20'
+                        : 'bg-gradient-to-r from-teal-700 via-emerald-700 to-teal-800 hover:from-teal-800 hover:to-emerald-800 shadow-teal-900/20'
+                    }`}
                   >
                     <FileText className="h-4 w-4" />
                     <span>View Full A4 Assessment Report</span>
@@ -754,7 +760,7 @@ export function SiteAssessmentPopup({
                       ? 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-2xs'
                       : assessCategory === 'farm_lot'
                       ? 'bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-800 text-white shadow-emerald-900/20'
-                      : 'bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 hover:bg-slate-800 text-white shadow-slate-900/25'
+                      : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-900/25'
                   }`}
                   onClick={onPickSiteOnMap}
                 >
