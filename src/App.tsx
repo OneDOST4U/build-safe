@@ -306,7 +306,7 @@ export default function App() {
 
   const handleMinimizeReport = useCallback(() => {
     setReportOpen(false)
-    setAssessPanelOpen(true)
+    setAssessPanelOpen(false)
   }, [])
 
   const handleReopenReport = useCallback(() => {
