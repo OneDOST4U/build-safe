@@ -159,6 +159,11 @@ export function assessFarmLot(
     luLabel.includes('river') ||
     luLabel.includes('creek') ||
     luLabel.includes('water')
+  const isAgriZone =
+    luClass === 'agriculture' ||
+    luClass === 'crops' ||
+    luLabel.includes('agri') ||
+    luLabel.includes('crop')
 
   // 5. Query Water Bodies & Statutory Agricultural Riparian Easement (20m under PD 1067)
   const waterCheck = checkWaterBodyProximity(coords, {
@@ -186,6 +191,9 @@ export function assessFarmLot(
   } else if (isCemeteryZone) {
     suitabilityLevel = 'HIGH_RISK'
     floodEvaluation = '🚫 Cemetery Zone: Parcel is designated as a cemetery / burial ground under Lasam CLUP (2020). Agricultural farm lots are strictly prohibited.'
+  } else if (ctx.landUse && !isAgriZone) {
+    suitabilityLevel = 'HIGH_RISK'
+    floodEvaluation = `🚫 Non-Agricultural Zone: Parcel is designated as ${luLabel || luClass || 'non-agricultural land'} under Lasam CLUP (2020). Agricultural farm lots and crops are strictly permitted only in designated Agricultural areas.`
   } else if (crop.startsWith('Palay')) {
     // Palay Evaluation
     if (isHighFlood) {
@@ -308,6 +316,8 @@ export function assessFarmLot(
       '🚫 Prohibited — Designated Institutional Land Use (Lasam CLUP 2020) for government & public educational facilities. Agricultural farm lots and crops are strictly prohibited here.'
   } else if (waterCheck.isWaterBody || isWaterLandUse) {
     agriZoningEvaluation = `🚫 Prohibited — Farm lot falls inside an active water body (${waterCheck.nearestWaterBodyName || 'water body'}). Cultivation and farming inside water bodies are strictly prohibited under Presidential Decree No. 1067.`
+  } else if (ctx.landUse && !isAgriZone) {
+    agriZoningEvaluation = `🚫 Prohibited — Designated ${luLabel || luClass || 'Non-Agricultural Land'} (Lasam CLUP 2020). Agricultural farm lots and crop cultivation are strictly prohibited in non-agricultural zones.`
   } else if (isInPrimeAgriZone) {
     agriZoningEvaluation = `🟢 Prime Protected Agricultural Land (RA 8435 - AFMA) — Site is officially designated within ${
       npaaadLabel ? `NPAAAD (${npaaadLabel})` : ''
@@ -338,6 +348,10 @@ export function assessFarmLot(
     color = '#7e22ce'
   } else if (waterCheck.isWaterBody || isWaterLandUse) {
     suitabilityTitle = 'Prohibited: Active Water Body (PD 1067)'
+    badgeClass = 'bg-red-100 text-red-950 border-red-300'
+    color = '#dc2626'
+  } else if (ctx.landUse && !isAgriZone) {
+    suitabilityTitle = `Prohibited: Non-Agricultural Zone (${luLabel || 'Lasam CLUP 2020'})`
     badgeClass = 'bg-red-100 text-red-950 border-red-300'
     color = '#dc2626'
   } else if (suitabilityLevel === 'HIGHLY_SUITABLE') {

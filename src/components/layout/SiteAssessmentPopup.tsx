@@ -147,15 +147,13 @@ export function SiteAssessmentPopup({
 
   // Building structures: strictly restricted to Residential and Commercial zones
   const isBuildingAllowed = isPendingResidential || isPendingCommercial
-  // Farm lots: strictly prohibited in parks, cemetery, institutional, water, forest, road, infrastructure
-  const isFarmProhibited =
-    isPendingParks ||
-    isPendingCemetery ||
-    isPendingInstitutional ||
-    isPendingWaterBody ||
-    pendingLandUseClass === 'forest' ||
-    pendingLandUseClass === 'road' ||
-    pendingLandUseClass === 'infrastructure'
+  // Farm lots: strictly restricted to designated Agricultural zones only
+  const isFarmAllowed =
+    isPendingAgri &&
+    !isPendingParks &&
+    !isPendingCemetery &&
+    !isPendingInstitutional &&
+    !isPendingWaterBody
 
   const isPendingProhibited =
     !isPendingInsideLasam ||
@@ -164,7 +162,7 @@ export function SiteAssessmentPopup({
     isPendingCemetery ||
     isPendingInstitutional ||
     (assessCategory === 'building' && !isBuildingAllowed) ||
-    (assessCategory === 'farm_lot' && isFarmProhibited)
+    (assessCategory === 'farm_lot' && !isFarmAllowed)
 
   let confirmDisabledLabel = 'Confirm Point'
   if (!isPendingInsideLasam) {
@@ -179,7 +177,7 @@ export function SiteAssessmentPopup({
     confirmDisabledLabel = 'Disabled (Institutional)'
   } else if (assessCategory === 'building' && !isBuildingAllowed) {
     confirmDisabledLabel = isPendingAgri ? 'Disabled (Agricultural)' : 'Disabled (Non-Residential)'
-  } else if (assessCategory === 'farm_lot' && isFarmProhibited) {
+  } else if (assessCategory === 'farm_lot' && !isFarmAllowed) {
     confirmDisabledLabel = 'Disabled (Non-Agri)'
   }
 
@@ -410,6 +408,19 @@ export function SiteAssessmentPopup({
               </div>
             )}
 
+            {/* Farm Lots Allowed in Agricultural Land only Alert */}
+            {assessCategory === 'farm_lot' && !isPendingAgri && !isPendingParks && !isPendingCemetery && !isPendingInstitutional && !isPendingWaterBody && (
+              <div className="rounded-lg border border-red-300 bg-red-50 p-2.5 text-xs text-red-950">
+                <div className="flex items-center gap-1.5 font-bold text-red-700">
+                  <Ban className="h-4 w-4 shrink-0" />
+                  <span>Non-Agricultural Land — Farming Prohibited</span>
+                </div>
+                <p className="mt-1 text-[10.5px] leading-relaxed text-red-900">
+                  Under Lasam CLUP (2020), agricultural farm lots and crop cultivation are strictly restricted to designated <strong>Agricultural</strong> areas only. Farming on {pendingLandUseLabel || 'non-agricultural land'} is prohibited.
+                </p>
+              </div>
+            )}
+
             <p className="text-[10px] leading-tight text-slate-500">
               {!isPendingInsideLasam
                 ? '⚠️ Placement disabled outside boundary. Click inside Lasam to relocate.'
@@ -423,6 +434,8 @@ export function SiteAssessmentPopup({
                 ? '🚫 Construction and farming prohibited in institutional zones. Click elsewhere to relocate.'
                 : assessCategory === 'building' && !isBuildingAllowed
                 ? '🚫 Buildings are only permitted in Residential and Commercial zones. Click elsewhere to relocate.'
+                : assessCategory === 'farm_lot' && !isPendingAgri
+                ? '🚫 Farm lots are only permitted in designated Agricultural areas. Click elsewhere to relocate.'
                 : '📍 Point dropped on map. Click elsewhere to relocate.'}
             </p>
 
@@ -683,6 +696,18 @@ export function SiteAssessmentPopup({
                 <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-2.5 text-xs text-emerald-950">
                   <p className="text-[11px] text-emerald-900 font-medium">
                     🌾 <strong>CLUP Zoning Clearance:</strong> Confirmed Agricultural Land (100% conforming for proposed farm lot).
+                  </p>
+                </div>
+              )}
+
+              {isInputValidNumber && isInputInsideLasam && !isInputAgri && assessCategory === 'farm_lot' && (
+                <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-950 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-red-800">
+                    <span className="text-base">🚫</span>
+                    <span>CLUP 2020: Non-Agricultural Zone (Farming Prohibited)</span>
+                  </div>
+                  <p className="text-[11px] text-red-900 leading-relaxed">
+                    Under Lasam CLUP (2020), agricultural farm lots and crops are strictly restricted to designated <strong>Agricultural</strong> areas only. Cultivation or farming in {inputLandUseLabel || 'non-agricultural zones'} is prohibited.
                   </p>
                 </div>
               )}

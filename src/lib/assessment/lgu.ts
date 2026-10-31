@@ -271,10 +271,10 @@ function evaluateLandUseZoning(
   if (isResidentialZone) {
     if (isFarm) {
       return {
-        landUseRow: 'Residential (CLUP 2020) — Designated for residential settlement.',
+        landUseRow: '🚫 Residential (CLUP 2020) — Designated for residential settlement.',
         zoningComplianceRow:
-          '⚠️ Conditional — Farm lot inside residential zone; commercial cultivation subject to urban residential zoning restrictions.',
-        isAgriConflict: false,
+          '🚫 Prohibited — Under Lasam CLUP (2020), agricultural farm lots and crop cultivation are strictly restricted to designated Agricultural areas only. Farming in residential areas is prohibited.',
+        isAgriConflict: true,
       }
     }
     return {
@@ -285,12 +285,17 @@ function evaluateLandUseZoning(
   }
 
   if (isCommercialZone) {
+    if (category === 'farm_lot') {
+      return {
+        landUseRow: '🚫 Commercial (CLUP 2020) — Designated for commercial and business enterprises.',
+        zoningComplianceRow:
+          '🚫 Prohibited — Under Lasam CLUP (2020), agricultural farm lots and crop cultivation are strictly restricted to designated Agricultural areas only. Farming in commercial areas is prohibited.',
+        isAgriConflict: true,
+      }
+    }
     return {
       landUseRow: '✅ Commercial (CLUP 2020) — Designated for commercial and business enterprises.',
-      zoningComplianceRow:
-        category === 'farm_lot'
-          ? '⚠️ Conditional — Farm lot inside commercial zone requires zoning clearance.'
-          : `✅ Conforming — Proposed ${buildingType} is conforming with Lasam CLUP Commercial zoning.`,
+      zoningComplianceRow: `✅ Conforming — Proposed ${buildingType} is conforming with Lasam CLUP Commercial zoning.`,
       isAgriConflict: false,
     }
   }
@@ -349,6 +354,14 @@ function evaluateLandUseZoning(
     return {
       landUseRow: `🚫 ${normalized} (CLUP 2020) — Non-residential / non-commercial land use.`,
       zoningComplianceRow: `🚫 Prohibited — Under Lasam CLUP (2020), building construction is strictly restricted to designated Residential and Commercial areas only.`,
+      isAgriConflict: true,
+    }
+  }
+
+  if (category === 'farm_lot' && !isAgri) {
+    return {
+      landUseRow: `🚫 ${normalized} (CLUP 2020) — Non-agricultural land use.`,
+      zoningComplianceRow: `🚫 Prohibited — Under Lasam CLUP (2020), farm lots and crop cultivation are strictly permitted only in designated Agricultural areas. Farming on ${normalized.toLowerCase()} is prohibited.`,
       isAgriConflict: true,
     }
   }

@@ -41,6 +41,7 @@ import {
 import { MapPin } from 'lucide-react'
 import { identifyMunicipality, isPointInsideLasam } from '@/lib/assessment/coverage'
 import { getLandUseAtPoint } from '@/lib/simulation/lguLayerQuery'
+import { checkWaterBodyProximity } from '@/lib/assessment/waterBody'
 import { MapLegend } from '@/components/map/MapLegend'
 import { TerrainInfoBar } from '@/components/map/TerrainInfoBar'
 import type {
@@ -1131,13 +1132,13 @@ export function MapView({
           .setHTML(
             `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.45;padding:2px 0;">
               <div style="background:#dc2626;color:#ffffff;padding:6px 10px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
-                <span>🚫 WATER BODY — CANNOT BUILD HERE</span>
+                <span>🚫 WATER BODY — CANNOT BUILD OR FARM HERE</span>
               </div>
               <div style="font-weight:700;font-size:13.5px;color:#0f172a;margin-bottom:4px;">
                 ${name}
               </div>
               <div style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:6px 8px;border-radius:6px;font-size:11px;margin-bottom:6px;line-height:1.4;">
-                <strong>Construction Strictly Prohibited:</strong> Under <strong>Presidential Decree No. 1067</strong> (Water Code of the Philippines, Art. 51) and <strong>PD 1096</strong> (National Building Code), building structures within riverbeds, active waterways, and riparian easements is unlawful.
+                <strong>Construction & Farming Strictly Prohibited:</strong> Under <strong>Presidential Decree No. 1067</strong> (Water Code of the Philippines, Art. 51) and <strong>PD 1096</strong> (National Building Code), building structures or establishing farm lots within riverbeds, active waterways, and riparian easements is unlawful.
               </div>
               <div style="font-size:10.5px;color:#334155;background:#f8fafc;padding:5px 8px;border-radius:6px;border:1px solid #e2e8f0;margin-bottom:6px;">
                 <strong style="color:#0f172a">Mandatory Legal Easements:</strong><br/>
@@ -1162,7 +1163,7 @@ export function MapView({
           bankElevationM,
           isWaterBody: true,
           advisory:
-            'Construction strictly prohibited under Presidential Decree No. 1067 (Water Code).',
+            'Construction and farming strictly prohibited under Presidential Decree No. 1067 (Water Code).',
         })
 
         // No site placement on water body - Water Code PD 1067 forbids construction
@@ -1562,8 +1563,10 @@ export function MapView({
           const isCem = c === 'cemetery' || l.includes('cemetery') || r.includes('cemetery') || r.includes('memorial')
           const isInst = c === 'institutional' || l.includes('institutional') || r.includes('school') || r.includes('afp camp')
           const isWat = c === 'water' || l.includes('river') || l.includes('water')
+          const isAgri = c === 'agriculture' || c === 'crops' || l.includes('agri') || l.includes('crop')
           if (isParks || isCem || isInst || isWat) return true
           if (category === 'building' && !isRes && !isComm) return true
+          if (category === 'farm_lot' && !isAgri) return true
           return false
         })()
       )
@@ -1687,8 +1690,10 @@ export function MapView({
           const isCem = c === 'cemetery' || l.includes('cemetery') || r.includes('cemetery') || r.includes('memorial')
           const isInst = c === 'institutional' || l.includes('institutional') || r.includes('school') || r.includes('afp camp')
           const isWat = c === 'water' || l.includes('river') || l.includes('water')
+          const isAgri = c === 'agriculture' || c === 'crops' || l.includes('agri') || l.includes('crop')
           if (isParks || isCem || isInst || isWat) return true
           if (category === 'building' && !isRes && !isComm) return true
+          if (category === 'farm_lot' && !isAgri) return true
           return false
         })()
       )
@@ -1958,9 +1963,30 @@ export function MapView({
             const isParks = luClass === 'parks' || luLabel.includes('parks') || luLabel.includes('recreation')
             const isCem = luClass === 'cemetery' || luLabel.includes('cemetery') || luRemarks.includes('cemetery') || luRemarks.includes('memorial')
             const isInst = luClass === 'institutional' || luLabel.includes('institutional') || luRemarks.includes('school') || luRemarks.includes('afp camp')
+            const isWat = luClass === 'water' || luLabel.includes('river') || luLabel.includes('creek') || luLabel.includes('water')
             const isRes = luClass === 'residential' || luClass === 'socialized_housing' || luLabel.includes('residential') || luLabel.includes('socialized housing')
             const isComm = luClass === 'commercial' || luLabel.includes('commercial')
             const isAgri = luClass === 'agriculture' || luClass === 'crops' || luLabel.includes('agri') || luLabel.includes('crop')
+
+            if (isWat) {
+              new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
+                .setLngLat(e.lngLat)
+                .setHTML(
+                  `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
+                    <div style="background:#dc2626;color:#ffffff;padding:5px 8px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                      <span>🚫 Water Body — Prohibited</span>
+                    </div>
+                    <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
+                      Cannot Build or Farm Here
+                    </div>
+                    <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
+                      Parcel is designated as <strong>Rivers & Water Bodies</strong> under Lasam CLUP (2020). Constructing building structures and establishing farm lots in water bodies is strictly prohibited under Presidential Decree No. 1067.
+                    </div>
+                  </div>`,
+                )
+                .addTo(map)
+              return
+            }
 
             if (isParks) {
               new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
@@ -2047,7 +2073,60 @@ export function MapView({
                 .addTo(map)
               return
             }
+
+            if (category === 'farm_lot' && !isAgri) {
+              const zoneName = luFeat.properties?.land_use_label || luClass || 'Non-Agricultural Land'
+              new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
+                .setLngLat(e.lngLat)
+                .setHTML(
+                  `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
+                    <div style="background:#dc2626;color:#ffffff;padding:5px 8px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                      <span>🚫 Only Agricultural Areas Allowed</span>
+                    </div>
+                    <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
+                      Cannot Farm Here (${zoneName})
+                    </div>
+                    <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
+                      Under Lasam CLUP (2020), agricultural farm lots and crop cultivation are strictly restricted to designated <strong>Agricultural</strong> areas only. Farming on ${zoneName.toLowerCase()} is prohibited.
+                    </div>
+                  </div>`,
+                )
+                .addTo(map)
+              return
+            }
           }
+        }
+
+        // Check Water Body via geometry calculation and rendered layers
+        const waterCheckAtPt = checkWaterBodyProximity([lng, lat], {
+          riversMain,
+          riversTributaries,
+          riverbanks,
+          drainage,
+        })
+        if (waterCheckAtPt.isWaterBody) {
+          const rName = waterCheckAtPt.nearestWaterBodyName || 'Water Body'
+          new maplibregl.Popup({
+            closeButton: true,
+            maxWidth: '300px',
+            className: 'water-warning-popup',
+          })
+            .setLngLat(e.lngLat)
+            .setHTML(
+              `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
+                <div style="background:#dc2626;color:#ffffff;padding:5px 8px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                  <span>🚫 Water Body — Prohibited</span>
+                </div>
+                <div style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:6px;">
+                  Cannot Build or Farm Here (${rName})
+                </div>
+                <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35;">
+                  Establishing building structures or farm lots inside active waterways and riverbeds is strictly prohibited under Presidential Decree No. 1067 and PD 1096.
+                </div>
+              </div>`,
+            )
+            .addTo(map)
+          return
         }
 
         // Check Water Body
@@ -2252,6 +2331,19 @@ export function MapView({
 
         let isWater = false
         let waterName: string | undefined
+
+        // Geometry-based water body check
+        const waterCheckAtCursor = checkWaterBodyProximity([lng, lat], {
+          riversMain,
+          riversTributaries,
+          riverbanks,
+          drainage,
+        })
+        if (waterCheckAtCursor.isWaterBody) {
+          isWater = true
+          waterName = waterCheckAtCursor.nearestWaterBodyName || 'Active Water Channel'
+        }
+
         if (existingWaterLayers.length > 0) {
           const waterFeats = map.queryRenderedFeatures(e.point, {
             layers: existingWaterLayers,
@@ -2288,6 +2380,9 @@ export function MapView({
         } else if (category === 'building' && !isRes && !isComm) {
           isProhibited = true
           prohibitedReason = isAgriZone ? 'Agricultural Land' : (zoneLabel || 'Non-Residential / Non-Commercial')
+        } else if (category === 'farm_lot' && !isAgriZone) {
+          isProhibited = true
+          prohibitedReason = zoneLabel ? `Non-Agri (${zoneLabel})` : 'Non-Agricultural Land'
         }
 
         setHoverSiteCoords({
@@ -2471,7 +2566,7 @@ export function MapView({
               🚫
             </span>
             <span>
-              {hoverSiteCoords.prohibitedReason} — {category === 'building' ? 'Building Prohibited (Only Residential & Commercial Permitted)' : 'Farming Prohibited'}
+              {hoverSiteCoords.prohibitedReason} — {category === 'building' ? 'Building Prohibited (Only Residential & Commercial Permitted)' : 'Farming Prohibited (Only Agricultural Areas Permitted)'}
             </span>
             <span className="rounded bg-red-900 px-1.5 py-0.5 text-[10px] font-bold text-red-200">
               Disabled

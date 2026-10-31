@@ -383,6 +383,25 @@ export default function App() {
         luClass === 'commercial' ||
         luLabel.includes('commercial')
 
+      const isAgri =
+        luClass === 'agriculture' ||
+        luClass === 'crops' ||
+        luLabel.includes('agri') ||
+        luLabel.includes('crop')
+
+      const isWat =
+        luClass === 'water' ||
+        luLabel.includes('river') ||
+        luLabel.includes('creek') ||
+        luLabel.includes('water')
+
+      if (isWat) {
+        setAssessError(
+          'Cannot assess site: Establishing building structures or farm lots inside water bodies is strictly prohibited under Presidential Decree No. 1067.',
+        )
+        return
+      }
+
       if (isParks) {
         setAssessError(
           'Cannot assess site: Building structures and farm lots are strictly prohibited in Parks & Recreation zones under Lasam CLUP.',
@@ -411,12 +430,9 @@ export default function App() {
         return
       }
 
-      if (
-        assessCategory === 'farm_lot' &&
-        (luClass === 'forest' || luClass === 'road' || luClass === 'infrastructure')
-      ) {
+      if (assessCategory === 'farm_lot' && !isAgri) {
         setAssessError(
-          'Cannot assess site: Agricultural farm lots are strictly prohibited in forest, road, and infrastructure zones.',
+          'Cannot assess site: Under Lasam CLUP 2020, farm lots and crops are strictly permitted only in designated Agricultural areas.',
         )
         return
       }
@@ -510,6 +526,27 @@ export default function App() {
         luClass === 'commercial' ||
         luLabel.includes('commercial')
 
+      const isAgri =
+        luClass === 'agriculture' ||
+        luClass === 'crops' ||
+        luLabel.includes('agri') ||
+        luLabel.includes('crop')
+
+      const isWat =
+        luClass === 'water' ||
+        luLabel.includes('river') ||
+        luLabel.includes('creek') ||
+        luLabel.includes('water')
+
+      if (isWat) {
+        setAssessError(
+          'Cannot confirm site: Establishing building structures or farm lots inside water bodies is strictly prohibited under Presidential Decree No. 1067.',
+        )
+        setAssessPanelOpen(true)
+        setActiveTool('pan')
+        return
+      }
+
       if (isParks) {
         setAssessError(
           'Cannot confirm site: Building structures and farm lots are strictly prohibited in Parks & Recreation zones under Lasam CLUP.',
@@ -546,12 +583,9 @@ export default function App() {
         return
       }
 
-      if (
-        assessCategory === 'farm_lot' &&
-        (luClass === 'forest' || luClass === 'road' || luClass === 'infrastructure')
-      ) {
+      if (assessCategory === 'farm_lot' && !isAgri) {
         setAssessError(
-          'Cannot confirm site: Agricultural farm lots are strictly prohibited in forest, road, and infrastructure zones.',
+          'Cannot confirm site: Under Lasam CLUP 2020, farm lots and crops are strictly permitted only in designated Agricultural areas.',
         )
         setAssessPanelOpen(true)
         setActiveTool('pan')
