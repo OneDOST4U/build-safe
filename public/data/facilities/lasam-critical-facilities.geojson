@@ -5,7 +5,7 @@
     "disclaimer": "Demonstration & site intelligence reference — verified against LGU Lasam, DOH, DepEd, and DPWH Region II records.",
     "data_source": "LGU Lasam MDRRMO, DOH CHD II, DepEd Division of Cagayan, DPWH Region II",
     "validated_at": "2026-08-25",
-    "total_facilities": 43
+    "total_facilities": 45
   },
   "features": [
     {
@@ -65,18 +65,60 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "gov-lasam-evac-center",
-        "name": "Lasam Municipal Evacuation Center & Multi-Purpose Gym",
+        "id": "gov-lasam-evac-1",
+        "name": "Lasam Municipal Evacuation Center 1",
         "category": "emergency_response",
         "amenity": "evacuation_center",
+        "barangay": "CENTRO 03",
+        "description": "Located in Centro 3, Lasam, Cagayan (18°03'57.3\"N 121°35'35.1\"E) near Natalged Arena. Designated for community events, caravan services, and disaster evacuation.",
         "validation_status": "trusted_lgu_verified",
-        "data_source": "LGU Lasam MDRRMO"
+        "data_source": "LGU Lasam MDRRMO / Verified Municipal Records"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          121.5996,
-          18.0645
+          121.593083,
+          18.065917
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "gov-lasam-evac-2",
+        "name": "Lasam Municipal Evacuation Center 2",
+        "category": "emergency_response",
+        "amenity": "evacuation_center",
+        "barangay": "CENTRO 01",
+        "description": "Municipal Evacuation Center 2 located at 18°04'01.1\"N 121°36'07.0\"E in Centro 1.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "LGU Lasam MDRRMO / Verified Municipal Records"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.601944,
+          18.066972
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "gov-lasam-multipurpose-bldg",
+        "name": "Lasam Multi-Purpose Building",
+        "category": "emergency_response",
+        "amenity": "community_centre",
+        "barangay": "CENTRO 01",
+        "description": "Lasam Multi-Purpose Building located in Centro 1 (18°04'00.3\"N 121°36'09.2\"E).",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "LGU Lasam MDRRMO / DPWH Region II"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.60255,
+          18.06675
         ]
       }
     },

@@ -321,6 +321,31 @@ Lasam's prime agricultural soils and alluvial terraces are highly fertile:
     }
   }
 
+  // 8b. Evacuation Centers & Disaster Facilities
+  if (
+    q.includes('evacuation') ||
+    q.includes('evac') ||
+    q.includes('shelter') ||
+    q.includes('natalged') ||
+    q.includes('arena') ||
+    q.includes('multi-purpose')
+  ) {
+    return {
+      text: `🏛️ **Official Evacuation Centers in Lasam:**
+
+• **Municipal Evacuation Center 1:** Located in Centro 3 near Natalged Arena (18°03'57.3"N 121°35'35.1"E). Primary center for community events, caravans, and disaster evacuation.
+• **Municipal Evacuation Center 2:** Located in Centro 1 (18°04'01.1"N 121°36'07.0"E).
+• **Lasam Multi-Purpose Building:** Located in Centro 1 (18°04'00.3"N 121°36'09.2"E).
+
+*Tip:* Under **Critical Facilities** in the assessment panel, you can click any of these facilities to view their live road route on the 3D map!`,
+      suggestions: [
+        'What is the 7-step building permit process in Lasam?',
+        'What are the mandatory river easement setbacks?',
+        'What documents are required for a building permit?',
+      ],
+    }
+  }
+
   // 9a. Building Permit 7-Step Procedure & Processing Time
   if (
     q.includes('step') ||

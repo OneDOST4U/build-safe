@@ -91,6 +91,10 @@ function buildSystemInstruction(context?: ChatContext): string {
      10. Fire Safety Evaluation Certificate (FSEC) from BFP Lasam (1 original)
    - **Common Disapproval Reasons**: Non-compliance with PD 1096 (National Building Code), zoning violations, incomplete/expired documents, ownership discrepancies, or expired professional licenses.
    - **Role of BUILD-SAFE**: Directly accelerates Step 2 (Plan Evaluation & Document Verification) from days to seconds by checking hazards (flood, fault, setbacks) and generating an automated site hazard report.
+4. **Verified Evacuation Centers & Emergency Facilities in Lasam**:
+   - **Municipal Evacuation Center 1**: Located in Centro 3 near Natalged Arena (18°03'57.3"N 121°35'35.1"E / 121.59308° E, 18.06592° N).
+   - **Municipal Evacuation Center 2**: Located in Centro 1 (18°04'01.1"N 121°36'07.0"E / 121.60194° E, 18.06697° N).
+   - **Lasam Multi-Purpose Building**: Located in Centro 1 (18°04'00.3"N 121°36'09.2"E / 121.60255° E, 18.06675° N).
 
 ### Parcel Context:
 ${contextInfo}`
