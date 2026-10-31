@@ -3,7 +3,6 @@ import {
   FileText,
   MessageSquare,
   MoreVertical,
-  PenLine,
   Plus,
   RotateCcw,
   Send,
@@ -276,32 +275,41 @@ export function BuildSafeChatbot({
               </div>
 
               {/* Stacked Suggestion Pills (above bottom input box) */}
-              <div className="flex flex-col gap-2.5 mb-3 w-full animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <div className="flex flex-col gap-2 mb-3 w-full animate-in fade-in slide-in-from-bottom-2 duration-200">
                 <button
                   type="button"
                   onClick={() => handleSendMessage('Explain the BUILD-SAFE site assessment process')}
-                  className="w-fit max-w-full rounded-full border border-slate-200/90 bg-white/95 px-4 py-2.5 text-[13px] font-medium text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-center gap-2.5 cursor-pointer text-left active:scale-[0.99]"
+                  className="w-fit max-w-full rounded-full border border-slate-200/90 bg-white/95 px-4 py-2 text-[12.5px] font-medium text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-center gap-2.5 cursor-pointer text-left active:scale-[0.99]"
                 >
-                  <FileText className="h-4 w-4 text-slate-600 shrink-0" />
+                  <FileText className="h-4 w-4 text-blue-600 shrink-0" />
                   <span className="truncate">Explain the BUILD-SAFE site assessment process</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => handleSendMessage('Discuss a topic with me')}
-                  className="w-fit max-w-full rounded-full border border-slate-200/90 bg-white/95 px-4 py-2.5 text-[13px] font-medium text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-center gap-2.5 cursor-pointer text-left active:scale-[0.99]"
+                  onClick={() => handleSendMessage('What is the 7-step building permit process in Lasam?')}
+                  className="w-fit max-w-full rounded-full border border-slate-200/90 bg-white/95 px-4 py-2 text-[12.5px] font-medium text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-center gap-2.5 cursor-pointer text-left active:scale-[0.99]"
                 >
-                  <MessageSquare className="h-4 w-4 text-slate-600 shrink-0" />
-                  <span className="truncate">Discuss a topic with me</span>
+                  <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span className="truncate">What is the 7-step building permit process in Lasam?</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => handleSendMessage('Help me with my writing')}
-                  className="w-fit max-w-full rounded-full border border-slate-200/90 bg-white/95 px-4 py-2.5 text-[13px] font-medium text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-center gap-2.5 cursor-pointer text-left active:scale-[0.99]"
+                  onClick={() => handleSendMessage('What documents are required for a building permit?')}
+                  className="w-fit max-w-full rounded-full border border-slate-200/90 bg-white/95 px-4 py-2 text-[12.5px] font-medium text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-center gap-2.5 cursor-pointer text-left active:scale-[0.99]"
                 >
-                  <PenLine className="h-4 w-4 text-slate-600 shrink-0" />
-                  <span className="truncate">Help me with my writing</span>
+                  <FileText className="h-4 w-4 text-amber-600 shrink-0" />
+                  <span className="truncate">What documents are required for a building permit?</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSendMessage('What are the mandatory river easement setbacks?')}
+                  className="w-fit max-w-full rounded-full border border-slate-200/90 bg-white/95 px-4 py-2 text-[12.5px] font-medium text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-center gap-2.5 cursor-pointer text-left active:scale-[0.99]"
+                >
+                  <MessageSquare className="h-4 w-4 text-cyan-600 shrink-0" />
+                  <span className="truncate">What are the mandatory river easement setbacks?</span>
                 </button>
               </div>
             </div>

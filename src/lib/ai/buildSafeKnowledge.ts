@@ -75,44 +75,42 @@ export function generateAiResponse(userInput: string, context?: ChatContext): {
     }
   }
 
-  // 0b. Discuss a topic with me
+  // 0b. Discuss planning topics in Lasam
   if (
-    q.includes('discuss a topic with me') ||
     q.includes('discuss a topic') ||
-    q.includes('topics to discuss')
+    q.includes('topics to discuss') ||
+    q.includes('what can we discuss')
   ) {
     return {
-      text: `💬 **Topics we can explore for Lasam:**
+      text: `💬 **Planning & Safety Topics in Lasam:**
 
-• **Flood Protection:** Stilt construction and elevated foundations along river floodplains
-• **Agricultural Land Rules:** How Lasam protects prime rice lands and DAR conversion rules
-• **Earthquake Safety:** Building standards for Seismic Zone 4 and liquefaction
-• **Permits & Approvals:** Step-by-step clearance from the MPDO and Building Official`,
+• **Flood & River Setbacks:** PD 1067 river easements and stilt elevation
+• **Agricultural Land Rules:** CLUP zoning, DAR conversion, and farm protection
+• **Building Permits:** 7-step municipal workflow and required clearances`,
       suggestions: [
+        'What is the 7-step building permit process in Lasam?',
         'Can I build on agricultural land in Lasam?',
         'What are the mandatory river easement setbacks?',
-        'What permits are required in Lasam?',
       ],
     }
   }
 
-  // 0c. Help me with my writing
+  // 0c. Municipal Document Preparation
   if (
     q.includes('help me with my writing') ||
-    q.includes('help me with writing') ||
-    q.includes('help write') ||
-    q.includes('draft a letter')
+    q.includes('draft a letter') ||
+    q.includes('locational clearance letter')
   ) {
     return {
-      text: `✍️ **I can help draft municipal letters for Lasam:**
+      text: `✍️ **Municipal Clearance Letter Guide for Lasam:**
 
-• **Locational Clearance Letter:** Justification letter for the Lasam MPDO
-• **DAR Reclassification Petition:** For agricultural lot conversion
-• **Hazard Mitigation Summary:** For your architect, engineer, or contractor
-• **Barangay Consultation Letter:** Request for local council clearance`,
+To request a Locational Clearance from the **Lasam MPDO**, include:
+1. Exact parcel location, Barangay, and Title (TCT/OCT) number
+2. Proposed building structure type and land-use intent
+3. Affirmation of compliance with Lasam CLUP and river/fault setbacks`,
       suggestions: [
-        'What permits are required in Lasam?',
-        'Can I build on agricultural land in Lasam?',
+        'What documents are required for a building permit?',
+        'What is the 7-step building permit process in Lasam?',
         'What are the mandatory river easement setbacks?',
       ],
     }
