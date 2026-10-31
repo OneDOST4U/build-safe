@@ -62,7 +62,7 @@ const COMPACT_FAULT_ENTRIES = [
   FAULT_LEGEND_ENTRIES.find((e) => e.key === 'potential-approximate'),
 ].filter((e): e is (typeof FAULT_LEGEND_ENTRIES)[number] => Boolean(e))
 
-export function MapLegend({ layerVisibility }: MapLegendProps) {
+export function MapLegend({ hazardMode, layerVisibility }: MapLegendProps) {
   const showFlood = Boolean(layerVisibility.flood)
   const showLguFlood = Boolean(layerVisibility.lguFlood)
   const showLiquefaction = Boolean(layerVisibility.liquefaction)
@@ -71,7 +71,7 @@ export function MapLegend({ layerVisibility }: MapLegendProps) {
   const showNpaaad = Boolean(layerVisibility.npaaad)
   const showSafdz = Boolean(layerVisibility.safdz)
   const showFault = Boolean(layerVisibility.fault)
-  const showVolcano = Boolean(layerVisibility.volcano)
+  const showVolcano = Boolean(layerVisibility.volcano || hazardMode === 'volcano')
 
   const hasAny =
     showFlood ||
@@ -127,11 +127,32 @@ export function MapLegend({ layerVisibility }: MapLegendProps) {
 
       {showVolcano && (
         <div className="mb-3 last:mb-0">
-          <p className="mb-1.5 text-[10px] font-semibold text-slate-700">Cagua Volcano</p>
-          <div className="space-y-1 text-[11px] text-slate-600">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-[10px] font-bold text-slate-800">🌋 Cagua Volcano Buffers</span>
+            <span className="rounded border border-amber-200 bg-amber-50 px-1 py-0.2 text-[8.5px] font-bold text-amber-800">
+              Active
+            </span>
+          </div>
+          <div className="space-y-1 text-[10px] text-slate-600">
             <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-800 shrink-0" />
-              <span>Summit (Gonzaga)</span>
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-white bg-red-600 shadow-xs" />
+              <span className="font-semibold text-red-950">10 km Permanent Danger (PDZ)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-white bg-orange-500 shadow-xs" />
+              <span>20 km High Danger Buffer</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-white bg-amber-500 shadow-xs" />
+              <span>30 km Moderate Buffer (Lahars)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-white bg-yellow-500 shadow-xs" />
+              <span>50 km Regional Ashfall Buffer</span>
+            </div>
+            <div className="flex items-center gap-2 border-t border-slate-100 pt-1">
+              <span className="h-0.5 w-3 shrink-0 border-t-2 border-dashed border-red-500" />
+              <span className="text-[9.5px] text-slate-500">~53 km Corridor to Lasam</span>
             </div>
           </div>
         </div>

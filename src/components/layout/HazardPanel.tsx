@@ -484,30 +484,146 @@ export function HazardPanel(props: HazardPanelProps) {
           <TabsContent value="volcano" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Cagua Volcano (Gonzaga)</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                    <span>🌋 Cagua Volcano</span>
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                      Active
+                    </span>
+                  </CardTitle>
+                  <span className="text-[10px] text-slate-400 font-mono">Gonzaga, Cagayan</span>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-[11px] leading-relaxed text-slate-500">
-                  Stratovolcano in Gonzaga, Cagayan (~{CAGUA_META.elevationM} m). Reference point for
-                  distance and site assessment — not official PHIVOLCS hazard zones. Source:{' '}
-                  {CAGUA_META.dataSource}.
+                  Active stratovolcano located in Gonzaga, Cagayan (~{CAGUA_META.elevationM} m elevation / 3,717 ft), locally known as <em>Bantay ti Apuy</em>. Source: {CAGUA_META.dataSource}.
                 </p>
-                <div className="rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                  Last known eruption: {CAGUA_META.lastEruption}
+
+                <div className="flex items-center justify-between rounded-xl border border-amber-200/90 bg-amber-50/80 px-3 py-2 text-xs text-amber-900 font-medium">
+                  <span>Last Known Eruption:</span>
+                  <strong className="font-semibold">{CAGUA_META.lastEruption}</strong>
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <Label htmlFor="show-volcano-layer">Show Cagua volcano marker</Label>
+
+                {/* Quick Map Navigation Controls */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-700">Camera Quick Navigation</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 flex items-center justify-center gap-1.5"
+                      onClick={() => {
+                        props.onLayerVisibilityChange('volcano', true)
+                        window.dispatchEvent(new CustomEvent('map:fly-volcano', { detail: { view: 'summit' } }))
+                      }}
+                    >
+                      <span>🌋</span>
+                      <span>Focus Summit</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 flex items-center justify-center gap-1.5"
+                      onClick={() => {
+                        props.onLayerVisibilityChange('volcano', true)
+                        window.dispatchEvent(new CustomEvent('map:fly-volcano', { detail: { view: 'corridor' } }))
+                      }}
+                    >
+                      <span>🗺️</span>
+                      <span>View Regional Buffer</span>
+                    </Button>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="w-full h-7 text-[11px] text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1"
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('map:fly-volcano', { detail: { view: 'lasam' } }))
+                    }}
+                  >
+                    <span>📍</span>
+                    <span>Return View to Lasam Municipality</span>
+                  </Button>
+                </div>
+
+                {/* Layer toggle switch */}
+                <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                  <div>
+                    <Label htmlFor="show-volcano-layer" className="text-xs font-bold text-slate-800 block">
+                      Show Volcano & Hazard Buffers
+                    </Label>
+                    <span className="text-[10px] text-slate-400 block">
+                      Display summit marker, radial buffer rings & corridor
+                    </span>
+                  </div>
                   <Switch
                     id="show-volcano-layer"
                     checked={Boolean(props.layerVisibility.volcano)}
                     onCheckedChange={(v) => props.onLayerVisibilityChange('volcano', v)}
                   />
                 </div>
-                <p className="text-[11px] leading-relaxed text-slate-500">
-                  Lasam is approximately 50–60 km from the Cagua summit. Toggle the volcano layer on
-                  the map to view the summit location. Use Site Assessment for ashfall and volcanic checks
-                  at a specific coordinate.
-                </p>
+
+                {/* Radial Buffer Planning Rings Breakdown */}
+                <div className="space-y-2 border-t border-slate-100 pt-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-slate-800">Hazard Planning Buffer Radii</Label>
+                    <span className="text-[10px] text-slate-400">PHIVOLCS / GVP model</span>
+                  </div>
+                  <div className="space-y-1.5 text-[11px]">
+                    <div className="rounded-lg border border-red-200 bg-red-50/70 p-2 text-red-950">
+                      <div className="flex items-center justify-between font-bold">
+                        <span>🔴 10 km Permanent Danger Zone (PDZ)</span>
+                        <span className="text-[10px] text-red-700">Severe</span>
+                      </div>
+                      <p className="mt-0.5 text-[10px] leading-tight text-red-900/80">
+                        Pyroclastic density currents, ballistic bombs, and base surges. Mandatory evacuation zone.
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg border border-orange-200 bg-orange-50/70 p-2 text-orange-950">
+                      <div className="flex items-center justify-between font-bold">
+                        <span>🟠 20 km High Danger Buffer</span>
+                        <span className="text-[10px] text-orange-700">High</span>
+                      </div>
+                      <p className="mt-0.5 text-[10px] leading-tight text-orange-900/80">
+                        Heavy tephra fall and ballistic projectile envelope. High roof loading risk.
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-2 text-amber-950">
+                      <div className="flex items-center justify-between font-bold">
+                        <span>🟡 30 km Moderate Danger Buffer</span>
+                        <span className="text-[10px] text-amber-700">Moderate</span>
+                      </div>
+                      <p className="mt-0.5 text-[10px] leading-tight text-amber-900/80">
+                        Syn-eruption lahar corridors and significant ash loading along river systems.
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg border border-yellow-200 bg-yellow-50/70 p-2 text-yellow-950">
+                      <div className="flex items-center justify-between font-bold">
+                        <span>🟡 50 km Regional Ashfall Advisory</span>
+                        <span className="text-[10px] text-yellow-700">Outer</span>
+                      </div>
+                      <p className="mt-0.5 text-[10px] leading-tight text-yellow-900/80">
+                        Regional airborne ash plume dispersal and respiratory health advisory margin.
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-2 text-emerald-950">
+                      <div className="flex items-center justify-between font-bold">
+                        <span>🟢 Lasam Municipality (~53 km WSW)</span>
+                        <span className="text-[10px] text-emerald-700">Safe Distance</span>
+                      </div>
+                      <p className="mt-0.5 text-[10px] leading-tight text-emerald-900/80">
+                        Safe from all near-vent ballistic hazards. Monitored strictly for seasonal wind-blown ashfall.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

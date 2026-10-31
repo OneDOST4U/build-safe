@@ -31,7 +31,7 @@ export const LAYER_ID_MAP: Record<string, string[]> = {
   safdz: ['safdz-fill', 'safdz-line'],
   fault: [...FAULT_LAYER_IDS],
   epicenter: ['epicenter-rings', 'epicenter-point'],
-  volcano: ['volcano-point'],
+  volcano: ['volcano-rings-fill', 'volcano-rings-line', 'volcano-corridor-line', 'volcano-point'],
   site: [],
   hillshade: ['hillshade'],
   contours: ['contours'],

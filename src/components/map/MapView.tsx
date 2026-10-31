@@ -18,6 +18,8 @@ import { createEarthquakeRings } from '@/lib/map/visuals'
 import {
   CAGUA_CENTER,
   createVolcanoPointFeature,
+  createVolcanoRings,
+  createCaguaCorridorLine,
 } from '@/lib/simulation/volcano'
 import { buildTerrainSample } from '@/lib/terrain/elevation'
 import { getBuildingColor } from '@/lib/simulation/stats'
@@ -162,6 +164,7 @@ export function MapView({
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<Map | null>(null)
   const siteMarkerRef = useRef<maplibregl.Marker | null>(null)
+  const volcanoMarkerRef = useRef<maplibregl.Marker | null>(null)
   const facilityMarkerRef = useRef<maplibregl.Marker | null>(null)
   const facilityPopupRef = useRef<maplibregl.Popup | null>(null)
   const onClearHighlightedFacilityRef = useRef(onClearHighlightedFacility)
@@ -250,6 +253,12 @@ export function MapView({
     const markerEl = siteMarkerRef.current?.getElement()
     if (markerEl) {
       markerEl.style.display = sitePinVisible ? '' : 'none'
+    }
+
+    const isVolcanoVisible = Boolean(layerVisibility.volcano || hazardMode === 'volcano')
+    const vEl = volcanoMarkerRef.current?.getElement()
+    if (vEl) {
+      vEl.style.display = isVolcanoVisible ? '' : 'none'
     }
 
     raiseBuildingLayers(map)
@@ -961,6 +970,53 @@ export function MapView({
       map.addLayer({ id: 'epicenter-rings', type: 'fill', source: 'epicenter', filter: ['==', ['geometry-type'], 'Polygon'], paint: { 'fill-color': '#ef4444', 'fill-opacity': ['coalesce', ['get', 'opacity'], 0.12] } })
       map.addLayer({ id: 'epicenter-point', type: 'circle', source: 'epicenter', filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-radius': 9, 'circle-color': '#dc2626', 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' } })
 
+      // Cagua Volcano Hazard Buffers, Corridor & Summit Layers
+      const volcanoRingsData = createVolcanoRings()
+      map.addSource('volcano-rings', {
+        type: 'geojson',
+        data: volcanoRingsData,
+      })
+      map.addLayer({
+        id: 'volcano-rings-fill',
+        type: 'fill',
+        source: 'volcano-rings',
+        paint: {
+          'fill-color': ['coalesce', ['get', 'color'], '#dc2626'],
+          'fill-opacity': ['coalesce', ['get', 'fillOpacity'], 0.14],
+        },
+      })
+      map.addLayer({
+        id: 'volcano-rings-line',
+        type: 'line',
+        source: 'volcano-rings',
+        paint: {
+          'line-color': ['coalesce', ['get', 'strokeColor'], '#dc2626'],
+          'line-width': 1.8,
+          'line-dasharray': [3, 2],
+          'line-opacity': 0.85,
+        },
+      })
+
+      const caguaCorridorData = {
+        type: 'FeatureCollection',
+        features: [createCaguaCorridorLine(CAGUA_CENTER, [121.602, 18.067])],
+      }
+      map.addSource('volcano-corridor', {
+        type: 'geojson',
+        data: caguaCorridorData as FeatureCollection,
+      })
+      map.addLayer({
+        id: 'volcano-corridor-line',
+        type: 'line',
+        source: 'volcano-corridor',
+        paint: {
+          'line-color': '#dc2626',
+          'line-width': 2.2,
+          'line-dasharray': [4, 3],
+          'line-opacity': 0.8,
+        },
+      })
+
       map.addSource('volcano', {
         type: 'geojson',
         data: {
@@ -974,12 +1030,137 @@ export function MapView({
         source: 'volcano',
         filter: ['==', ['geometry-type'], 'Point'],
         paint: {
-          'circle-radius': 10,
-          'circle-color': '#b45309',
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#fff',
+          'circle-radius': 9,
+          'circle-color': '#dc2626',
+          'circle-stroke-width': 2.5,
+          'circle-stroke-color': '#ffffff',
         },
       })
+
+      const showVolcanoDetails = (lngLat: maplibregl.LngLatLike = CAGUA_CENTER) => {
+        new maplibregl.Popup({ closeButton: true, maxWidth: '330px', offset: [0, -14] })
+          .setLngLat(lngLat)
+          .setHTML(`
+            <div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.45;padding:2px 0;">
+              <div style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#ffffff;padding:8px 12px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-weight:800;font-size:12px;letter-spacing:0.4px;">🌋 CAGUA VOLCANO</span>
+                <span style="background:rgba(255,255,255,0.25);padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;">ACTIVE</span>
+              </div>
+              <div style="font-size:13.5px;font-weight:700;color:#0f172a;margin-bottom:2px;">
+                Mount Cagua ("Bantay ti Apuy")
+              </div>
+              <div style="font-size:11px;color:#64748b;margin-bottom:8px;">
+                Gonzaga, Cagayan · Elevation: 1,133 m (3,717 ft)
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3.5px;background:#fef2f2;border:1px solid #fecaca;padding:7px 9px;border-radius:6px;font-size:11px;color:#991b1b;margin-bottom:8px;">
+                <div><strong>Volcano Type:</strong> Stratovolcano (active solfatara & thermal vents)</div>
+                <div><strong>Last Known Eruption:</strong> 1860 CE (phreatic thermal activity)</div>
+                <div><strong>Distance to Lasam:</strong> ~53.4 km WSW</div>
+              </div>
+              <div style="font-size:10.5px;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;padding:6px 8px;border-radius:6px;margin-bottom:6px;line-height:1.4;">
+                <strong style="color:#0f172a;">Lasam Impact Assessment:</strong><br/>
+                • Safe from near-vent ballistic projectiles & pyroclastic density currents (&gt;50 km outside PDZ).<br/>
+                • Primary potential hazard is airborne <strong>ashfall dispersion</strong> during prevailing seasonal monsoons.
+              </div>
+              <div style="font-size:9.5px;color:#94a3b8;display:flex;justify-content:space-between;border-top:1px solid #f1f5f9;padding-top:4px;">
+                <span>Source: PHIVOLCS / Smithsonian GVP</span>
+                <span style="color:#0284c7;font-weight:600;">BuildSafe Lasam</span>
+              </div>
+            </div>
+          `)
+          .addTo(map)
+      }
+
+      map.on('click', 'volcano-point', (e) => showVolcanoDetails(e.lngLat))
+      map.on('mouseenter', 'volcano-point', () => { map.getCanvas().style.cursor = 'pointer' })
+      map.on('mouseleave', 'volcano-point', () => { map.getCanvas().style.cursor = '' })
+
+      map.on('click', 'volcano-rings-fill', (e) => {
+        if (activeToolRef.current !== 'select' && activeToolRef.current !== 'pan') return
+        const p = e.features?.[0]?.properties
+        if (!p) return
+        const label = String(p.label ?? `${p.radius_km} km buffer`)
+        const desc = String(p.description ?? '')
+        const color = String(p.color ?? '#ea580c')
+        new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
+          .setLngLat(e.lngLat)
+          .setHTML(`
+            <div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
+              <div style="background:${color};color:#ffffff;padding:5px 9px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:800;">
+                <span>🌋 ${label}</span>
+              </div>
+              <div style="font-size:11px;color:#334155;margin-top:4px;line-height:1.4;">
+                ${desc}
+              </div>
+              <div style="font-size:9.5px;color:#64748b;margin-top:6px;border-top:1px solid #f1f5f9;padding-top:4px;">
+                Radial buffer from Mount Cagua summit (1,133m).
+              </div>
+            </div>
+          `)
+          .addTo(map)
+      })
+      map.on('mouseenter', 'volcano-rings-fill', () => {
+        if (activeToolRef.current === 'select' || activeToolRef.current === 'pan') {
+          map.getCanvas().style.cursor = 'pointer'
+        }
+      })
+      map.on('mouseleave', 'volcano-rings-fill', () => {
+        if (activeToolRef.current === 'select' || activeToolRef.current === 'pan') {
+          map.getCanvas().style.cursor = ''
+        }
+      })
+
+      map.on('click', 'volcano-corridor-line', (e) => {
+        if (activeToolRef.current !== 'select' && activeToolRef.current !== 'pan') return
+        new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
+          .setLngLat(e.lngLat)
+          .setHTML(`
+            <div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:2px 0;">
+              <div style="background:#dc2626;color:#ffffff;padding:5px 9px;margin:-10px -10px 8px -10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:800;">
+                <span>📏 Cagua to Lasam Hazard Corridor</span>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:#0f172a;margin-top:4px;">
+                ~53.4 km Direct Geodesic Distance
+              </div>
+              <div style="font-size:11px;color:#475569;margin-top:3px;line-height:1.35;">
+                Direct path from Mount Cagua summit (Gonzaga) to the Municipality of Lasam. Lasam is outside the 50km permanent danger radius.
+              </div>
+            </div>
+          `)
+          .addTo(map)
+      })
+      map.on('mouseenter', 'volcano-corridor-line', () => {
+        if (activeToolRef.current === 'select' || activeToolRef.current === 'pan') {
+          map.getCanvas().style.cursor = 'pointer'
+        }
+      })
+      map.on('mouseleave', 'volcano-corridor-line', () => {
+        if (activeToolRef.current === 'select' || activeToolRef.current === 'pan') {
+          map.getCanvas().style.cursor = ''
+        }
+      })
+
+      // Create Custom Interactive Summit Marker
+      const volcanoEl = document.createElement('div')
+      volcanoEl.className = 'cagua-volcano-marker'
+      volcanoEl.style.cssText =
+        'cursor:pointer;display:flex;flex-direction:column;align-items:center;z-index:28;user-select:none;transition:transform 0.15s ease;'
+      volcanoEl.innerHTML = `
+        <div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#ffffff;padding:3.5px 10px;border-radius:9999px;font-size:11px;font-weight:800;letter-spacing:0.3px;border:2px solid #ffffff;box-shadow:0 3px 12px rgba(0,0,0,0.45);display:flex;align-items:center;gap:5px;white-space:nowrap;">
+          <span style="font-size:13px;">🌋</span>
+          <span>CAGUA VOLCANO</span>
+          <span style="background:rgba(255,255,255,0.25);padding:1px 5px;border-radius:4px;font-size:9px;font-weight:700;">1,133m · ACTIVE</span>
+        </div>
+        <div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid #dc2626;margin-top:-1px;"></div>
+        <div style="position:relative;margin-top:2px;display:flex;align-items:center;justify-content:center;">
+          <div style="position:absolute;width:28px;height:28px;border-radius:50%;background:rgba(220,38,38,0.45);animation:ping 1.8s cubic-bezier(0,0,0.2,1) infinite;"></div>
+          <div style="width:10px;height:10px;border-radius:50%;background:#ef4444;border:2px solid #ffffff;box-shadow:0 0 8px #dc2626;"></div>
+        </div>
+      `
+      volcanoEl.onclick = () => showVolcanoDetails(CAGUA_CENTER)
+      volcanoMarkerRef.current = new maplibregl.Marker({ element: volcanoEl, anchor: 'bottom', offset: [0, 4] })
+        .setLngLat(CAGUA_CENTER)
+        .addTo(map)
 
       map.addSource('site-assessment', {
         type: 'geojson',
@@ -1297,6 +1478,8 @@ export function MapView({
       unbindResize?.()
       siteMarkerRef.current?.remove()
       siteMarkerRef.current = null
+      volcanoMarkerRef.current?.remove()
+      volcanoMarkerRef.current = null
       mapRef.current?.remove()
       mapRef.current = null
     }
@@ -1898,8 +2081,26 @@ export function MapView({
   useEffect(() => {
     const map = mapRef.current
     if (!map || hazardMode !== 'volcano') return
-    map.flyTo({ center: CAGUA_CENTER, zoom: 9.2, pitch: is3D ? 45 : 0, duration: 1200 })
+    // Position camera between Lasam and Mount Cagua so all hazard buffer rings and the corridor line are visible
+    map.flyTo({ center: [121.88, 18.16], zoom: 9.3, pitch: is3D ? 35 : 0, duration: 1200 })
   }, [hazardMode, is3D])
+
+  useEffect(() => {
+    const handleFlyVolcano = (e: Event) => {
+      const map = mapRef.current
+      if (!map) return
+      const detail = (e as CustomEvent<{ view: 'summit' | 'corridor' | 'lasam' }>).detail
+      if (detail?.view === 'summit') {
+        map.flyTo({ center: CAGUA_CENTER, zoom: 12, pitch: is3D ? 55 : 0, duration: 1200 })
+      } else if (detail?.view === 'corridor') {
+        map.flyTo({ center: [121.88, 18.16], zoom: 9.3, pitch: is3D ? 35 : 0, duration: 1200 })
+      } else if (detail?.view === 'lasam') {
+        fitMapToLasam(map, boundaryRef.current ?? boundary, { pitch: is3D ? 52 : 0, duration: 1200 })
+      }
+    }
+    window.addEventListener('map:fly-volcano', handleFlyVolcano)
+    return () => window.removeEventListener('map:fly-volcano', handleFlyVolcano)
+  }, [is3D, boundary])
 
   useEffect(() => {
     const map = mapRef.current

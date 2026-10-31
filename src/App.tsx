@@ -71,7 +71,7 @@ const initialLayerVisibility = {
   safdz: false,
   fault: false,
   epicenter: false,
-  volcano: false,
+  volcano: true,
   site: true,
 }
 
@@ -659,7 +659,12 @@ export default function App() {
 
   const hazardPanelProps = {
     hazardMode,
-    onHazardModeChange: setHazardMode,
+    onHazardModeChange: (mode: HazardMode) => {
+      setHazardMode(mode)
+      if (mode === 'volcano') {
+        setLayerVisibility((prev) => ({ ...prev, volcano: true }))
+      }
+    },
     floodOpacity,
     onFloodOpacityChange: setFloodOpacity,
     mgbFeatureCount: data?.mgbFlood.features.length ?? 0,
