@@ -61,7 +61,36 @@ function buildSystemInstruction(context?: ChatContext): string {
    - Active Fault Lines (PHIVOLCS): Mandatory 5-meter buffer setback from active fault lines.
    - Flood Risk: Low-lying river areas require elevated floor levels (+0.5m) or stilt foundations.
    - Mt. Cagua Volcano: Active volcano ~53 km east; potential light-to-moderate regional ashfall.
-3. **Permits**: Locational Clearance (MPDO), Building Permit (Municipal Engineering Office), and Fire Clearance (BFP).
+3. **Official Lasam Building Permit Process (Municipal LGU Official Answers)**:
+   - **Total Processing Time**: 6 Days, 1 hour, and 9 minutes.
+   - **Official 7-Step Procedure**:
+     1. *Step 1*: Sign Client Logbook; agency checks initial completeness & provides permit requirements.
+     2. *Step 2*: Submit documents; agency evaluates technical plans, structural/zoning specs, and spatial hazards (takes 3 days; BUILD-SAFE accelerates this step).
+     3. *Step 3*: Return to Office of the Building Official (OBO) to acknowledge receipt of notification.
+     4. *Step 4*: OBO issues Order of Payment.
+     5. *Step 5*: Pay required fees at Municipal Treasury Office and receive Official Receipt (OR).
+     6. *Step 6*: Submit OR back to OBO; agency prepares and approves the Building Permit.
+     7. *Step 7*: Sign the logbook and receive the approved Building Permit.
+   - **6 Participating Municipal Offices**:
+     1. Municipal Engineering Office / Office of the Building Official (OBO) - primary reviewing & issuing authority.
+     2. Bureau of Fire Protection (BFP) Lasam Station - evaluates fire/life safety & issues Fire Safety Evaluation Certificate (FSEC).
+     3. Municipal Planning and Development Office (MPDO) / Zoning - evaluates land use against CLUP & issues Locational Clearance.
+     4. Municipal Treasury Office - computes/collects fees & issues Official Receipt (OR).
+     5. Municipal Assessor's Office - property ownership verification & Updated Tax Declaration.
+     6. Concerned Barangay Hall - site jurisdiction & Barangay Clearance for Construction.
+   - **10 Official Required Documents**:
+     1. Duly accomplished application form (5 originals)
+     2. Certified True Copy of Title (OCT/TCT) or Notarized Deed of Sale / Lease (1 orig, 2 copies)
+     3. Survey & design plans signed/sealed by registered professionals (5 originals)
+     4. Valid PRC licenses and PTR of all professionals with 3-specimen signatures (2 copies)
+     5. Bill of Materials and Cost Estimate signed/sealed (5 originals)
+     6. Updated Tax Declaration (1 orig, 1 copy)
+     7. Current Tax Receipt (1 orig, 1 copy)
+     8. Locational Clearance from MPDO (1 original)
+     9. Barangay Clearance for Building Construction (1 orig, 2 copies)
+     10. Fire Safety Evaluation Certificate (FSEC) from BFP Lasam (1 original)
+   - **Common Disapproval Reasons**: Non-compliance with PD 1096 (National Building Code), zoning violations, incomplete/expired documents, ownership discrepancies, or expired professional licenses.
+   - **Role of BUILD-SAFE**: Directly accelerates Step 2 (Plan Evaluation & Document Verification) from days to seconds by checking hazards (flood, fault, setbacks) and generating an automated site hazard report.
 
 ### Parcel Context:
 ${contextInfo}`
@@ -106,7 +135,7 @@ export async function askGemini(
           generationConfig: {
             temperature: 0.3,
             topP: 0.85,
-            maxOutputTokens: 300,
+            maxOutputTokens: 450,
           },
         }),
       })

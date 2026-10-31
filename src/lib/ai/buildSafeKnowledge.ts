@@ -39,11 +39,11 @@ I can assist you with:
 How can I help you plan or evaluate your property today?`,
   timestamp: 'Just now',
   suggestions: [
+    'What is the 7-step building permit process in Lasam?',
+    'What documents are required for a building permit?',
     'Can I build a house on agricultural land in Lasam?',
     'What are the mandatory river easement setbacks?',
     'How close can I build to an active fault line?',
-    'What permits are required for a building in Lasam?',
-    'What crops are most suitable for Lasam farm lots?',
   ],
 }
 
@@ -321,28 +321,110 @@ Lasam's prime agricultural soils and alluvial terraces are highly fertile:
     }
   }
 
-  // 9. Building Permits & Process in Lasam
+  // 9a. Building Permit 7-Step Procedure & Processing Time
+  if (
+    q.includes('step') ||
+    q.includes('procedure') ||
+    q.includes('process of building') ||
+    q.includes('permit process') ||
+    q.includes('how long') ||
+    q.includes('duration') ||
+    q.includes('application process')
+  ) {
+    return {
+      text: `🏛️ **Official 7-Step Building Permit Procedure in Lasam:**
+*Total Processing Time: 6 Days, 1 hour, and 9 minutes*
+
+1. **Step 1:** Sign Client Logbook & receive initial requirements.
+2. **Step 2:** Submit documents for plan evaluation & hazard checks (takes 3 days; BUILD-SAFE automates this step).
+3. **Step 3:** Acknowledge notice of evaluation at the Office of the Building Official (OBO).
+4. **Step 4:** Receive official Order of Payment from OBO.
+5. **Step 5:** Pay fees at Municipal Treasury Office & receive Official Receipt (OR).
+6. **Step 6:** Submit OR back to OBO for permit preparation & final approval.
+7. **Step 7:** Sign logbook and receive your approved Building Permit.`,
+      suggestions: [
+        'What documents are required for a building permit?',
+        'What offices review my building permit application?',
+        'Can I build on agricultural land in Lasam?',
+      ],
+    }
+  }
+
+  // 9b. Offices Involved in Building Permit
+  if (
+    q.includes('office') ||
+    q.includes('department') ||
+    q.includes('who review') ||
+    q.includes('who approve')
+  ) {
+    return {
+      text: `🏢 **6 Municipal Offices Reviewing Building Permits in Lasam:**
+
+1. **Municipal Engineering Office / OBO:** Primary reviewing & issuing authority for structural, architectural, electrical, and sanitary evaluation.
+2. **BFP Lasam Station (Fire Protection):** Inspects fire safety & issues Fire Safety Evaluation Certificate (FSEC).
+3. **MPDO / Zoning Division:** Verifies land use against CLUP & issues Locational Clearance.
+4. **Municipal Treasury Office:** Fee calculation, collection, and Official Receipt (OR) issuance.
+5. **Municipal Assessor’s Office:** Property ownership verification & Updated Tax Declaration.
+6. **Concerned Barangay Hall:** Verifies site jurisdiction & issues Barangay Construction Clearance.`,
+      suggestions: [
+        'What is the 7-step building permit process in Lasam?',
+        'What documents are required for a building permit?',
+        'What are the common reasons for disapproving a permit?',
+      ],
+    }
+  }
+
+  // 9c. Disapproval / Rejection Reasons
+  if (
+    q.includes('disapprov') ||
+    q.includes('reject') ||
+    q.includes('denied') ||
+    q.includes('returned') ||
+    q.includes('fail')
+  ) {
+    return {
+      text: `⚠️ **Common Reasons Building Permits are Returned or Disapproved:**
+
+• **Technical Non-Compliance:** Plans fail standards under PD 1096 (National Building Code), NSCP Structural Code, Electrical, or Plumbing Codes.
+• **Zoning Violations:** Proposed structure is non-conforming under the Lasam CLUP without approved conversion.
+• **Incomplete Documents:** Missing required clearances, expired tax receipts, or lack of sealed professional plans.
+• **Ownership Discrepancies:** Conflicts or lack of clear title (TCT/OCT) or notarized deeds.
+• **Expired Licenses:** Invalid PTR or PRC IDs of designing engineers and architects.`,
+      suggestions: [
+        'What documents are required for a building permit?',
+        'What is the 7-step building permit process in Lasam?',
+        'Can I build on agricultural land in Lasam?',
+      ],
+    }
+  }
+
+  // 9d. Official Required Documents Checklist
   if (
     q.includes('permit') ||
     q.includes('clearance') ||
     q.includes('requirement') ||
+    q.includes('checklist') ||
+    q.includes('document') ||
     q.includes('process') ||
     q.includes('how to build')
   ) {
     return {
-      text: `📜 **Building Permit Checklist for Lasam:**
+      text: `📜 **Official 10-Document Checklist for Building Permit in Lasam:**
 
-To apply at the **Lasam Municipal Engineering Office**, prepare:
-1. **Proof of Ownership:** Title (TCT/OCT) or notarized Deed of Sale
-2. **Barangay Clearance:** From your local Barangay Captain
-3. **Locational / Zoning Clearance:** From the Lasam MPDO
-4. **Building Plans (5 sets):** Signed & sealed by registered professionals
-5. **Fire Safety Clearance:** From BFP Lasam
-6. *(If agricultural land)* **DAR Conversion Clearance**`,
+1. **Application Form** (5 accomplished originals)
+2. **Proof of Ownership** (Title OCT/TCT, Deed of Sale, or Lease Contract — 1 original, 2 copies)
+3. **Signed & Sealed Plans** (Architectural, Structural, Electrical, Sanitary — 5 originals)
+4. **Professional Licenses** (PRC ID & PTR with 3 specimen signatures — 2 copies)
+5. **Bill of Materials & Cost Estimate** signed and sealed (5 originals)
+6. **Updated Tax Declaration** (1 original, 1 copy)
+7. **Current Tax Receipt** (1 original, 1 copy)
+8. **Locational Clearance** from Lasam MPDO (1 original)
+9. **Barangay Construction Clearance** (1 original, 2 copies)
+10. **Fire Safety Certificate (FSEC)** from BFP Lasam (1 original)`,
       suggestions: [
+        'What is the 7-step building permit process in Lasam?',
+        'What offices review my building permit application?',
         'Can I build on agricultural land in Lasam?',
-        'What are the mandatory river easement setbacks?',
-        'How can I mitigate flood risk on my lot?',
       ],
     }
   }
