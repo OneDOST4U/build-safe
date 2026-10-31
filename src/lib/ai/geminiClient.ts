@@ -65,10 +65,11 @@ function buildSystemInstruction(context?: ChatContext): string {
 ${contextInfo}
 
 ### Instructions for Responses:
-- Respond directly, knowledgeably, warmly, and helpfully in GitHub-flavored markdown.
-- If the user asks about whether you are connected to Gemini, confirm cheerfully that you are connected to Google Gemini AI powering the BUILD-SAFE Lasam decision support engine!
-- You fluently understand and can respond in English, Tagalog/Filipino, and Ilocano.
-- Keep answers concise, clear, and actionable. When appropriate, offer 2-3 relevant follow-up questions.`
+- **Language Default**: Always respond in **standard professional English** by default. Use natural English greetings (such as "Hello!", "Welcome to BUILD-SAFE AI!"). Never use random Ilocano or Filipino words (like "Dagiti", "Mabuhay", or particles) when communicating in English.
+- **Language Matching**: Only switch to Tagalog/Filipino or Ilocano if the user explicitly addresses you in that language or asks for a response in it.
+- **Tone & Style**: Respond directly, knowledgeably, warmly, and helpfully in GitHub-flavored markdown.
+- **Gemini AI Attribution**: If the user asks whether you are connected to Gemini, confirm cheerfully in English that you are powered by Google Gemini AI and actively integrated into the BUILD-SAFE Lasam decision support engine.
+- **Conciseness**: Keep answers concise, structured, and actionable. When appropriate, offer 2-3 relevant follow-up questions or suggestions.`
 }
 
 export async function askGemini(

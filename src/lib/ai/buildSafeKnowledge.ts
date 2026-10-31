@@ -26,7 +26,7 @@ export interface ChatContext {
 export const INITIAL_GREETING_MESSAGE: ChatMessage = {
   id: 'welcome-1',
   sender: 'assistant',
-  text: `👋 **Mabuhay! I am BUILD-SAFE AI**, your intelligent decision support assistant for the **Municipality of Lasam, Cagayan**.
+  text: `👋 **Hello! I am BUILD-SAFE AI**, your intelligent decision support assistant for the **Municipality of Lasam, Cagayan**.
 
 I can assist you with:
 • **CLUP (2020–2029) Zoning & Land Use Compliance**
