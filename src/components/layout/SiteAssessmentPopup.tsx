@@ -535,17 +535,6 @@ export function SiteAssessmentPopup({
               )}
 
               {/* Status alerts based on input */}
-              {isInputValidNumber && !isInputInsideLasam && (
-                <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-amber-800">
-                    <Ban className="h-4 w-4 shrink-0 text-amber-700" />
-                    <span>Outside Lasam Boundary ({identifyMunicipality(numLng, numLat, boundary)})</span>
-                  </div>
-                  <p className="text-[11px] text-amber-900 leading-relaxed">
-                    Entered coordinates fall outside the official municipal boundary of Lasam. Site intelligence screenings are strictly configured for Lasam.
-                  </p>
-                </div>
-              )}
 
               {isInputValidNumber && isInputInsideLasam && isAgriConflictInput && (
                 <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-950 space-y-1">
