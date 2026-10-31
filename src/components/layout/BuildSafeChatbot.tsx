@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react'
+import { BrandLogo } from '@/components/layout/BrandLogo'
 import {
   generateAiResponse,
   type ChatContext,
@@ -259,11 +260,11 @@ export function BuildSafeChatbot({
           {messages.length === 0 ? (
             /* Idle Screen: Exact layout matching user screenshot */
             <div className="flex flex-1 flex-col justify-between px-6 pb-4">
-              {/* Center Sparkle and Greeting */}
+              {/* Center Logo and Greeting */}
               <div className="flex flex-1 flex-col items-center justify-center text-center -mt-8">
-                <GeminiSparkle className="h-10 w-10 mb-5 drop-shadow-sm" />
+                <BrandLogo size="lg" className="h-14 w-14 mb-4 object-contain drop-shadow-sm select-none" />
                 <h1 className="text-[26px] sm:text-[28px] font-normal text-slate-800 tracking-tight leading-snug">
-                  What's the vibe, manoling?
+                  Ask about BUILD-SAFE
                 </h1>
               </div>
 
