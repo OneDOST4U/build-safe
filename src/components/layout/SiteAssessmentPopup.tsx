@@ -170,8 +170,16 @@ export function SiteAssessmentPopup({
           </div>
         )}
 
-        {pickingOnMap && !open && pendingSiteCoords && (
-          <div className="pointer-events-auto w-[min(92vw,21.5rem)] rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-2xl backdrop-blur-md space-y-3 animate-in fade-in zoom-in-95 duration-150">
+      </div>
+
+      {/* Centered Confirmation & Hazard Notice Card upon Dropping Pin on Map */}
+      {pickingOnMap && !open && pendingSiteCoords && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center p-4 pointer-events-none animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="false"
+        >
+          <div className="pointer-events-auto w-[min(92vw,23rem)] rounded-2xl border border-slate-200/90 bg-white/98 p-4.5 shadow-2xl backdrop-blur-md space-y-3 animate-in zoom-in-95 duration-150 ring-1 ring-slate-900/5">
             <div className="flex items-start gap-2.5">
               <div className="relative mt-0.5">
                 <span className={`absolute -inset-1 rounded-full animate-ping ${isPendingInsideLasam ? 'bg-sky-400/30' : 'bg-amber-400/30'}`} />
@@ -320,8 +328,8 @@ export function SiteAssessmentPopup({
               </Button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {open && (
         <div
