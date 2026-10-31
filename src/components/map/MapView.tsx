@@ -1979,7 +1979,15 @@ export function MapView({
 
       // 4. Show live route info popup card
       facilityPopupRef.current?.remove()
-      const categoryLabel = (highlightedFacility.category ?? 'Destination Facility')
+      const friendlyCategoryMap: Record<string, string> = {
+        primary_road: '🛣️ Primary Highway Access Point',
+        hauling_road: '🛣️ Nearest Farm Hauling Road',
+        emergency_response: '🚨 Emergency / Disaster Facility',
+        govt_health: '🏥 Government Health Facility',
+        public_school: '🏫 Public Educational Facility',
+      }
+      const rawCat = highlightedFacility.category ?? ''
+      const categoryLabel = (friendlyCategoryMap[rawCat] ?? `📍 ${rawCat.replace(/_/g, ' ') || 'Destination Facility'}`)
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
       const distLabel =
@@ -2003,7 +2011,7 @@ export function MapView({
         .setHTML(
           `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:4px 2px;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:10px;font-weight:700;color:#047857;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;">
-              <span>📍 ${categoryLabel}</span>
+              <span>${categoryLabel}</span>
               <span style="background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:1px 6px;border-radius:4px;font-size:9.5px;font-weight:600;">LIVE ROUTE</span>
             </div>
             <div style="font-weight:700;font-size:13px;color:#0f172a;margin-bottom:6px;line-height:1.3;">

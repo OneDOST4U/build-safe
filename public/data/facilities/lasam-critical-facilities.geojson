@@ -120,7 +120,7 @@
       "type": "Feature",
       "properties": {
         "id": "road-cagayan-apayao-lasam",
-        "name": "Logac - Lasam Road / Cagayan-Apayao Road (DPWH)",
+        "name": "Logac - Lasam Road / Cagayan-Apayao Road (National Highway)",
         "category": "primary_road",
         "highway": "primary",
         "validation_status": "trusted_dpwh_verified",
