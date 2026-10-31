@@ -71,7 +71,7 @@ const initialLayerVisibility = {
   safdz: false,
   fault: false,
   epicenter: false,
-  volcano: true,
+  volcano: false,
   site: true,
 }
 
