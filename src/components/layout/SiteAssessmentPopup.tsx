@@ -49,6 +49,7 @@ export interface SiteAssessmentPopupProps {
   onCancelPickOnMap?: () => void
   onRepickSite?: () => void
   onOpenReliability?: () => void
+  isChatbotOpen?: boolean
 }
 
 export function SiteAssessmentPopup({
@@ -76,6 +77,7 @@ export function SiteAssessmentPopup({
   onCancelPickOnMap,
   onRepickSite,
   onOpenReliability,
+  isChatbotOpen = false,
 }: SiteAssessmentPopupProps) {
   const isPendingInsideLasam = pendingSiteCoords
     ? isPointInsideLasam(pendingSiteCoords[0], pendingSiteCoords[1], boundary)
@@ -183,7 +185,11 @@ export function SiteAssessmentPopup({
       {/* Centered Confirmation & Hazard Notice Card upon Dropping Pin on Map */}
       {pickingOnMap && !open && pendingSiteCoords && (
         <div
-          className="fixed inset-0 z-40 flex items-center justify-center p-4 pointer-events-none animate-in fade-in duration-200"
+          className={`fixed top-0 bottom-0 left-0 ${
+            isChatbotOpen
+              ? 'right-0 sm:right-[420px] lg:right-[460px] xl:right-[480px]'
+              : 'right-0'
+          } z-40 flex items-center justify-center p-4 pointer-events-none transition-all duration-300 animate-in fade-in`}
           role="dialog"
           aria-modal="false"
         >
@@ -341,7 +347,11 @@ export function SiteAssessmentPopup({
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          className={`fixed top-0 bottom-0 left-0 ${
+            isChatbotOpen
+              ? 'right-0 sm:right-[420px] lg:right-[460px] xl:right-[480px]'
+              : 'right-0'
+          } z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4 transition-all duration-300 animate-in fade-in`}
           role="dialog"
           aria-modal="true"
           aria-labelledby="site-assessment-title"

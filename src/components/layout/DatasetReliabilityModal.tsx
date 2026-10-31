@@ -6,6 +6,7 @@ import { MUNICIPALITY_PROFILES } from '@/lib/assessment/coverage'
 interface DatasetReliabilityModalProps {
   open: boolean
   onClose: () => void
+  isChatbotOpen?: boolean
 }
 
 interface DatasetRow {
@@ -100,14 +101,18 @@ const LASAM_DATASET_ROWS: DatasetRow[] = [
   },
 ]
 
-export function DatasetReliabilityModal({ open, onClose }: DatasetReliabilityModalProps) {
+export function DatasetReliabilityModal({ open, onClose, isChatbotOpen = false }: DatasetReliabilityModalProps) {
   if (!open) return null
 
   const lasamProfile = MUNICIPALITY_PROFILES.Lasam
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      className={`fixed top-0 bottom-0 left-0 ${
+        isChatbotOpen
+          ? 'right-0 sm:right-[420px] lg:right-[460px] xl:right-[480px]'
+          : 'right-0'
+      } z-[70] flex items-center justify-center bg-slate-950/50 backdrop-blur-sm p-4 transition-all duration-300 animate-in fade-in`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="reliability-modal-title"

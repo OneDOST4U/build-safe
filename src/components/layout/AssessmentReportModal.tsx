@@ -81,12 +81,16 @@ export function AssessmentReportModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-3 sm:p-4"
+      className={`fixed top-0 bottom-0 left-0 ${
+        isChatbotOpen
+          ? 'right-0 sm:right-[420px] lg:right-[460px] xl:right-[480px]'
+          : 'right-0'
+      } z-[60] flex items-center justify-center bg-black/55 p-2 sm:p-4 transition-all duration-300`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="assessment-report-title"
     >
-      <div className="flex max-h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl">
+      <div className={`flex max-h-[96vh] w-full ${isChatbotOpen ? 'max-w-5xl' : 'max-w-6xl'} flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl transition-all duration-300`}>
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
           <div>
             <h2 id="assessment-report-title" className="text-sm font-semibold text-slate-900">
