@@ -312,7 +312,7 @@ Lasam's prime agricultural soils and alluvial terraces are highly fertile:
 3. **Root Crops (Cassava, Sweet Potato / Kamote):** Highly drought-tolerant; excellent for upland terraces and sloping loam areas.
 4. **High-Value Commercial Vegetables (Ampalaya, Eggplant, Squash):** Ideal along fertile riparian terraces with drip or furrow irrigation.
 
-📍 *Agri Logistics:* Lasam features local cooperative grains centers (LFMPC in Centro 2), communal solar drying pavements (MPDP in Alannay/Centro), and DA-MAO technoguide demonstration centers.`,
+📍 *Verified Farm Infrastructure:* Key agricultural hubs include **AJSEAN RICE MILL** (Nabannagan West), **Diosa Palay Trading**, **Double E Agricultural & Poultry Supply**, **Battalan Agricultural Cooperative**, and **Lasam Public Market**.`,
       suggestions: [
         'Can I build a house on agricultural land?',
         'Where are the nearest farm businesses in Lasam?',

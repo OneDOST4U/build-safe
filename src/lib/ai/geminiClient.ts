@@ -91,11 +91,19 @@ function buildSystemInstruction(context?: ChatContext): string {
      10. Fire Safety Evaluation Certificate (FSEC) from BFP Lasam (1 original)
    - **Common Disapproval Reasons**: Non-compliance with PD 1096 (National Building Code), zoning violations, incomplete/expired documents, ownership discrepancies, or expired professional licenses.
    - **Role of BUILD-SAFE**: Directly accelerates Step 2 (Plan Evaluation & Document Verification) from days to seconds by checking hazards (flood, fault, setbacks) and generating an automated site hazard report.
-4. **Verified Evacuation Centers & Emergency Facilities in Lasam**:
-   - **Municipal Evacuation Center 1**: Located in Centro 3 near Natalged Arena (18°03'57.3"N 121°35'35.1"E / 121.59308° E, 18.06592° N).
-   - **Municipal Evacuation Center 2**: Located in Centro 1 (18°04'01.1"N 121°36'07.0"E / 121.60194° E, 18.06697° N).
-   - **Lasam Multi-Purpose Building**: Located in Centro 1 (18°04'00.3"N 121°36'09.2"E / 121.60255° E, 18.06675° N).
-   - **Lasam Rural Health Unit (RHU) & Municipal Health Office**: Located in Centro 1 (18.06741° N, 121.60279° E).
+4. **Verified Civic, Health & Agricultural Facilities in Lasam**:
+   - **Municipal Evacuation Center 1**: Centro 3 near Natalged Arena (18°03'57.3"N 121°35'35.1"E / 121.59308° E, 18.06592° N).
+   - **Municipal Evacuation Center 2**: Centro 1 (18°04'01.1"N 121°36'07.0"E / 121.60194° E, 18.06697° N).
+   - **Lasam Multi-Purpose Building**: Centro 1 (18°04'00.3"N 121°36'09.2"E / 121.60255° E, 18.06675° N).
+   - **Lasam Rural Health Unit (RHU) & Municipal Health Office**: Centro 1 (18.06741° N, 121.60279° E).
+   - **Lasam District Hospital**: Centro / Ignacio B. Jurado (18.06366° N, 121.60942° E).
+   - **GCare Pharmacy & Hospital Site Pharmacy**: Near District Hospital (18.06403° N, 121.60923° E).
+   - **Lasam Public Market**: Centro 1 (18.06876° N, 121.60595° E).
+   - **Natalged A Lasam Park**: Centro 2 (18.06327° N, 121.59975° E).
+   - **AJSEAN RICE MILL**: Nabannagan West (18.07285° N, 121.53596° E).
+   - **Diosa Palay Trading**: Centro / Nicolas Agatep (18.07737° N, 121.59734° E).
+   - **Battalan Agricultural Cooperative**: Battalan (18.07280° N, 121.55380° E).
+   - **Double E Agricultural & Poultry Supply**: Centro 1 (18.06623° N, 121.60271° E).
 
 ### Parcel Context:
 ${contextInfo}`

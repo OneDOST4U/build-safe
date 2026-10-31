@@ -1985,6 +1985,11 @@ export function MapView({
         emergency_response: '🚨 Emergency / Disaster Facility',
         govt_health: '🏥 Government Health Facility',
         public_school: '🏫 Public Educational Facility',
+        grains_mill: '🌾 Grains Trading / Rice Mill',
+        agri_supply: '🌱 Farm Input & Poultry Supply',
+        agri_coop: '🤝 Agricultural Cooperative',
+        public_market: '🏪 Public Market / Trading Hub',
+        agri_office: '🏛️ Municipal Agriculture Office (MAO)',
       }
       const rawCat = highlightedFacility.category ?? ''
       const categoryLabel = (friendlyCategoryMap[rawCat] ?? `📍 ${rawCat.replace(/_/g, ' ') || 'Destination Facility'}`)

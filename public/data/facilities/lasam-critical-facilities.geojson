@@ -5,7 +5,7 @@
     "disclaimer": "Demonstration & site intelligence reference — verified against LGU Lasam, DOH, DepEd, and DPWH Region II records.",
     "data_source": "LGU Lasam MDRRMO, DOH CHD II, DepEd Division of Cagayan, DPWH Region II",
     "validated_at": "2026-08-25",
-    "total_facilities": 45
+    "total_facilities": 53
   },
   "features": [
     {
@@ -149,13 +149,13 @@
         "category": "govt_health",
         "amenity": "hospital",
         "validation_status": "trusted_doh_verified",
-        "data_source": "Department of Health / Provincial Government of Cagayan"
+        "data_source": "Verified LGU Lasam GPS (18.063658, 121.609424)"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          121.609631,
-          18.0633266
+          121.60942379388406,
+          18.0636582353473
         ]
       }
     },
@@ -3292,6 +3292,166 @@
         "coordinates": [
           121.465671,
           18.019133
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "health-gcare-pharmacy",
+        "name": "GCare Pharmacy",
+        "category": "govt_health",
+        "amenity": "pharmacy",
+        "barangay": "CENTRO 01",
+        "description": "GCare Pharmacy serving Lasam District Hospital area.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified LGU GPS (18.064025, 121.609226)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.6092255397134,
+          18.064025339354366
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "health-hosp-pharmacy",
+        "name": "Hospital Site Pharmacy",
+        "category": "govt_health",
+        "amenity": "pharmacy",
+        "barangay": "CENTRO 01",
+        "description": "Hospital Site Pharmacy near Lasam District Hospital.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified LGU GPS (18.063925, 121.609153)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.60915336499664,
+          18.063924557710866
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "civic-lasam-public-market",
+        "name": "Lasam Public Market",
+        "category": "commercial_market",
+        "amenity": "marketplace",
+        "barangay": "CENTRO 01",
+        "description": "Central Public Market of Lasam for agri-trading, produce consolidation, and commerce.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified LGU GPS (18.068761, 121.605947)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.60594714884782,
+          18.06876087444966
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "civic-natalged-park",
+        "name": "Natalged A Lasam Park",
+        "category": "emergency_response",
+        "amenity": "park",
+        "barangay": "CENTRO 02",
+        "description": "Municipal public civic park and assembly area in Centro 2 near Municipal Hall.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified LGU GPS (18.063267, 121.599749)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.59974903931595,
+          18.06326734127016
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "agri-diosa-palay-trading",
+        "name": "Diosa Palay Trading",
+        "category": "grains_mill",
+        "amenity": "grain_trading",
+        "barangay": "CENTRO / NICOLAS AGATEP",
+        "description": "Verified Palay trading and grain buying depot in Lasam.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified LGU GPS (18.077373, 121.597335)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.59733545997271,
+          18.077372868215893
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "agri-ajsean-rice-mill",
+        "name": "AJSEAN RICE MILL",
+        "category": "grains_mill",
+        "amenity": "rice_mill",
+        "barangay": "NABANNAGAN WEST",
+        "description": "Verified custom rice mill and palay processing station in Nabannagan West, Lasam.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified LGU GPS (18.072846, 121.535963)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.53596347813048,
+          18.07284580585752
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "agri-battalan-coop",
+        "name": "Battalan Agricultural Cooperative",
+        "category": "agri_supply",
+        "amenity": "agricultural_cooperative",
+        "barangay": "BATTALAN",
+        "description": "Verified agricultural cooperative for farmers in Battalan, Lasam.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified LGU GPS (18.072801, 121.553801)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.55380082246973,
+          18.07280139636836
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "agri-double-e-supply",
+        "name": "Double E Agricultural & Poultry Supply",
+        "category": "agri_supply",
+        "amenity": "farm_supply",
+        "barangay": "CENTRO 01",
+        "description": "Verified retail agricultural, veterinary, and poultry supplies in Centro.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified LGU GPS (18.066230, 121.602707)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.60270732565128,
+          18.06622990300658
         ]
       }
     }
