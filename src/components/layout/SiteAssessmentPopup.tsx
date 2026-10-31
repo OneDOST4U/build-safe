@@ -39,7 +39,7 @@ export interface SiteAssessmentPopupProps {
   onAssessCategoryChange?: (v: AssessmentTargetCategory) => void
   onAssessBuildingTypeChange: (v: ProposedBuildingType) => void
   onAssessCropTypeChange?: (v: FarmCropType) => void
-  onAssessSite: () => void
+  onAssessSite?: () => void
   onPickSiteOnMap: () => void
   pickingOnMap?: boolean
   pendingSiteCoords?: [number, number] | null
@@ -69,7 +69,6 @@ export function SiteAssessmentPopup({
   onAssessCategoryChange,
   onAssessBuildingTypeChange,
   onAssessCropTypeChange,
-  onAssessSite,
   onPickSiteOnMap,
   pickingOnMap = false,
   pendingSiteCoords = null,
@@ -517,32 +516,17 @@ export function SiteAssessmentPopup({
 
               {assessError && <p className="text-[11px] text-red-600">{assessError}</p>}
 
-              <div className="flex flex-col gap-2 pt-1">
+              <div className="pt-1">
                 <Button
                   size="sm"
-                  className={`w-full h-9 rounded-xl font-medium shadow-xs transition-all ${
-                    isInputValidNumber && !isInputInsideLasam
-                      ? 'bg-slate-200 text-slate-400 cursor-not-allowed hover:bg-slate-200'
-                      : assessCategory === 'farm_lot'
-                      ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-                      : 'bg-slate-900 hover:bg-slate-800 text-white'
+                  className={`w-full h-10 rounded-xl gap-2 font-semibold shadow-xs transition-all text-white ${
+                    assessCategory === 'farm_lot'
+                      ? 'bg-emerald-700 hover:bg-emerald-800'
+                      : 'bg-slate-900 hover:bg-slate-800'
                   }`}
-                  onClick={onAssessSite}
-                  disabled={isInputValidNumber && !isInputInsideLasam}
-                >
-                  {isInputValidNumber && !isInputInsideLasam
-                    ? 'Assessment Disabled (Outside Lasam)'
-                    : assessCategory === 'farm_lot'
-                    ? 'Run Farm Lot & Crop Hazard Assessment'
-                    : 'Run Site Hazard Assessment'}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full h-9 rounded-xl gap-2 border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-xs"
                   onClick={onPickSiteOnMap}
                 >
-                  <MapPin className="h-3.5 w-3.5 text-teal-600" />
+                  <MapPin className="h-4 w-4" />
                   {assessCategory === 'farm_lot' ? 'Pick Farm Lot Directly on Map' : 'Pick Point Directly on Map'}
                 </Button>
               </div>
