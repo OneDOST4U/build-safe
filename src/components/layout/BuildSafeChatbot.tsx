@@ -179,7 +179,7 @@ export function BuildSafeChatbot({
             aria-label="Open BUILD-SAFE AI chat"
             title="Chat with BUILD-SAFE AI"
           >
-            <GeminiSparkle className="h-5 w-5 shrink-0" />
+            <BrandLogo size="sm" className="h-5 w-5 shrink-0" />
             <span className="text-xs font-semibold tracking-tight text-slate-800">
               BUILD-SAFE AI
             </span>
@@ -328,7 +328,7 @@ export function BuildSafeChatbot({
                   ) : (
                     <div className="flex items-start gap-2.5 max-w-[95%]">
                       <div className="shrink-0 mt-0.5">
-                        <GeminiSparkle className="h-5 w-5" />
+                        <BrandLogo size="sm" className="h-5 w-5 shrink-0" />
                       </div>
                       <div className="flex-1 space-y-2">
                         <div className="text-[13.5px] leading-relaxed text-slate-800 whitespace-pre-wrap">
@@ -362,7 +362,7 @@ export function BuildSafeChatbot({
               {/* Typing Shimmer */}
               {isTyping && (
                 <div className="flex items-center gap-2.5 text-slate-500 pt-1">
-                  <GeminiSparkle className="h-5 w-5 shrink-0 animate-pulse" />
+                  <BrandLogo size="sm" className="h-5 w-5 shrink-0 animate-pulse" />
                   <div className="flex items-center gap-1 rounded-2xl bg-white border border-slate-200 px-3 py-2 shadow-2xs">
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-500 animate-bounce" />
                     <span className="h-1.5 w-1.5 rounded-full bg-slate-500 animate-bounce [animation-delay:0.2s]" />

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Download, Loader2, Minus, Sparkles, X } from 'lucide-react'
+import { Download, Loader2, Minus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AssessmentReportSheet } from '@/components/layout/AssessmentReportSheet'
 import { type ProposedBuildingPreviewMapHandle } from '@/components/layout/ProposedBuildingPreviewMap'
@@ -189,7 +189,11 @@ export function AssessmentReportModal({
               title="Chat with BUILD-SAFE AI about this site assessment"
               aria-label="Open BUILD-SAFE AI chat"
             >
-              <Sparkles className="h-4.5 w-4.5 text-emerald-100 shrink-0 group-hover:scale-110 group-hover:rotate-6 transition-transform" />
+              <img
+                src={APP_LOGO_PATH}
+                alt={APP_LOGO_ALT}
+                className="h-5 w-5 object-contain shrink-0 drop-shadow-sm group-hover:scale-110 transition-transform"
+              />
               <span className="text-xs font-bold tracking-wide text-white drop-shadow-xs">
                 BUILD-SAFE AI
               </span>
