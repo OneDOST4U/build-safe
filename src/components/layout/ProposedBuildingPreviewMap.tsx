@@ -291,6 +291,19 @@ export const ProposedBuildingPreviewMap = forwardRef<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Auto-resize map when container dimensions scale or change
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => {
+      if (mapRef.current) {
+        mapRef.current.resize()
+      }
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   useEffect(() => {
     const map = mapRef.current
     if (!map) return

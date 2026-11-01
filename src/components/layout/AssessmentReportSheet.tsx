@@ -55,7 +55,7 @@ export function AssessmentReportSheet({
 
   return (
     <article
-      className={`flex w-full flex-col overflow-hidden bg-white ${className}`}
+      className={`flex h-full w-full flex-col overflow-hidden bg-white ${className}`}
       style={{ aspectRatio: String(A4_LANDSCAPE_RATIO) }}
     >
       {/* Header — compact centered logo + titles */}
@@ -195,7 +195,7 @@ export function AssessmentReportSheet({
               Demonstration report · not an official certificate
             </p>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-2 py-1.5 sm:px-2.5 sm:py-2">
+          <div className="min-h-0 flex-1 overflow-y-auto px-2 py-1.5 sm:px-2.5 sm:py-2 custom-scrollbar">
             <AssessmentResultsCard
               result={result}
               report
@@ -209,10 +209,21 @@ export function AssessmentReportSheet({
   )
 }
 
-/** Wrapper with border for modal preview */
-export function AssessmentReportFrame({ children }: { children: ReactNode }) {
+/** Responsive wrapper with border and drop-shadow for modal preview */
+export function AssessmentReportFrame({
+  children,
+  style,
+  className = '',
+}: {
+  children: ReactNode
+  style?: React.CSSProperties
+  className?: string
+}) {
   return (
-    <div className="mx-auto w-full max-w-5xl overflow-hidden rounded border border-slate-300 bg-white shadow-md">
+    <div
+      style={style}
+      className={`relative mx-auto flex flex-col overflow-hidden rounded-lg border border-slate-300 bg-white shadow-xl transition-all duration-200 ${className}`}
+    >
       {children}
     </div>
   )
