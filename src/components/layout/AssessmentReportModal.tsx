@@ -88,7 +88,7 @@ export function AssessmentReportModal({
       aria-modal="true"
       aria-labelledby="assessment-report-title"
     >
-      <div className={`flex h-[88vh] max-h-[820px] w-full ${isChatbotOpen ? 'max-w-5xl' : 'max-w-6xl'} flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl transition-all duration-300`}>
+      <div className={`relative flex h-[88vh] max-h-[820px] w-full ${isChatbotOpen ? 'max-w-5xl' : 'max-w-6xl'} flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl transition-all duration-300`}>
         {/* Main Header Bar */}
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 bg-white">
           <div className="flex items-center gap-3 min-w-0">
@@ -113,25 +113,6 @@ export function AssessmentReportModal({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Direct Ask AI Button in Header */}
-            {onOpenChatbot && (
-              <Button
-                size="sm"
-                variant={isChatbotOpen ? 'secondary' : 'outline'}
-                className={`h-8 gap-1.5 text-xs font-semibold shadow-2xs transition-all ${
-                  isChatbotOpen
-                    ? 'bg-slate-900 text-white hover:bg-slate-800'
-                    : 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 hover:text-emerald-900'
-                }`}
-                onClick={onOpenChatbot}
-                title={isChatbotOpen ? 'Close BUILD-SAFE AI chat' : 'Open BUILD-SAFE AI chat assistant'}
-              >
-                <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
-                <span className="hidden sm:inline">BUILD-SAFE AI</span>
-                <span className="sm:hidden">AI</span>
-              </Button>
-            )}
-
             {/* Save PDF (A4) */}
             <Button
               size="sm"
@@ -197,6 +178,28 @@ export function AssessmentReportModal({
             onMinimize={onMinimize}
           />
         </div>
+
+        {/* Floating BUILD-SAFE AI button docked in the lower right of the assessment popup */}
+        {!isChatbotOpen && onOpenChatbot && (
+          <div className="absolute bottom-4 right-4 z-40 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <button
+              type="button"
+              onClick={onOpenChatbot}
+              className="group flex items-center gap-2.5 rounded-full border border-emerald-300 bg-white/95 px-4 py-2.5 text-slate-800 shadow-xl backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-emerald-50 hover:border-emerald-400 hover:shadow-2xl active:scale-95 cursor-pointer ring-4 ring-emerald-500/15"
+              title="Chat with BUILD-SAFE AI about this site assessment"
+              aria-label="Open BUILD-SAFE AI chat"
+            >
+              <Sparkles className="h-4.5 w-4.5 text-emerald-600 shrink-0" />
+              <span className="text-xs font-bold tracking-tight text-slate-800">
+                BUILD-SAFE AI
+              </span>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
