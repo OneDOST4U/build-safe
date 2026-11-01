@@ -87,7 +87,7 @@ export function AssessmentReportSheet({
             if ((e.target as HTMLElement).closest('button, a')) return
             onMinimize()
           }}
-          title={onMinimize ? 'Click map to minimize report and explore on full live map' : undefined}
+          title={onMinimize ? 'Click map to minimize report and explore on interactive 3D map' : undefined}
         >
           <ProposedBuildingPreviewMap
             ref={mapRef}
@@ -107,10 +107,10 @@ export function AssessmentReportSheet({
                 type="button"
                 onClick={onMinimize}
                 className="flex items-center gap-1.5 rounded-full border border-slate-300 bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-slate-700 shadow-md backdrop-blur-xs transition hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 cursor-pointer"
-                title="Minimize sheet to view and interact with live path on the main 3D map"
+                title="Minimize sheet to view and explore road route on the main 3D map"
               >
                 <Minus className="h-3 w-3 text-slate-500" />
-                <span>Explore on Live Map</span>
+                <span>Explore on Map</span>
               </button>
             )}
             {onOpenChatbot && (
@@ -154,7 +154,7 @@ export function AssessmentReportSheet({
             <div className="absolute top-2.5 left-2.5 z-20 flex items-center justify-between gap-3 rounded-xl border border-emerald-300 bg-white/95 px-3 py-2 shadow-lg backdrop-blur-sm text-xs max-w-[85%]">
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 text-[9.5px] font-bold text-emerald-700 uppercase tracking-wider">
-                  <span>📍 Live Route Trace</span>
+                  <span>📍 Road Route Trace</span>
                   <span className="rounded bg-emerald-100 px-1 text-[8.5px] text-emerald-800">
                     {highlightedFacility.category?.replace(/_/g, ' ') ?? 'Facility'}
                   </span>

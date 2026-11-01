@@ -95,6 +95,7 @@ interface MapViewProps {
   category?: AssessmentTargetCategory
   hasAssessmentResult?: boolean
   onReopenReport?: () => void
+  onOpenAssessmentPopup?: () => void
   reportOpen?: boolean
   hazardPanelOpen?: boolean
   highlightedFacility?: HighlightedFacilityInfo | null
@@ -145,6 +146,7 @@ export function MapView({
   category,
   hasAssessmentResult = false,
   onReopenReport,
+  onOpenAssessmentPopup,
   reportOpen = false,
   hazardPanelOpen = false,
   highlightedFacility = null,
@@ -167,6 +169,8 @@ export function MapView({
   const volcanoMarkerRef = useRef<maplibregl.Marker | null>(null)
   const facilityMarkerRef = useRef<maplibregl.Marker | null>(null)
   const facilityPopupRef = useRef<maplibregl.Popup | null>(null)
+  const sitePopupRef = useRef<maplibregl.Popup | null>(null)
+  const showSitePopupRef = useRef<() => void>(() => {})
   const onClearHighlightedFacilityRef = useRef(onClearHighlightedFacility)
   onClearHighlightedFacilityRef.current = onClearHighlightedFacility
   const drawPointsRef = useRef<[number, number][]>([])
@@ -182,6 +186,8 @@ export function MapView({
   const onMapReadyRef = useRef(onMapReady)
   const onReopenReportRef = useRef(onReopenReport)
   onReopenReportRef.current = onReopenReport
+  const onOpenAssessmentPopupRef = useRef(onOpenAssessmentPopup)
+  onOpenAssessmentPopupRef.current = onOpenAssessmentPopup
   const latestLayerDataRef = useRef({
     boundary, riversMain, riversTributaries, drainage, riverbanks, watersheds,
     flowArrows, contours, mgbFlood, liquefaction, erosion, lguFlood, landUse,
@@ -1233,7 +1239,7 @@ export function MapView({
 
       map.on('click', 'proposed-building-3d', (e) => {
         e.originalEvent?.stopPropagation?.()
-        onReopenReportRef.current?.()
+        showSitePopupRef.current?.()
       })
       map.on('mouseenter', 'proposed-building-3d', () => {
         map.getCanvas().style.cursor = 'pointer'
@@ -1719,6 +1725,8 @@ export function MapView({
       if (!siteCoords) {
         siteMarkerRef.current?.remove()
         siteMarkerRef.current = null
+        sitePopupRef.current?.remove()
+        sitePopupRef.current = null
         ;(map.getSource('site-assessment') as maplibregl.GeoJSONSource | undefined)?.setData({
           type: 'FeatureCollection',
           features: [],
@@ -1770,90 +1778,186 @@ export function MapView({
         })()
       )
 
-      const markerHtml = hasAssessmentResult
-        ? isProhibitedLocation
-          ? `
-          <div class="live-site-assessment-badge" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;user-select:none;transition:transform 0.15s ease;">
-            <div style="display:flex;align-items:center;gap:4.5px;background:#dc2626;color:#ffffff;padding:3px 9px;border-radius:9999px;font-size:10.5px;font-weight:700;letter-spacing:0.3px;border:1.5px solid #ffffff;box-shadow:0 3px 10px rgba(0,0,0,0.35);white-space:nowrap;">
-              <span style="font-size:10px;">🚫</span>
-              <span>PROHIBITED SITE</span>
-              <span style="font-size:8.5px;background:rgba(255,255,255,0.25);padding:1px 5px;border-radius:4px;font-weight:800;letter-spacing:0.2px;">OPEN</span>
+      let badgeText = ''
+      let badgeIcon = ''
+      let badgeBg = ''
+      let pulseColor = 'rgba(2,132,199,0.35)'
+      let dotColor = '#0284c7'
+
+      if (isProhibitedLocation) {
+        badgeText = 'PROHIBITED SITE'
+        badgeIcon = '🚫'
+        badgeBg = '#dc2626'
+        pulseColor = 'rgba(220,38,38,0.35)'
+        dotColor = '#ef4444'
+      } else if (isNonConformingAgriLocation) {
+        badgeText = 'NON-CONFORMING SITE'
+        badgeIcon = '⚠️'
+        badgeBg = '#b45309'
+        pulseColor = 'rgba(245,158,11,0.35)'
+        dotColor = '#f59e0b'
+      } else if (category === 'farm_lot') {
+        badgeText = 'PROPOSED FARM LOT'
+        badgeIcon = '🌾'
+        badgeBg = '#065f46'
+        pulseColor = 'rgba(16,185,129,0.35)'
+        dotColor = '#10b981'
+      } else {
+        badgeText = 'PROPOSED BUILDING SITE'
+        badgeIcon = '🏠'
+        badgeBg = '#1d4ed8'
+        pulseColor = 'rgba(59,130,246,0.35)'
+        dotColor = '#2563eb'
+      }
+
+      const markerHtml = `
+        <div style="position:relative;display:flex;flex-direction:column;align-items:center;cursor:pointer;">
+          ${hasAssessmentResult ? `
+            <div style="display:flex;align-items:center;gap:4.5px;background:${badgeBg};color:#ffffff;padding:2.5px 8px;border-radius:9999px;font-size:10px;font-weight:700;letter-spacing:0.3px;border:1.5px solid #ffffff;box-shadow:0 3px 8px rgba(0,0,0,0.35);margin-bottom:4px;white-space:nowrap;z-index:3;">
+              <span style="font-size:9.5px;">${badgeIcon}</span>
+              <span>${badgeText}</span>
             </div>
-            <div style="width:6px;height:6px;border-radius:50%;background:#ef4444;margin-top:4px;box-shadow:0 0 6px #dc2626;"></div>
+          ` : ''}
+          <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+            <div style="position:absolute;bottom:2px;width:32px;height:32px;border-radius:50%;background:${pulseColor};animation:ping 1.8s cubic-bezier(0,0,0.2,1) infinite;"></div>
+            <div style="position:absolute;bottom:10px;width:11px;height:11px;border-radius:50%;background:${dotColor};border:2px solid #ffffff;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>
+            <img src="/markers/site-pin.svg" alt="" width="36" height="48" draggable="false" style="display:block;filter:drop-shadow(0 3px 8px rgba(0,0,0,.55));position:relative;z-index:2;" />
           </div>
-        `
-          : isNonConformingAgriLocation
-          ? `
-          <div class="live-site-assessment-badge" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;user-select:none;transition:transform 0.15s ease;">
-            <div style="display:flex;align-items:center;gap:4.5px;background:#b45309;color:#ffffff;padding:3px 9px;border-radius:9999px;font-size:10.5px;font-weight:700;letter-spacing:0.3px;border:1.5px solid #ffffff;box-shadow:0 3px 10px rgba(0,0,0,0.35);white-space:nowrap;">
-              <span style="font-size:10px;">⚠️</span>
-              <span>NON-CONFORMING SITE</span>
-              <span style="font-size:8.5px;background:rgba(255,255,255,0.25);padding:1px 5px;border-radius:4px;font-weight:800;letter-spacing:0.2px;">OPEN</span>
-            </div>
-            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid #b45309;margin-top:-1px;"></div>
-            <div style="width:6px;height:6px;border-radius:50%;background:#f59e0b;margin-top:2px;box-shadow:0 0 6px #d97706;"></div>
-          </div>
-        `
-          : `
-        <div class="live-site-assessment-badge" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;user-select:none;transition:transform 0.15s ease;">
-          <div style="display:flex;align-items:center;gap:4.5px;background:#065f46;color:#ffffff;padding:3px 9px;border-radius:9999px;font-size:10.5px;font-weight:700;letter-spacing:0.3px;border:1.5px solid #ffffff;box-shadow:0 3px 10px rgba(0,0,0,0.35);white-space:nowrap;">
-            <span style="font-size:10px;">📍</span>
-            <span>LIVE SITE ASSESSMENT</span>
-            <span style="font-size:8.5px;background:rgba(255,255,255,0.25);padding:1px 5px;border-radius:4px;font-weight:800;letter-spacing:0.2px;">OPEN</span>
-          </div>
-          <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid #065f46;margin-top:-1px;"></div>
-          <div style="width:6px;height:6px;border-radius:50%;background:#34d399;margin-top:2px;box-shadow:0 0 6px #10b981;"></div>
-        </div>
-      `
-        : `
-        <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
-          <div style="position:absolute;bottom:2px;width:30px;height:30px;border-radius:50%;background:rgba(2,132,199,0.35);box-shadow:0 0 0 4px rgba(2,132,199,0.25);animation:ping 1.6s cubic-bezier(0,0,0.2,1) infinite;"></div>
-          <div style="position:absolute;bottom:10px;width:10px;height:10px;border-radius:50%;background:#0284c7;border:2px solid #ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>
-          <img src="/markers/site-pin.svg" alt="" width="36" height="48" draggable="false" style="display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));position:relative;z-index:2;" />
         </div>
       `
 
-      const markerOffset: [number, number] = hasAssessmentResult ? [0, -28] : [0, 2]
+      const showSitePopup = () => {
+        sitePopupRef.current?.remove()
+
+        const statusLabel = isProhibitedLocation
+          ? 'Prohibited'
+          : isNonConformingAgriLocation
+          ? 'Non-Conforming'
+          : 'Conforming Zone'
+        const statusBadgeBg = isProhibitedLocation
+          ? '#fef2f2'
+          : isNonConformingAgriLocation
+          ? '#fffbeb'
+          : '#ecfdf5'
+        const statusBadgeColor = isProhibitedLocation
+          ? '#dc2626'
+          : isNonConformingAgriLocation
+          ? '#b45309'
+          : '#047857'
+        const statusBadgeBorder = isProhibitedLocation
+          ? '#fca5a5'
+          : isNonConformingAgriLocation
+          ? '#fde68a'
+          : '#a7f3d0'
+
+        const typeName = category === 'farm_lot'
+          ? (buildingType ? `Proposed Farm Lot (${buildingType})` : 'Agricultural Farm Lot & Crops')
+          : (buildingType ? `Proposed ${buildingType}` : 'Proposed Building Structure')
+
+        const complianceDesc = isProhibitedLocation
+          ? 'Parcel falls inside a restricted / prohibited zone under Lasam CLUP (2020).'
+          : isNonConformingAgriLocation
+          ? 'Building on Agricultural land is non-conforming and requires DAR conversion clearance.'
+          : category === 'farm_lot'
+          ? 'Designated Agricultural Zone (CLUP 2020) — 100% conforming with farm land-use policy.'
+          : 'Designated Residential / Commercial Zone — 100% conforming for building development.'
+
+        const popup = new maplibregl.Popup({
+          closeButton: true,
+          closeOnClick: false,
+          offset: [0, -56],
+          maxWidth: '300px',
+          className: 'site-details-map-popup',
+        })
+          .setLngLat(siteCoords)
+          .setHTML(
+            `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:4px 2px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:10px;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;">
+                <span>${category === 'farm_lot' ? '🌾 Proposed Farm Site' : '🏠 Proposed Building Site'}</span>
+                <span style="background:${statusBadgeBg};color:${statusBadgeColor};border:1px solid ${statusBadgeBorder};padding:1px 6px;border-radius:4px;font-size:9.5px;font-weight:700;">${statusLabel}</span>
+              </div>
+              <div style="font-weight:700;font-size:13px;color:#0f172a;margin-bottom:2px;line-height:1.3;">
+                ${typeName}
+              </div>
+              <div style="font-size:10.5px;color:#64748b;font-family:monospace;margin-bottom:6px;">
+                ${siteCoords[1].toFixed(5)}° N, ${siteCoords[0].toFixed(5)}° E
+              </div>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:6px 8px;font-size:11px;color:#334155;margin-bottom:8px;">
+                ${complianceDesc}
+              </div>
+              <div style="display:flex;gap:6px;margin-top:6px;">
+                <button id="site-popup-full-report-btn" style="flex:1;background:#059669;color:#ffffff;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
+                  <span>📄</span>
+                  <span>Open Report</span>
+                </button>
+                <button id="site-popup-edit-btn" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;border-radius:6px;padding:6px 8px;font-size:11px;font-weight:600;cursor:pointer;">
+                  Edit Site
+                </button>
+              </div>
+            </div>`
+          )
+          .addTo(map)
+
+        setTimeout(() => {
+          const reportBtn = document.getElementById('site-popup-full-report-btn')
+          if (reportBtn) {
+            reportBtn.onclick = (ev) => {
+              ev.stopPropagation()
+              popup.remove()
+              onReopenReportRef.current?.()
+            }
+          }
+          const editBtn = document.getElementById('site-popup-edit-btn')
+          if (editBtn) {
+            editBtn.onclick = (ev) => {
+              ev.stopPropagation()
+              popup.remove()
+              onOpenAssessmentPopupRef.current?.()
+            }
+          }
+        }, 50)
+
+        sitePopupRef.current = popup
+      }
+
+      showSitePopupRef.current = showSitePopup
 
       if (!siteMarkerRef.current) {
         const el = document.createElement('div')
         el.className = 'site-pin-marker'
         el.style.cssText =
-          `width:auto;height:auto;display:flex;align-items:flex-end;justify-content:center;z-index:30;pointer-events:${hasAssessmentResult ? 'auto' : 'none'};cursor:${hasAssessmentResult ? 'pointer' : 'default'};`
-        el.title = hasAssessmentResult ? 'Click to reopen Site Assessment Report' : ''
+          `width:auto;height:auto;display:flex;align-items:flex-end;justify-content:center;z-index:40;pointer-events:auto;cursor:pointer;`
+        el.title = hasAssessmentResult ? 'Click to view site assessment details' : ''
         el.innerHTML = markerHtml
-        if (hasAssessmentResult) {
-          el.onclick = (e) => {
-            e.stopPropagation()
-            e.preventDefault()
-            onReopenReportRef.current?.()
+        el.onclick = (e) => {
+          e.stopPropagation()
+          e.preventDefault()
+          if (hasAssessmentResult) {
+            showSitePopup()
           }
-          el.onmousedown = (e) => e.stopPropagation()
-          el.ontouchstart = (e) => e.stopPropagation()
         }
-        siteMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'bottom', offset: markerOffset })
+        el.onmousedown = (e) => e.stopPropagation()
+        el.ontouchstart = (e) => e.stopPropagation()
+        siteMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [0, 2] })
           .setLngLat(siteCoords)
           .addTo(map)
       } else {
         const el = siteMarkerRef.current.getElement()
-        el.style.pointerEvents = hasAssessmentResult ? 'auto' : 'none'
-        el.style.cursor = hasAssessmentResult ? 'pointer' : 'default'
-        el.title = hasAssessmentResult ? 'Click to open Live Site Assessment' : ''
+        el.style.pointerEvents = 'auto'
+        el.style.cursor = 'pointer'
+        el.style.zIndex = '40'
+        el.title = hasAssessmentResult ? 'Click to view site assessment details' : ''
         el.innerHTML = markerHtml
-        if (hasAssessmentResult) {
-          el.onclick = (e) => {
-            e.stopPropagation()
-            e.preventDefault()
-            onReopenReportRef.current?.()
+        el.onclick = (e) => {
+          e.stopPropagation()
+          e.preventDefault()
+          if (hasAssessmentResult) {
+            showSitePopup()
           }
-          el.onmousedown = (e) => e.stopPropagation()
-          el.ontouchstart = (e) => e.stopPropagation()
-        } else {
-          el.onclick = null
-          el.onmousedown = null
-          el.ontouchstart = null
         }
-        siteMarkerRef.current.setOffset(markerOffset)
+        el.onmousedown = (e) => e.stopPropagation()
+        el.ontouchstart = (e) => e.stopPropagation()
+        siteMarkerRef.current.setOffset([0, 2])
         siteMarkerRef.current.setLngLat(siteCoords)
       }
 
@@ -1879,8 +1983,9 @@ export function MapView({
 
     return () => {
       map.off('load', syncSitePin)
+      sitePopupRef.current?.remove()
     }
-  }, [siteCoords, flyToSite, is3D, layerVisibility.site, activeTool, hasAssessmentResult, onReopenReport])
+  }, [siteCoords, flyToSite, is3D, layerVisibility.site, activeTool, hasAssessmentResult, onReopenReport, onOpenAssessmentPopup, buildingType, category])
 
   useEffect(() => {
     const map = mapRef.current
@@ -2014,14 +2119,14 @@ export function MapView({
         closeOnClick: false,
         offset: [0, -32],
         maxWidth: '300px',
-        className: 'facility-live-route-popup',
+        className: 'facility-road-route-popup',
       })
         .setLngLat([facLng, facLat])
         .setHTML(
           `<div style="font-family:system-ui,-apple-system,sans-serif;color:#0f172a;line-height:1.4;padding:4px 2px;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:10px;font-weight:700;color:#047857;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;">
               <span>${categoryLabel}</span>
-              <span style="background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:1px 6px;border-radius:4px;font-size:9.5px;font-weight:600;">LIVE ROUTE</span>
+              <span style="background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:1px 6px;border-radius:4px;font-size:9.5px;font-weight:700;letter-spacing:0.3px;">ROAD ROUTE</span>
             </div>
             <div style="font-weight:700;font-size:13px;color:#0f172a;margin-bottom:6px;line-height:1.3;">
               ${safeFacName}
@@ -2036,6 +2141,11 @@ export function MapView({
           </div>`,
         )
         .addTo(map)
+
+      el.onclick = (e) => {
+        e.stopPropagation()
+        popup.addTo(map)
+      }
 
       popup.on('close', () => {
         onClearHighlightedFacilityRef.current?.()

@@ -822,7 +822,8 @@ export default function App() {
             hasAssessmentResult={Boolean(assessmentResult)}
             reportOpen={reportOpen}
             hazardPanelOpen={hazardPanelOpen}
-            onReopenReport={handleOpenAssessmentPopup}
+            onReopenReport={handleReopenReport}
+            onOpenAssessmentPopup={handleOpenAssessmentPopup}
             highlightedFacility={highlightedFacility}
             onClearHighlightedFacility={handleClearHighlightedFacility}
             layerVisibility={layerVisibility}
@@ -920,10 +921,10 @@ export default function App() {
                 type="button"
                 onClick={handleOpenAssessmentPopup}
                 className="flex items-center gap-1.5 text-xs font-semibold hover:text-emerald-300 transition-colors cursor-pointer"
-                title="Open Live Site Assessment Popup"
+                title="Open Site Assessment Settings"
               >
                 <FileText className="h-3.5 w-3.5 text-emerald-400" />
-                <span>Live Assessment</span>
+                <span>Site Assessment</span>
               </button>
               <div className="h-3.5 w-px bg-slate-700 mx-0.5" />
               <button
@@ -947,7 +948,7 @@ export default function App() {
             </div>
           )}
 
-          {/* Dedicated floating live route banner on main map when report is minimized */}
+          {/* Dedicated floating road route banner on main map when report is minimized */}
           {assessmentResult && !reportOpen && highlightedFacility && (
             <div className="fixed top-24 left-1/2 -translate-x-1/2 z-30 flex max-w-[94vw] sm:max-w-md items-center justify-between gap-3 rounded-2xl border border-emerald-500/60 bg-slate-950/95 px-3.5 py-2 text-white shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-3">
               <div className="flex items-center gap-2.5 min-w-0">
@@ -956,8 +957,8 @@ export default function App() {
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    <span>Live Route Path</span>
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    <span>Road Route</span>
                     <span className="rounded bg-emerald-900/60 px-1 py-0.2 text-[9px] text-emerald-300">
                       {highlightedFacility.category?.replace(/_/g, ' ') ?? 'Facility'}
                     </span>

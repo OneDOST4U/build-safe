@@ -119,7 +119,7 @@ export function AssessmentReportModal({
                 size="sm"
                 className="h-8 gap-1.5 text-xs text-slate-700 hover:text-slate-900 border-slate-300 font-medium"
                 onClick={onMinimize}
-                title="Minimize report to explore the full live map & route"
+                title="Minimize report to explore on 3D map & road route"
               >
                 <Minus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Minimize</span>

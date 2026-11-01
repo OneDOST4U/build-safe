@@ -335,7 +335,7 @@ Lasam's prime agricultural soils and alluvial terraces are highly fertile:
 • **Municipal Evacuation Center 2:** Located in Centro 1 (18°04'01.1"N 121°36'07.0"E).
 • **Lasam Multi-Purpose Building:** Located in Centro 1 (18°04'00.3"N 121°36'09.2"E).
 
-*Tip:* Under **Critical Facilities** in the assessment panel, you can click any of these facilities to view their live road route on the 3D map!`,
+*Tip:* Under **Critical Facilities** in the assessment panel, you can click any of these facilities to view their road route on the 3D map!`,
       suggestions: [
         'What is the 7-step building permit process in Lasam?',
         'What are the mandatory river easement setbacks?',
@@ -358,7 +358,7 @@ Lasam's prime agricultural soils and alluvial terraces are highly fertile:
 • **Lasam Rural Health Unit (RHU) & Municipal Health Office:** Located in Centro 1 (18.06741° N, 121.60279° E) for primary medical care and municipal health clearances.
 • **Lasam District Hospital:** DOH Level 1 public hospital located along the main road for emergency operations and inpatient care.
 
-You can click **Nearest Government Health Facility** in the assessment panel to trace the live road route on the 3D map!`,
+You can click **Nearest Government Health Facility** in the assessment panel to trace the road route on the 3D map!`,
       suggestions: [
         'Where are the evacuation centers in Lasam?',
         'What is the 7-step building permit process in Lasam?',

@@ -87,7 +87,7 @@ function ResultSection({
                 <span>{row.value}</span>
                 {isSelected && (
                   <span className="rounded bg-teal-600 px-1.5 py-0.2 text-[8px] font-bold text-white shrink-0 tracking-wide">
-                    Live Route
+                    Road Route
                   </span>
                 )}
               </span>
@@ -117,7 +117,7 @@ function ResultSection({
                     ? 'bg-teal-100/90 text-teal-950 ring-1 ring-inset ring-teal-500/60 shadow-inner'
                     : 'hover:bg-teal-50/80 hover:text-teal-950 cursor-pointer'
                 }`}
-                title={isSelected ? 'Click to clear live route' : 'Click to fly to this facility and trace connection line on map'}
+                title={isSelected ? 'Click to clear road route' : 'Click to fly to this facility and trace road route on map'}
               >
                 {cellContent}
               </button>
