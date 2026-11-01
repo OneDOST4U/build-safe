@@ -185,17 +185,17 @@ export function AssessmentReportModal({
             <button
               type="button"
               onClick={onOpenChatbot}
-              className="group flex items-center gap-2.5 rounded-full border border-emerald-300 bg-white/95 px-4 py-2.5 text-slate-800 shadow-xl backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-emerald-50 hover:border-emerald-400 hover:shadow-2xl active:scale-95 cursor-pointer ring-4 ring-emerald-500/15"
+              className="group flex items-center gap-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 font-bold shadow-xl shadow-emerald-950/35 transition-all duration-200 hover:scale-105 hover:shadow-2xl active:scale-95 cursor-pointer ring-4 ring-emerald-500/30 border border-emerald-400/50"
               title="Chat with BUILD-SAFE AI about this site assessment"
               aria-label="Open BUILD-SAFE AI chat"
             >
-              <Sparkles className="h-4.5 w-4.5 text-emerald-600 shrink-0" />
-              <span className="text-xs font-bold tracking-tight text-slate-800">
+              <Sparkles className="h-4.5 w-4.5 text-emerald-100 shrink-0 group-hover:scale-110 group-hover:rotate-6 transition-transform" />
+              <span className="text-xs font-bold tracking-wide text-white drop-shadow-xs">
                 BUILD-SAFE AI
               </span>
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-85" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
               </span>
             </button>
           </div>
