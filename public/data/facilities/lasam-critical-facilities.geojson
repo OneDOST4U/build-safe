@@ -4,25 +4,207 @@
     "name": "Lasam Critical Facilities & Infrastructure (Trusted LGU / DepEd / DOH / DPWH Data)",
     "disclaimer": "Demonstration & site intelligence reference — verified against LGU Lasam, DOH, DepEd, and DPWH Region II records.",
     "data_source": "LGU Lasam MDRRMO, DOH CHD II, DepEd Division of Cagayan, DPWH Region II",
-    "validated_at": "2026-08-25",
-    "total_facilities": 53
+    "validated_at": "2026-11-04",
+    "total_facilities": 60
   },
   "features": [
     {
       "type": "Feature",
       "properties": {
-        "id": "gov-lasam-mdrrmo",
-        "name": "Lasam Municipal Hall & MDRRMO Emergency Operations Center",
-        "category": "emergency_response",
+        "id": "gov-lasam-lgu",
+        "name": "Lasam Municipal Hall (LGU Government Center)",
+        "category": "govt_office",
         "amenity": "townhall",
+        "barangay": "CENTRO 02",
+        "description": "LGU Lasam Municipal Hall & Government Administrative Complex (18°03'47.50\"N 121°35'57.01\"E).",
         "validation_status": "trusted_lgu_verified",
-        "data_source": "LGU Lasam Municipal Governance"
+        "data_source": "LGU Lasam Official Ground Truth Coordinates"
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          121.5998,
-          18.0642
+          121.599169,
+          18.063194
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "gov-lasam-mdrrmo",
+        "name": "Lasam MDRRMO Emergency Operations Center",
+        "category": "emergency_response",
+        "amenity": "disaster_management",
+        "barangay": "CENTRO 01",
+        "description": "Lasam Municipal Disaster Risk Reduction and Management Office (18°04'00.62\"N 121°36'06.47\"E).",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "LGU Lasam MDRRMO Verified Coordinates"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.601797,
+          18.066839
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "gov-lasam-evac-1",
+        "name": "Lasam Municipal Evacuation Center (Centro 3)",
+        "category": "emergency_response",
+        "amenity": "evacuation_center",
+        "barangay": "CENTRO 03",
+        "description": "Centro 3 Municipal Evacuation Center (18°03'57.75\"N 121°35'35.28\"E). Designated for emergency shelter and community evacuation.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "LGU Lasam MDRRMO Verified Records"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.593133,
+          18.066042
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "health-district-hospital",
+        "name": "Lasam District Hospital (LDH)",
+        "category": "hospital",
+        "amenity": "hospital",
+        "barangay": "IGNACIO B. JURADO",
+        "description": "DOH Level 1 Public Hospital in Lasam (18°03'49.12\"N 121°36'33.84\"E). 24/7 Emergency and inpatient medical services.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "DOH / LGU Lasam Verified Ground Truth"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.6094,
+          18.063644
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "hardware-dandex",
+        "name": "DanDex Hardware",
+        "category": "hardware_supply",
+        "amenity": "hardware",
+        "barangay": "CENTRO",
+        "description": "DanDex Hardware & Construction Supply (18°04'04.20\"N 121°36'17.39\"E). Cement, structural steel, rebar & building materials.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified Commercial Registry"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.604831,
+          18.067833
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "hardware-avenue",
+        "name": "Avenue Hardware",
+        "category": "hardware_supply",
+        "amenity": "hardware",
+        "barangay": "CENTRO",
+        "description": "Avenue Hardware & Construction Supply (18°04'06.57\"N 121°36'18.72\"E). Construction tools, electrical, plumbing & building supplies.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified Commercial Registry"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.6052,
+          18.068492
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "pharmacy-capalungan",
+        "name": "Capalungan Pharmacy",
+        "category": "pharmacy",
+        "amenity": "pharmacy",
+        "barangay": "CENTRO",
+        "description": "Capalungan Pharmacy & Drugstore (18°04'09.55\"N 121°36'21.96\"E). Prescription medications & healthcare essentials.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified Health & Drugstore Registry"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.6061,
+          18.069319
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "pharmacy-avenue",
+        "name": "Avenue Pharmacy",
+        "category": "pharmacy",
+        "amenity": "pharmacy",
+        "barangay": "CENTRO",
+        "description": "Avenue Pharmacy & Medical Supplies (18°04'05.85\"N 121°36'19.22\"E). Pharmaceuticals & medical supplies.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified Health & Drugstore Registry"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.605339,
+          18.068292
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "agri-3g-grain",
+        "name": "3G Grain Buying",
+        "category": "grains_mill",
+        "amenity": "grain_buying",
+        "barangay": "CENTRO",
+        "description": "3G Grain Buying & Palay Consolidation Depot (18°04'05.60\"N 121°36'17.74\"E). Commercial palay & corn buying station.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified Lasam Agribusiness Registry"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.604928,
+          18.068222
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "agri-3g-farm-business",
+        "name": "3G Farm Business",
+        "category": "agri_supply",
+        "amenity": "agri_supply",
+        "barangay": "CENTRO",
+        "description": "3G Farm Business & Agricultural Supply (18°04'05.60\"N 121°36'17.74\"E). Farm inputs, fertilizer, feeds & crop supplies.",
+        "validation_status": "trusted_lgu_verified",
+        "data_source": "Verified Lasam Agribusiness Registry"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.604928,
+          18.068222
         ]
       }
     },
@@ -59,26 +241,6 @@
         "coordinates": [
           121.60212068870366,
           18.067050066250953
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "gov-lasam-evac-1",
-        "name": "Lasam Municipal Evacuation Center 1",
-        "category": "emergency_response",
-        "amenity": "evacuation_center",
-        "barangay": "CENTRO 03",
-        "description": "Located in Centro 3, Lasam, Cagayan (18°03'57.3\"N 121°35'35.1\"E) near Natalged Arena. Designated for community events, caravan services, and disaster evacuation.",
-        "validation_status": "trusted_lgu_verified",
-        "data_source": "LGU Lasam MDRRMO / Verified Municipal Records"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          121.593083,
-          18.065917
         ]
       }
     },
@@ -138,24 +300,6 @@
         "coordinates": [
           121.60279161956103,
           18.067408864378496
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "health-district-hospital",
-        "name": "Lasam District Hospital (DOH Level 1 Public Hospital)",
-        "category": "govt_health",
-        "amenity": "hospital",
-        "validation_status": "trusted_doh_verified",
-        "data_source": "Verified LGU Lasam GPS (18.063658, 121.609424)"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          121.60942379388406,
-          18.0636582353473
         ]
       }
     },
@@ -3298,46 +3442,6 @@
     {
       "type": "Feature",
       "properties": {
-        "id": "health-gcare-pharmacy",
-        "name": "GCare Pharmacy",
-        "category": "govt_health",
-        "amenity": "pharmacy",
-        "barangay": "CENTRO 01",
-        "description": "GCare Pharmacy serving Lasam District Hospital area.",
-        "validation_status": "trusted_lgu_verified",
-        "data_source": "Verified LGU GPS (18.064025, 121.609226)"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          121.6092255397134,
-          18.064025339354366
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "health-hosp-pharmacy",
-        "name": "Hospital Site Pharmacy",
-        "category": "govt_health",
-        "amenity": "pharmacy",
-        "barangay": "CENTRO 01",
-        "description": "Hospital Site Pharmacy near Lasam District Hospital.",
-        "validation_status": "trusted_lgu_verified",
-        "data_source": "Verified LGU GPS (18.063925, 121.609153)"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          121.60915336499664,
-          18.063924557710866
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "id": "civic-lasam-public-market",
         "name": "Lasam Public Market",
         "category": "commercial_market",
@@ -3372,86 +3476,6 @@
         "coordinates": [
           121.59974903931595,
           18.06326734127016
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "agri-diosa-palay-trading",
-        "name": "Diosa Palay Trading",
-        "category": "grains_mill",
-        "amenity": "grain_trading",
-        "barangay": "CENTRO / NICOLAS AGATEP",
-        "description": "Verified Palay trading and grain buying depot in Lasam.",
-        "validation_status": "trusted_lgu_verified",
-        "data_source": "Verified LGU GPS (18.077373, 121.597335)"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          121.59733545997271,
-          18.077372868215893
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "agri-ajsean-rice-mill",
-        "name": "AJSEAN RICE MILL",
-        "category": "grains_mill",
-        "amenity": "rice_mill",
-        "barangay": "NABANNAGAN WEST",
-        "description": "Verified custom rice mill and palay processing station in Nabannagan West, Lasam.",
-        "validation_status": "trusted_lgu_verified",
-        "data_source": "Verified LGU GPS (18.072846, 121.535963)"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          121.53596347813048,
-          18.07284580585752
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "agri-battalan-coop",
-        "name": "Battalan Agricultural Cooperative",
-        "category": "agri_supply",
-        "amenity": "agricultural_cooperative",
-        "barangay": "BATTALAN",
-        "description": "Verified agricultural cooperative for farmers in Battalan, Lasam.",
-        "validation_status": "trusted_lgu_verified",
-        "data_source": "Verified LGU GPS (18.072801, 121.553801)"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          121.55380082246973,
-          18.07280139636836
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "agri-double-e-supply",
-        "name": "Double E Agricultural & Poultry Supply",
-        "category": "agri_supply",
-        "amenity": "farm_supply",
-        "barangay": "CENTRO 01",
-        "description": "Verified retail agricultural, veterinary, and poultry supplies in Centro.",
-        "validation_status": "trusted_lgu_verified",
-        "data_source": "Verified LGU GPS (18.066230, 121.602707)"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          121.60270732565128,
-          18.06622990300658
         ]
       }
     }

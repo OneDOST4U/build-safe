@@ -35,41 +35,25 @@ interface FarmFacilityItem {
  * Uses exact verified GPS coordinates provided by LGU records.
  */
 export const LASAM_FARM_BUSINESSES: FarmFacilityItem[] = [
-  // 1. Grains Trading & Commercial Rice Mills
+  // 1. Verified Grains Trading & Commercial Palay Buying
   {
-    name: 'AJSEAN RICE MILL',
+    name: '3G Grain Buying',
     category: 'grains_mill',
-    coords: [121.535963, 18.072846],
-    barangay: 'Nabannagan West',
-    description: 'Custom rice mill and palay processing station in Nabannagan West, Lasam',
-  },
-  {
-    name: 'Diosa Palay Trading',
-    category: 'grains_mill',
-    coords: [121.597335, 18.077373],
-    barangay: 'Centro / Nicolas Agatep',
-    description: 'Palay buying, grain consolidation, and agricultural trading depot',
+    coords: [121.604928, 18.068222],
+    barangay: 'Centro',
+    description: 'Verified commercial palay & grain buying depot (18°04\'05.60"N 121°36\'17.74"E)',
   },
 
-  // 2. Farm Inputs & Poultry Supply
+  // 2. Verified Farm Inputs & Agribusiness Supply
   {
-    name: 'Double E Agricultural & Poultry Supply',
+    name: '3G Farm Business',
     category: 'agri_supply',
-    coords: [121.602707, 18.066230],
-    barangay: 'Centro 1',
-    description: 'Verified farm inputs, fertilizer, veterinary, and poultry supplies',
+    coords: [121.604928, 18.068222],
+    barangay: 'Centro',
+    description: 'Verified farm inputs, fertilizer, feeds & crop supplies (18°04\'05.60"N 121°36\'17.74"E)',
   },
 
-  // 3. Agricultural Cooperative
-  {
-    name: 'Battalan Agricultural Cooperative',
-    category: 'agri_coop',
-    coords: [121.553801, 18.072801],
-    barangay: 'Battalan',
-    description: 'Verified agricultural cooperative supporting farmers in Battalan and western Lasam',
-  },
-
-  // 4. Central Public Market
+  // 3. Central Public Market
   {
     name: 'Lasam Public Market',
     category: 'public_market',
@@ -78,13 +62,13 @@ export const LASAM_FARM_BUSINESSES: FarmFacilityItem[] = [
     description: 'Central municipal trading market for fresh crops, produce consolidation, and farm commerce',
   },
 
-  // 5. Municipal Agriculture Office
+  // 4. Municipal Agriculture Office
   {
     name: 'Lasam Municipal Agriculture Office (MAO Desk)',
     category: 'agri_office',
-    coords: [121.599800, 18.064200],
+    coords: [121.599169, 18.063194],
     barangay: 'Centro 2',
-    description: 'DA extension services, RSBSA registration, fertilizer assistance, and LGU technoguide',
+    description: 'DA extension services, RSBSA registration, fertilizer assistance, and LGU technoguide at Lasam Municipal Hall',
   },
 ]
 

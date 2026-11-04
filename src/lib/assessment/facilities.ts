@@ -7,13 +7,19 @@ import type { AssessmentRow } from '@/types'
 
 export type FacilityCategory =
   | 'emergency_response'
-  | 'govt_health'
+  | 'hospital'
+  | 'pharmacy'
+  | 'hardware_supply'
+  | 'govt_office'
   | 'public_school'
   | 'primary_road'
 
 const CATEGORY_LABELS: Record<FacilityCategory, string> = {
-  emergency_response: 'Nearest Emergency / Disaster Facility',
-  govt_health: 'Nearest Government Health Facility',
+  emergency_response: 'Nearest Emergency / Disaster Facility (MDRRM)',
+  hospital: 'Nearest Hospital (LDH)',
+  pharmacy: 'Nearest Pharmacy / Medical Supply',
+  hardware_supply: 'Nearest Hardware Supply',
+  govt_office: 'Nearest Government Office (LGU)',
   public_school: 'Nearest Public Educational Facility',
   primary_road: 'Nearest Primary Road Network',
 }
@@ -34,8 +40,26 @@ function nearestInCategory(
   let best: { name: string; distanceM: number; coords: [number, number] } | null = null
 
   for (const f of facilities.features) {
-    if (String(f.properties?.category) !== category) continue
     if (!f.geometry) continue
+    const fCat = String(f.properties?.category ?? '')
+
+    let matches = false
+    if (fCat === category) {
+      matches = true
+    } else if (category === 'hospital' && (fCat === 'hospital' || fCat === 'govt_health')) {
+      const name = String(f.properties?.name ?? '').toLowerCase()
+      if (name.includes('hospital') || fCat === 'hospital') matches = true
+    } else if (category === 'emergency_response' && (fCat === 'emergency_response' || fCat === 'evacuation_site')) {
+      matches = true
+    } else if (category === 'govt_office' && (fCat === 'govt_office' || fCat === 'lgu_office')) {
+      matches = true
+    } else if (category === 'pharmacy' && (fCat === 'pharmacy' || fCat === 'medical_supply')) {
+      matches = true
+    } else if (category === 'hardware_supply' && (fCat === 'hardware_supply' || fCat === 'hardware')) {
+      matches = true
+    }
+
+    if (!matches) continue
 
     let distM: number
     let targetCoords: [number, number]
@@ -65,7 +89,10 @@ export function assessFacilities(
 ): AssessmentRow[] {
   const order: FacilityCategory[] = [
     'emergency_response',
-    'govt_health',
+    'hospital',
+    'pharmacy',
+    'hardware_supply',
+    'govt_office',
     'public_school',
     'primary_road',
   ]

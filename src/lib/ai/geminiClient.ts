@@ -91,19 +91,27 @@ function buildSystemInstruction(context?: ChatContext): string {
      10. Fire Safety Evaluation Certificate (FSEC) from BFP Lasam (1 original)
    - **Common Disapproval Reasons**: Non-compliance with PD 1096 (National Building Code), zoning violations, incomplete/expired documents, ownership discrepancies, or expired professional licenses.
    - **Role of BUILD-SAFE**: Directly accelerates Step 2 (Plan Evaluation & Document Verification) from days to seconds by checking hazards (flood, fault, setbacks) and generating an automated site hazard report.
-4. **Verified Civic, Health & Agricultural Facilities in Lasam**:
-   - **Municipal Evacuation Center 1**: Centro 3 near Natalged Arena (18°03'57.3"N 121°35'35.1"E / 121.59308° E, 18.06592° N).
-   - **Municipal Evacuation Center 2**: Centro 1 (18°04'01.1"N 121°36'07.0"E / 121.60194° E, 18.06697° N).
+4. **Verified Civic, Health, Commercial & Agricultural Facilities in Lasam**:
+   - **Government Offices - LGU (Lasam Municipal Hall & Government Center)**: Centro 2 (18°03'47.50"N 121°35'57.01"E / 121.59917° E, 18.06319° N).
+   - **Emergency - Lasam MDRRMO Operations Center**: Centro 1 (18°04'00.62"N 121°36'06.47"E / 121.60180° E, 18.06684° N).
+   - **Evacuation Center 1 (Centro 3)**: Centro 3 (18°03'57.75"N 121°35'35.28"E / 121.59313° E, 18.06604° N).
+   - **Evacuation Center 2 (Centro 1)**: Centro 1 (18°04'01.1"N 121°36'07.0"E / 121.60194° E, 18.06697° N).
    - **Lasam Multi-Purpose Building**: Centro 1 (18°04'00.3"N 121°36'09.2"E / 121.60255° E, 18.06675° N).
-   - **Lasam Rural Health Unit (RHU) & Municipal Health Office**: Centro 1 (18.06741° N, 121.60279° E).
-   - **Lasam District Hospital**: Centro / Ignacio B. Jurado (18.06366° N, 121.60942° E).
-   - **GCare Pharmacy & Hospital Site Pharmacy**: Near District Hospital (18.06403° N, 121.60923° E).
-   - **Lasam Public Market**: Centro 1 (18.06876° N, 121.60595° E).
-   - **Natalged A Lasam Park**: Centro 2 (18.06327° N, 121.59975° E).
+   - **Hospital - Lasam District Hospital (LDH)**: DOH Level 1 Hospital (18°03'49.12"N 121°36'33.84"E / 121.60940° E, 18.06364° N).
+   - **Health Office - Lasam Rural Health Unit (RHU)**: Centro 1 (18.06741° N, 121.60279° E).
+   - **Hardware - DanDex Hardware**: Centro (18°04'04.20"N 121°36'17.39"E / 121.60483° E, 18.06783° N).
+   - **Hardware - Avenue Hardware**: Centro (18°04'06.57"N 121°36'18.72"E / 121.60520° E, 18.06849° N).
+   - **Pharmacy - Capalungan Pharmacy**: Centro (18°04'09.55"N 121°36'21.96"E / 121.60610° E, 18.06932° N).
+   - **Pharmacy - Avenue Pharmacy**: Centro (18°04'05.85"N 121°36'19.22"E / 121.60534° E, 18.06829° N).
+   - **Pharmacy - GCare Pharmacy & Hospital Site Pharmacy**: Near District Hospital (18.06403° N, 121.60923° E).
+   - **Farm Business - 3G Farm Business**: Centro (18°04'05.60"N 121°36'17.74"E / 121.60493° E, 18.06822° N).
+   - **Grain Buying - 3G Grain Buying**: Centro (18°04'05.60"N 121°36'17.74"E / 121.60493° E, 18.06822° N).
    - **AJSEAN RICE MILL**: Nabannagan West (18.07285° N, 121.53596° E).
    - **Diosa Palay Trading**: Centro / Nicolas Agatep (18.07737° N, 121.59734° E).
    - **Battalan Agricultural Cooperative**: Battalan (18.07280° N, 121.55380° E).
    - **Double E Agricultural & Poultry Supply**: Centro 1 (18.06623° N, 121.60271° E).
+   - **Lasam Public Market**: Centro 1 (18.06876° N, 121.60595° E).
+   - **Natalged A Lasam Park**: Centro 2 (18.06327° N, 121.59975° E).
 
 ### Parcel Context:
 ${contextInfo}`
