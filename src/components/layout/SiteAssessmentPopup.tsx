@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { AlertTriangle, Ban, ClipboardList, Crosshair, FileText, MapPin, RotateCcw, ShieldCheck, Sparkles, X } from 'lucide-react'
+import { AlertTriangle, Ban, ClipboardList, FileText, MapPin, RotateCcw, ShieldCheck, Sparkles, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { AssessmentResultsCard, type HighlightedFacilityInfo } from '@/components/layout/AssessmentResultsCard'
@@ -21,13 +21,6 @@ import { getLandUseAtPoint } from '@/lib/simulation/lguLayerQuery'
 import { parseCoordinate } from '@/lib/assessment/coordinateParser'
 import type { WaterBodyCheckResult } from '@/lib/assessment/waterBody'
 import type { SiteAssessmentResult } from '@/types'
-
-const LASAM_LOCATION_PRESETS = [
-  { name: '🏛️ Centro 2 (Town Hall)', lat: '18.063194', lng: '121.599169', desc: 'Lasam Municipal Hall & LGU Center' },
-  { name: '🌾 Alannay (Rice Basin)', lat: '18.060930', lng: '121.571580', desc: 'Prime Agricultural Farmland Basin' },
-  { name: '🏥 LDH (District Hospital)', lat: '18.063644', lng: '121.609400', desc: 'Lasam District Hospital' },
-  { name: '🏡 Centro 3', lat: '18.066042', lng: '121.593133', desc: 'Designated Evacuation Center' },
-]
 
 export interface SiteAssessmentPopupProps {
   open: boolean
@@ -593,94 +586,7 @@ export function SiteAssessmentPopup({
 
             {/* Scrollable Body */}
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 text-slate-800">
-              {/* Geographic Coordinates Manual Input */}
-              <div className="space-y-2 rounded-2xl border border-slate-200/90 bg-slate-50/70 p-3.5 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Crosshair className="h-3.5 w-3.5 text-blue-600" />
-                    <span>Geographic Coordinates</span>
-                  </Label>
-                  {isInputValidNumber && isInputInsideLasam ? (
-                    <span className="text-[10px] text-emerald-800 font-semibold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      In Lasam (Verified)
-                    </span>
-                  ) : isInputValidNumber && !isInputInsideLasam ? (
-                    <span className="text-[10px] text-amber-800 font-semibold bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-                      Outside Lasam Boundary
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-slate-400 font-medium">WGS84 / DMS Supported</span>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl border border-slate-200 bg-white p-2 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-600/15 transition-all">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      <span>Latitude (N)</span>
-                      <span className="text-[9px] text-blue-700 font-mono">17.99° - 18.12°</span>
-                    </div>
-                    <input
-                      className="w-full bg-transparent font-mono text-xs font-semibold text-slate-900 focus:outline-none placeholder:text-slate-400"
-                      value={assessLat}
-                      onChange={(e) => onAssessLatChange(e.target.value)}
-                      placeholder="e.g. 18.064500"
-                      inputMode="decimal"
-                    />
-                  </div>
-
-                  <div className="rounded-xl border border-slate-200 bg-white p-2 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-600/15 transition-all">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      <span>Longitude (E)</span>
-                      <span className="text-[9px] text-blue-700 font-mono">121.40° - 121.65°</span>
-                    </div>
-                    <input
-                      className="w-full bg-transparent font-mono text-xs font-semibold text-slate-900 focus:outline-none placeholder:text-slate-400"
-                      value={assessLng}
-                      onChange={(e) => onAssessLngChange(e.target.value)}
-                      placeholder="e.g. 121.601500"
-                      inputMode="decimal"
-                    />
-                  </div>
-                </div>
-
-                {/* Quick Presets Pills */}
-                <div className="flex items-center gap-1.5 pt-0.5">
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider shrink-0">
-                    Quick test:
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {LASAM_LOCATION_PRESETS.map((preset) => (
-                      <button
-                        key={preset.name}
-                        type="button"
-                        onClick={() => {
-                          onAssessLatChange(preset.lat)
-                          onAssessLngChange(preset.lng)
-                        }}
-                        className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-[10.5px] font-medium text-slate-600 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-900 transition-all cursor-pointer shadow-2xs"
-                        title={preset.desc}
-                      >
-                        {preset.name}
-                      </button>
-                    ))}
-                    {(assessLat || assessLng) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onAssessLatChange('')
-                          onAssessLngChange('')
-                        }}
-                        className="rounded-lg border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 hover:text-red-600 hover:border-red-300 transition-all cursor-pointer"
-                        title="Clear coordinates"
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
+              
               {/* Site Land-Use Purpose Selector */}
               <div className="space-y-1.5">
                 <Label className="text-xs font-bold text-slate-800">
@@ -824,8 +730,32 @@ export function SiteAssessmentPopup({
                 </div>
               )}
 
+              {/* Latitude & Longitude Manual Input */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-bold text-slate-700">Latitude</Label>
+                  <input
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 font-mono text-xs font-semibold text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 placeholder:text-slate-400"
+                    value={assessLat}
+                    onChange={(e) => onAssessLatChange(e.target.value)}
+                    placeholder="e.g. 18.064500"
+                    inputMode="decimal"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-bold text-slate-700">Longitude</Label>
+                  <input
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 font-mono text-xs font-semibold text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 placeholder:text-slate-400"
+                    value={assessLng}
+                    onChange={(e) => onAssessLngChange(e.target.value)}
+                    placeholder="e.g. 121.601500"
+                    inputMode="decimal"
+                  />
+                </div>
+              </div>
+
               {/* Action Buttons */}
-              <div className="pt-2 space-y-2">
+              <div className="pt-1 space-y-2">
                 {/* Primary Examine Button */}
                 {onAssessSite && (
                   <Button
