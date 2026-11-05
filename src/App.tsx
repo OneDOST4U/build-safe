@@ -33,6 +33,7 @@ import {
   volcanoStatusLabel,
 } from '@/lib/simulation/volcano'
 import { assessSite, isPointInsideLasam } from '@/lib/assessment/siteAssessment'
+import { parseCoordinate } from '@/lib/assessment/coordinateParser'
 import { checkWaterBodyProximity } from '@/lib/assessment/waterBody'
 import { getLandUseAtPoint } from '@/lib/simulation/lguLayerQuery'
 import type {
@@ -325,16 +326,19 @@ export default function App() {
 
   const handleAssessSite = useCallback(() => {
     if (!data) return
-    const lat = Number(assessLat)
-    const lng = Number(assessLng)
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      setAssessError('Enter valid decimal latitude and longitude.')
+    const lat = parseCoordinate(assessLat)
+    const lng = parseCoordinate(assessLng)
+    if (lat === null || lng === null) {
+      setAssessError('Enter valid latitude and longitude (e.g. 18.064500, 121.601500 or DMS format 18°03\'47.5"N).')
       return
     }
     if (!isPointInsideLasam(lng, lat, data.boundary)) {
       setAssessError('Coordinates must be strictly within the official municipal boundary of Lasam.')
       return
     }
+
+    setAssessLat(lat.toFixed(6))
+    setAssessLng(lng.toFixed(6))
 
     const pt: [number, number] = [lng, lat]
     const waterCheck = checkWaterBodyProximity(pt, {

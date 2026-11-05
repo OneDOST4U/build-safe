@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { AlertTriangle, Ban, ClipboardList, Crosshair, FileText, MapPin, RotateCcw, ShieldCheck, X } from 'lucide-react'
+import { AlertTriangle, Ban, ClipboardList, Crosshair, FileText, MapPin, RotateCcw, ShieldCheck, Sparkles, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { AssessmentResultsCard, type HighlightedFacilityInfo } from '@/components/layout/AssessmentResultsCard'
@@ -18,8 +18,16 @@ import {
 } from '@/lib/assessment/farmLot'
 import { identifyMunicipality, isPointInsideLasam } from '@/lib/assessment/coverage'
 import { getLandUseAtPoint } from '@/lib/simulation/lguLayerQuery'
+import { parseCoordinate } from '@/lib/assessment/coordinateParser'
 import type { WaterBodyCheckResult } from '@/lib/assessment/waterBody'
 import type { SiteAssessmentResult } from '@/types'
+
+const LASAM_LOCATION_PRESETS = [
+  { name: '🏛️ Centro 2 (Town Hall)', lat: '18.063194', lng: '121.599169', desc: 'Lasam Municipal Hall & LGU Center' },
+  { name: '🌾 Alannay (Rice Basin)', lat: '18.060930', lng: '121.571580', desc: 'Prime Agricultural Farmland Basin' },
+  { name: '🏥 LDH (District Hospital)', lat: '18.063644', lng: '121.609400', desc: 'Lasam District Hospital' },
+  { name: '🏡 Centro 3', lat: '18.066042', lng: '121.593133', desc: 'Designated Evacuation Center' },
+]
 
 export interface SiteAssessmentPopupProps {
   open: boolean
@@ -67,9 +75,12 @@ export function SiteAssessmentPopup({
   landUse = null,
   highlightedFacility = null,
   onSelectFacility,
+  onAssessLatChange,
+  onAssessLngChange,
   onAssessCategoryChange,
   onAssessBuildingTypeChange,
   onAssessCropTypeChange,
+  onAssessSite,
   onPickSiteOnMap,
   pickingOnMap = false,
   pendingSiteCoords = null,
@@ -85,18 +96,12 @@ export function SiteAssessmentPopup({
     ? isPointInsideLasam(pendingSiteCoords[0], pendingSiteCoords[1], boundary)
     : true
 
-  const hasCoordinates = Boolean(
-    assessLat &&
-    assessLng &&
-    assessLat.trim() !== '' &&
-    assessLng.trim() !== '' &&
-    Number.isFinite(Number(assessLat)) &&
-    Number.isFinite(Number(assessLng))
-  )
-
-  const numLat = hasCoordinates ? Number(assessLat) : NaN
-  const numLng = hasCoordinates ? Number(assessLng) : NaN
-  const isInputValidNumber = hasCoordinates
+  const parsedLat = parseCoordinate(assessLat)
+  const parsedLng = parseCoordinate(assessLng)
+  const isInputValidNumber = parsedLat !== null && parsedLng !== null
+  const numLat = parsedLat ?? NaN
+  const numLng = parsedLng ?? NaN
+  const hasCoordinates = isInputValidNumber
   const isInputInsideLasam = isInputValidNumber
     ? isPointInsideLasam(numLng, numLat, boundary)
     : true
@@ -588,31 +593,93 @@ export function SiteAssessmentPopup({
 
             {/* Scrollable Body */}
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 text-slate-800">
-              {/* Only display Geographic Coordinates & Coverage when a site point has been confirmed */}
-              {hasCoordinates && (
-                <div className="space-y-2 rounded-2xl border border-slate-200/90 bg-slate-50/80 p-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <Crosshair className="h-3.5 w-3.5 text-teal-600" />
-                      <span>Selected Site Coordinates</span>
-                    </Label>
-                    <span className="text-[10px] text-teal-700 font-semibold bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
-                      📍 Lasam (PSGC 0201517000)
+              {/* Geographic Coordinates Manual Input */}
+              <div className="space-y-2 rounded-2xl border border-slate-200/90 bg-slate-50/70 p-3.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Crosshair className="h-3.5 w-3.5 text-blue-600" />
+                    <span>Geographic Coordinates</span>
+                  </Label>
+                  {isInputValidNumber && isInputInsideLasam ? (
+                    <span className="text-[10px] text-emerald-800 font-semibold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      In Lasam (Verified)
                     </span>
+                  ) : isInputValidNumber && !isInputInsideLasam ? (
+                    <span className="text-[10px] text-amber-800 font-semibold bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                      Outside Lasam Boundary
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-medium">WGS84 / DMS Supported</span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl border border-slate-200 bg-white p-2 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-600/15 transition-all">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      <span>Latitude (N)</span>
+                      <span className="text-[9px] text-blue-700 font-mono">17.99° - 18.12°</span>
+                    </div>
+                    <input
+                      className="w-full bg-transparent font-mono text-xs font-semibold text-slate-900 focus:outline-none placeholder:text-slate-400"
+                      value={assessLat}
+                      onChange={(e) => onAssessLatChange(e.target.value)}
+                      placeholder="e.g. 18.064500"
+                      inputMode="decimal"
+                    />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded-xl border border-slate-200 bg-white p-2">
-                      <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Latitude</span>
-                      <span className="font-mono text-xs font-bold text-slate-900">{numLat.toFixed(5)}° N</span>
+                  <div className="rounded-xl border border-slate-200 bg-white p-2 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-600/15 transition-all">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      <span>Longitude (E)</span>
+                      <span className="text-[9px] text-blue-700 font-mono">121.40° - 121.65°</span>
                     </div>
-                    <div className="rounded-xl border border-slate-200 bg-white p-2">
-                      <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">Longitude</span>
-                      <span className="font-mono text-xs font-bold text-slate-900">{numLng.toFixed(5)}° E</span>
-                    </div>
+                    <input
+                      className="w-full bg-transparent font-mono text-xs font-semibold text-slate-900 focus:outline-none placeholder:text-slate-400"
+                      value={assessLng}
+                      onChange={(e) => onAssessLngChange(e.target.value)}
+                      placeholder="e.g. 121.601500"
+                      inputMode="decimal"
+                    />
                   </div>
                 </div>
-              )}
+
+                {/* Quick Presets Pills */}
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider shrink-0">
+                    Quick test:
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {LASAM_LOCATION_PRESETS.map((preset) => (
+                      <button
+                        key={preset.name}
+                        type="button"
+                        onClick={() => {
+                          onAssessLatChange(preset.lat)
+                          onAssessLngChange(preset.lng)
+                        }}
+                        className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-[10.5px] font-medium text-slate-600 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-900 transition-all cursor-pointer shadow-2xs"
+                        title={preset.desc}
+                      >
+                        {preset.name}
+                      </button>
+                    ))}
+                    {(assessLat || assessLng) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onAssessLatChange('')
+                          onAssessLngChange('')
+                        }}
+                        className="rounded-lg border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 hover:text-red-600 hover:border-red-300 transition-all cursor-pointer"
+                        title="Clear coordinates"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               {/* Site Land-Use Purpose Selector */}
               <div className="space-y-1.5">
@@ -759,41 +826,56 @@ export function SiteAssessmentPopup({
 
               {/* Action Buttons */}
               <div className="pt-2 space-y-2">
-                {assessmentResult && onOpenReport && (
+                {/* Primary Examine Button */}
+                {onAssessSite && (
                   <Button
                     type="button"
-                    onClick={onOpenReport}
+                    size="lg"
+                    onClick={onAssessSite}
                     className={`w-full h-11 rounded-2xl gap-2 font-bold shadow-md transition-all text-xs cursor-pointer text-white ${
-                      assessCategory === 'building'
-                        ? 'bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 hover:from-blue-800 hover:to-indigo-700 shadow-blue-900/20'
-                        : 'bg-gradient-to-r from-teal-700 via-emerald-700 to-teal-800 hover:from-teal-800 hover:to-emerald-800 shadow-teal-900/20'
+                      assessCategory === 'farm_lot'
+                        ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-900/20'
+                        : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 shadow-blue-900/25'
                     }`}
                   >
-                    <FileText className="h-4 w-4" />
-                    <span>View Full A4 Assessment Report</span>
+                    <Sparkles className="h-4 w-4" />
+                    <span>
+                      {isInputValidNumber
+                        ? assessCategory === 'farm_lot'
+                          ? 'Examine Farm Lot Coordinates'
+                          : 'Examine Site Coordinates'
+                        : 'Examine Coordinates (Enter Lat & Long)'}
+                    </span>
                   </Button>
                 )}
 
+                {/* Secondary Pick on Map Button */}
                 <Button
                   type="button"
                   size="lg"
-                  variant={assessmentResult ? 'outline' : 'default'}
-                  className={`w-full h-11 rounded-2xl gap-2 font-bold shadow-md transition-all text-xs cursor-pointer ${
-                    assessmentResult
-                      ? 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-2xs'
-                      : assessCategory === 'farm_lot'
-                      ? 'bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-800 text-white shadow-emerald-900/20'
-                      : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-900/25'
-                  }`}
+                  variant="outline"
+                  className="w-full h-10 rounded-2xl gap-2 font-semibold border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs shadow-2xs transition-all cursor-pointer"
                   onClick={onPickSiteOnMap}
                 >
-                  <MapPin className="h-4 w-4" />
+                  <MapPin className="h-4 w-4 text-slate-500" />
                   <span>
                     {hasCoordinates
                       ? assessCategory === 'farm_lot' ? 'Re-pick Farm Lot on Map' : 'Re-pick Point on Map'
                       : assessCategory === 'farm_lot' ? 'Pick Farm Lot Directly on Map' : 'Pick Point Directly on Map'}
                   </span>
                 </Button>
+
+                {assessmentResult && onOpenReport && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onOpenReport}
+                    className="w-full h-9 rounded-xl gap-2 font-semibold border-teal-200 bg-teal-50/70 hover:bg-teal-100/70 text-teal-800 text-xs transition-all cursor-pointer"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>View Full A4 Assessment Report</span>
+                  </Button>
+                )}
               </div>
 
               {assessmentResult && (
