@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "shortcut": "powershell -ExecutionPolicy Bypass -File scripts/create-desktop-shortcut.ps1",
     "build": "tsc -p tsconfig.app.json && vite build",
     "preview": "vite preview",
     "generate:data": "node scripts/generate-buildings.mjs",
